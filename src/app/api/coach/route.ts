@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import Anthropic from '@anthropic-ai/sdk'
+import Groq from 'groq-sdk'
 import { LESSONS } from '@/lib/lessons'
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
 })
 
 export async function GET() {
@@ -96,20 +96,22 @@ Rules:
       },
     })
 
-    const anthropicMessages = recentMessages.map((m) => ({
+    const groqMessages: { role: 'user' | 'assistant'; content: string }[] = recentMessages.map((m) => ({
       role: m.role as 'user' | 'assistant',
       content: m.content,
     }))
-    anthropicMessages.push({ role: 'user', content: message })
+    groqMessages.push({ role: 'user', content: message })
 
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
+    const response = await groq.chat.completions.create({
+      model: 'llama-3.1-8b-instant',
       max_tokens: 400,
-      system: systemPrompt,
-      messages: anthropicMessages,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        ...groqMessages,
+      ],
     })
 
-    const assistantMessage = response.content[0].type === 'text' ? response.content[0].text : ''
+    const assistantMessage = response.choices[0]?.message?.content ?? ''
 
     // Save assistant message
     await prisma.coachMessage.create({
