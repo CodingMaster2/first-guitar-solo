@@ -1,0 +1,197 @@
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { redirect } from 'next/navigation'
+import { prisma } from '@/lib/prisma'
+import { LESSONS } from '@/lib/lessons'
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
+import ProgressBar from '@/components/ProgressBar'
+
+export default async function ProgressPage() {
+  const session = await getServerSession(authOptions)
+  if (!session?.user) redirect('/login')
+  if (session.user.purchaseStatus !== 'PAID') redirect('/success?new=true')
+
+  const [profile, progress, practiceSessions, userAchievements, allAchievements] = await Promise.all([
+    prisma.profile.findUnique({ where: { userId: session.user.id } }),
+    prisma.progress.findMany({ where: { userId: session.user.id }, orderBy: { day: 'asc' } }),
+    prisma.practiceSession.findMany({ where: { userId: session.user.id }, orderBy: { createdAt: 'desc' }, take: 20 }),
+    prisma.userAchievement.findMany({ where: { userId: session.user.id }, include: { achievement: true } }),
+    prisma.achievement.findMany(),
+  ])
+
+  if (!profile) redirect('/onboarding')
+
+  const completedDays = new Set(progress.filter((p) => p.completed).map((p) => p.day))
+  const completionPct = Math.round((completedDays.size / 30) * 100)
+  const totalPracticeTime = practiceSessions.reduce((sum, s) => sum + s.duration, 0)
+
+  const earnedAchievementIds = new Set(userAchievements.map((ua) => ua.achievementId))
+
+  // Week completion
+  const weeks = [
+    { label: 'Week 1', days: [1, 2, 3, 4, 5, 6, 7] },
+    { label: 'Week 2', days: [8, 9, 10, 11, 12, 13, 14] },
+    { label: 'Week 3', days: [15, 16, 17, 18, 19, 20, 21] },
+    { label: 'Week 4', days: [22, 23, 24, 25, 26, 27, 28, 29, 30] },
+  ]
+
+  const skills = [
+    { name: 'Picking', level: Math.min(100, (profile.pickingLevel ?? 1) * 15 + completedDays.size * 1.5) },
+    { name: 'Hammer-ons', level: Math.min(100, (profile.hammerOnLevel ?? 1) * 15 + Math.max(0, completedDays.size - 3) * 2) },
+    { name: 'Pull-offs', level: Math.min(100, (profile.pullOffLevel ?? 1) * 15 + Math.max(0, completedDays.size - 4) * 2) },
+    { name: 'Slides', level: Math.min(100, (profile.slideLevel ?? 1) * 15 + Math.max(0, completedDays.size - 5) * 2) },
+    { name: 'Pentatonic', level: Math.min(100, (profile.pentatonicLevel ?? 1) * 12 + Math.max(0, completedDays.size - 7) * 3) },
+    { name: 'Bends', level: Math.min(100, (profile.bendLevel ?? 1) * 12 + Math.max(0, completedDays.size - 11) * 3) },
+    { name: 'Vibrato', level: Math.min(100, (profile.vibratoLevel ?? 1) * 12 + Math.max(0, completedDays.size - 12) * 3) },
+    { name: 'Solo', level: Math.min(100, Math.max(0, completedDays.size - 14) * 7) },
+  ]
+
+  return (
+    <div style={{ backgroundColor: '#0a0a0a', minHeight: '100vh' }}>
+      <Navbar />
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h1 className="text-3xl font-black text-white uppercase mb-8">Your Progress</h1>
+
+        {/* Overview */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
+          <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-lg p-4">
+            <p style={{ color: '#a3a3a3' }} className="text-xs uppercase tracking-wider mb-1">Completion</p>
+            <p className="text-white text-2xl font-black">{completionPct}%</p>
+          </div>
+          <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-lg p-4">
+            <p style={{ color: '#a3a3a3' }} className="text-xs uppercase tracking-wider mb-1">Current Streak</p>
+            <p style={{ color: '#f59e0b' }} className="text-2xl font-black">{profile.streak}</p>
+            <p style={{ color: '#a3a3a3' }} className="text-xs">days</p>
+          </div>
+          <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-lg p-4">
+            <p style={{ color: '#a3a3a3' }} className="text-xs uppercase tracking-wider mb-1">Practice Sessions</p>
+            <p className="text-white text-2xl font-black">{practiceSessions.length}</p>
+          </div>
+          <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-lg p-4">
+            <p style={{ color: '#a3a3a3' }} className="text-xs uppercase tracking-wider mb-1">Total Time</p>
+            <p className="text-white text-2xl font-black">{totalPracticeTime}</p>
+            <p style={{ color: '#a3a3a3' }} className="text-xs">minutes</p>
+          </div>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-8 mb-10">
+          {/* Week by week */}
+          <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6">
+            <h2 className="text-white font-bold text-sm uppercase tracking-wider mb-5">Week by Week</h2>
+            <div className="space-y-4">
+              {weeks.map((week) => {
+                const done = week.days.filter((d) => completedDays.has(d)).length
+                const pct = Math.round((done / week.days.length) * 100)
+                return (
+                  <div key={week.label}>
+                    <div className="flex justify-between mb-1">
+                      <span style={{ color: '#a3a3a3' }} className="text-sm">{week.label}</span>
+                      <span style={{ color: '#a3a3a3' }} className="text-xs">{done}/{week.days.length}</span>
+                    </div>
+                    <ProgressBar value={pct} height={8} />
+                    <div className="flex gap-1 mt-2">
+                      {week.days.map((d) => (
+                        <div
+                          key={d}
+                          style={{
+                            backgroundColor: completedDays.has(d) ? '#f59e0b' : '#262626',
+                            width: '100%',
+                            height: '4px',
+                          }}
+                          className="rounded-full"
+                          title={`Day ${d}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Technique breakdown */}
+          <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6">
+            <h2 className="text-white font-bold text-sm uppercase tracking-wider mb-5">Technique Breakdown</h2>
+            <div className="space-y-3">
+              {skills.map((skill) => (
+                <ProgressBar key={skill.name} value={skill.level} label={skill.name} showLabel height={8} />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Achievements */}
+        <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6 mb-8">
+          <h2 className="text-white font-bold text-sm uppercase tracking-wider mb-5">Achievements</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {allAchievements.map((achievement) => {
+              const earned = earnedAchievementIds.has(achievement.id)
+              const userAch = userAchievements.find((ua) => ua.achievementId === achievement.id)
+              return (
+                <div
+                  key={achievement.id}
+                  style={{
+                    backgroundColor: earned ? '#1a1200' : '#1a1a1a',
+                    border: `1px solid ${earned ? '#f59e0b' : '#262626'}`,
+                    opacity: earned ? 1 : 0.5,
+                  }}
+                  className="p-4 rounded-lg"
+                >
+                  <div style={{ color: earned ? '#f59e0b' : '#a3a3a3' }} className="text-2xl mb-2">
+                    {earned ? '★' : '☆'}
+                  </div>
+                  <p style={{ color: earned ? '#ffffff' : '#a3a3a3' }} className="text-sm font-bold mb-1">
+                    {achievement.name}
+                  </p>
+                  <p style={{ color: '#a3a3a3' }} className="text-xs mb-2">{achievement.description}</p>
+                  <p style={{ color: '#f59e0b' }} className="text-xs">+{achievement.xpReward} XP</p>
+                  {earned && userAch && (
+                    <p style={{ color: '#a3a3a3' }} className="text-xs mt-1">
+                      {new Date(userAch.unlockedAt).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Practice history */}
+        <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6">
+          <h2 className="text-white font-bold text-sm uppercase tracking-wider mb-5">Practice History</h2>
+          {practiceSessions.length === 0 ? (
+            <p style={{ color: '#a3a3a3' }} className="text-sm">No practice sessions yet.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #262626' }}>
+                    <th style={{ color: '#a3a3a3' }} className="text-left pb-3 text-xs uppercase tracking-wider font-medium">Date</th>
+                    <th style={{ color: '#a3a3a3' }} className="text-left pb-3 text-xs uppercase tracking-wider font-medium">Lesson</th>
+                    <th style={{ color: '#a3a3a3' }} className="text-left pb-3 text-xs uppercase tracking-wider font-medium">Duration</th>
+                    <th style={{ color: '#a3a3a3' }} className="text-left pb-3 text-xs uppercase tracking-wider font-medium">Difficulty</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {practiceSessions.map((s) => {
+                    const lesson = LESSONS.find((l) => l.day === s.day)
+                    return (
+                      <tr key={s.id} style={{ borderBottom: '1px solid #1a1a1a' }}>
+                        <td style={{ color: '#a3a3a3' }} className="py-2 text-xs">{new Date(s.createdAt).toLocaleDateString()}</td>
+                        <td className="text-white py-2 text-xs">Day {s.day}: {lesson?.title}</td>
+                        <td style={{ color: '#a3a3a3' }} className="py-2 text-xs">{s.duration} min</td>
+                        <td style={{ color: '#a3a3a3' }} className="py-2 text-xs capitalize">{s.difficulty ?? '—'}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </main>
+      <Footer />
+    </div>
+  )
+}

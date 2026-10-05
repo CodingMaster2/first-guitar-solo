@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String            @id @default(cuid())
+  email            String            @unique
+  password         String
+  name             String?
+  role             String            @default("USER")
+  purchaseStatus   String            @default("UNPAID")
+  stripeCustomerId String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  profile          Profile?
+  progress         Progress[]
+  practiceSessions PracticeSession[]
+  userAchievements UserAchievement[]
+  coachMessages    CoachMessage[]
+  feedback         Feedback[]
+}
+
+model Profile {
+  id               String    @id @default(cuid())
+  userId           String    @unique
+  user             User      @relation(fields: [userId], references: [id])
+  instrument       String?
+  experienceMonths Int?
+  tabComfort       Int?
+  hasBasicChords   Boolean?
+  hasLearnedSolo   Boolean?
+  pickingLevel     Int?
+  hammerOnLevel    Int?
+  pullOffLevel     Int?
+  slideLevel       Int?
+  bendLevel        Int?
+  vibratoLevel     Int?
+  pentatonicLevel  Int?
+  styles           String?
+  practiceMinutes  Int?
+  currentDay       Int       @default(1)
+  totalXP          Int       @default(0)
+  streak           Int       @default(0)
+  lastPracticeDate DateTime?
+}
+
+model Progress {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id])
+  day            Int
+  completed      Boolean   @default(false)
+  completedAt    DateTime?
+  difficulty     String?
+  difficultAreas String?
+  rating         Int?
+  notes          String?
+  createdAt      DateTime  @default(now())
+
+  @@unique([userId, day])
+}
+
+model PracticeSession {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  day        Int
+  duration   Int
+  difficulty String?
+  createdAt  DateTime @default(now())
+}
+
+model Achievement {
+  id               String            @id @default(cuid())
+  key              String            @unique
+  name             String
+  description      String
+  xpReward         Int               @default(0)
+  userAchievements UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  unlockedAt    DateTime    @default(now())
+
+  @@unique([userId, achievementId])
+}
+
+model CoachMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  role      String
+  content   String
+  createdAt DateTime @default(now())
+}
+
+model AudioAsset {
+  id        String   @id @default(cuid())
+  type      String
+  label     String
+  url       String
+  day       Int?
+  section   Int?
+  speed     String?
+  published Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Feedback {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  day       Int?
+  rating    Int?
+  comment   String?
+  type      String?
+  createdAt DateTime @default(now())
+}
