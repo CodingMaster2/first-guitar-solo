@@ -36,6 +36,31 @@ export default async function DashboardPage() {
     return session.user.name ? `Welcome back, ${session.user.name}.` : 'Welcome back.'
   })()
 
+  const xpLevel = (() => {
+    const xp = profile.totalXP
+    if (xp >= 2000) return { title: 'Solo Artist', next: null, progress: 100 }
+    if (xp >= 1000) return { title: 'Lead Guitarist', next: 2000, progress: Math.round(((xp - 1000) / 1000) * 100) }
+    if (xp >= 500) return { title: 'Practitioner', next: 1000, progress: Math.round(((xp - 500) / 500) * 100) }
+    if (xp >= 200) return { title: 'Student', next: 500, progress: Math.round(((xp - 200) / 300) * 100) }
+    return { title: 'Beginner', next: 200, progress: Math.round((xp / 200) * 100) }
+  })()
+
+  const completionEstimate = (() => {
+    if (completedDays.size === 0 || completedDays.size >= 30) return null
+    const remaining = 30 - completedDays.size
+    if (profile.streak === 0) return null
+    const daysFromNow = remaining
+    const date = new Date()
+    date.setDate(date.getDate() + daysFromNow)
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  })()
+
+  const isComeback = (() => {
+    if (!profile.lastPracticeDate) return false
+    const daysSince = Math.floor((Date.now() - new Date(profile.lastPracticeDate).getTime()) / (1000 * 60 * 60 * 24))
+    return daysSince >= 3
+  })()
+
   const skills = [
     { name: 'Picking', level: Math.min(100, (profile.pickingLevel ?? 1) * 15 + completedDays.size * 1.5) },
     { name: 'Hammer-ons', level: Math.min(100, (profile.hammerOnLevel ?? 1) * 15 + Math.max(0, completedDays.size - 3) * 2) },
@@ -53,8 +78,25 @@ export default async function DashboardPage() {
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
+        {/* Comeback banner */}
+        {isComeback && profile.streak === 0 && (
+          <div
+            style={{ background: 'linear-gradient(135deg, #0a0a1a 0%, #050510 100%)', border: '1px solid #1e3a5f' }}
+            className="rounded-xl p-4 mb-6 flex items-center gap-4"
+          >
+            <span style={{ fontSize: '2rem', lineHeight: 1 }}>&#127928;</span>
+            <div className="flex-1">
+              <p className="text-white font-black text-base">Welcome back — the guitar is still waiting.</p>
+              <p style={{ color: '#a3a3a3' }} className="text-xs mt-0.5">
+                Missed days don't matter. Just pick up where you left off — today's lesson is ready.
+              </p>
+            </div>
+            <div style={{ color: '#0ea5e9' }} className="text-2xl font-black hidden sm:block">&#8594;</div>
+          </div>
+        )}
+
         {/* Streak banner */}
-        {profile.streak >= 2 && (
+        {profile.streak >= 2 && !isComeback && (
           <div
             style={{ background: 'linear-gradient(135deg, #1a0f00 0%, #0f0800 100%)', border: '1px solid #78350f' }}
             className="rounded-xl p-4 mb-6 flex items-center gap-4"
@@ -83,8 +125,8 @@ export default async function DashboardPage() {
           {[
             { label: 'Progress', value: `${completionPct}%`, sub: `${completedDays.size} of 30 days`, color: '#ffffff' },
             { label: 'Streak', value: `${profile.streak}d`, sub: 'current', color: '#f59e0b' },
-            { label: 'Total XP', value: profile.totalXP.toLocaleString(), sub: 'experience', color: '#f59e0b' },
-            { label: 'This Week', value: `${[...completedDays].filter(d => d >= currentDay - 6 && d <= currentDay).length}/7`, sub: 'days practiced', color: '#ffffff' },
+            { label: 'Total XP', value: profile.totalXP.toLocaleString(), sub: xpLevel.title, color: '#f59e0b' },
+            { label: 'This Week', value: `${[...completedDays].filter(d => d >= currentDay - 6 && d <= currentDay).length}/7`, sub: completionEstimate ? `finish ~${completionEstimate}` : 'days practiced', color: '#ffffff' },
           ].map((stat) => (
             <div
               key={stat.label}

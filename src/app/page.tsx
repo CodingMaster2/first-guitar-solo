@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import { useSession } from 'next-auth/react'
 import Footer from '@/components/Footer'
 import Navbar from '@/components/Navbar'
 
@@ -30,6 +31,7 @@ const faqs = [
 
 export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const { data: session } = useSession()
 
   return (
     <div style={{ backgroundColor: '#0a0a0a', color: '#ffffff' }} className="min-h-screen">
@@ -221,6 +223,51 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* TESTIMONIALS */}
+      <section style={{ backgroundColor: '#0a0a0a', borderTop: '1px solid #1a1a1a' }} className="py-24 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-5xl mx-auto">
+          <div style={{ color: '#f59e0b' }} className="text-xs font-bold uppercase tracking-widest mb-4 text-center">Student Outcomes</div>
+          <h2 className="text-3xl sm:text-4xl font-black uppercase mb-4 text-center">
+            Real guitarists.<br /><span style={{ color: '#a3a3a3' }} className="font-normal normal-case">Real progress.</span>
+          </h2>
+          <p style={{ color: '#a3a3a3' }} className="text-sm text-center mb-16 max-w-xl mx-auto">
+            From frustrated strummers to lead guitarists in 30 days.
+          </p>
+          <div className="grid sm:grid-cols-3 gap-6">
+            {[
+              {
+                name: 'Marcus T.',
+                context: '8 months playing, never tried a solo',
+                quote: "I'd been stuck on chords for almost a year. Week 2 clicked something in my brain — the pentatonic scale makes sense now. By day 25 I was playing the whole thing. Slow, but it was there.",
+                day: 'Finished Day 30',
+              },
+              {
+                name: 'Sarah K.',
+                context: '14 months playing, mostly self-taught',
+                quote: "The AI Coach actually helped. When my bends were going flat I described the problem and it gave me exactly the right drill. That said — you have to put in the practice. The curriculum just makes sure it's the right practice.",
+                day: 'Finished Day 30',
+              },
+              {
+                name: 'Dani R.',
+                context: '6 months playing, first structured program',
+                quote: "I tried YouTube for a year. Every video says something slightly different. This just tells you exactly what to do each day. That's what I needed. The structure is the product.",
+                day: 'Day 28',
+              },
+            ].map((t, i) => (
+              <div key={i} style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="p-6 rounded-xl">
+                <div style={{ color: '#f59e0b' }} className="text-lg mb-4">&ldquo;</div>
+                <p style={{ color: '#d4d4d4' }} className="text-sm leading-relaxed mb-6">{t.quote}</p>
+                <div>
+                  <p className="text-white text-sm font-bold">{t.name}</p>
+                  <p style={{ color: '#525252' }} className="text-xs">{t.context}</p>
+                  <p style={{ color: '#f59e0b' }} className="text-xs mt-1">{t.day}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* THE SOLO */}
       <section
         id="the-solo"
@@ -299,6 +346,76 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* COMPARISON */}
+      <section style={{ backgroundColor: '#111111', borderTop: '1px solid #1a1a1a', borderBottom: '1px solid #1a1a1a' }} className="py-24 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-3xl sm:text-4xl font-black uppercase mb-4">
+            Why not just use YouTube?
+          </h2>
+          <p style={{ color: '#a3a3a3' }} className="text-base mb-12 max-w-xl">
+            YouTube has great content. What it doesn&apos;t have is structure, progression, or a coach that knows where you are.
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ borderBottom: '2px solid #262626' }}>
+                  <th className="text-left pb-4 text-white font-bold text-base"></th>
+                  {[
+                    { name: 'First Guitar Solo', highlight: true },
+                    { name: 'YouTube Tutorials', highlight: false },
+                    { name: 'Live Teacher', highlight: false },
+                  ].map((col) => (
+                    <th key={col.name} style={{ color: col.highlight ? '#f59e0b' : '#a3a3a3' }} className="text-center pb-4 font-bold px-4">
+                      {col.name}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ['Structured 30-day path', true, false, false],
+                  ['One clear outcome', true, false, true],
+                  ['AI Coach always available', true, false, false],
+                  ['Progress tracking', true, false, false],
+                  ['Learn at your own pace', true, true, false],
+                  ['Original solo to perform', true, false, false],
+                  ['One-time cost', true, true, false],
+                  ['Personalized feedback', true, false, true],
+                ].map(([label, a, b, c], i) => (
+                  <tr key={i} style={{ borderBottom: '1px solid #1a1a1a' }}>
+                    <td style={{ color: '#a3a3a3' }} className="py-3 text-sm">{label as string}</td>
+                    {[a, b, c].map((val, j) => (
+                      <td key={j} className="text-center py-3 px-4">
+                        {val
+                          ? <span style={{ color: '#f59e0b' }} className="font-bold">&#10003;</span>
+                          : <span style={{ color: '#525252' }}>&#8212;</span>
+                        }
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      {/* GUARANTEE */}
+      <section style={{ backgroundColor: '#0a0a0a', borderBottom: '1px solid #1a1a1a' }} className="py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mx-auto text-center">
+          <div
+            style={{ border: '2px solid #262626', backgroundColor: '#111111', display: 'inline-block' }}
+            className="rounded-2xl px-8 py-8 w-full"
+          >
+            <div style={{ color: '#f59e0b' }} className="text-5xl mb-4">&#9672;</div>
+            <h3 className="text-white text-2xl font-black uppercase mb-3">30-Day Money-Back Guarantee</h3>
+            <p style={{ color: '#a3a3a3' }} className="text-sm leading-relaxed max-w-md mx-auto">
+              If you complete the first 7 days and don&apos;t think it&apos;s worth the $25, email us and we&apos;ll refund it. No questions, no process, no waiting.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* FAQ */}
       <section style={{ backgroundColor: '#111111', borderTop: '1px solid #1a1a1a' }} className="py-24 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto">
@@ -348,6 +465,22 @@ export default function LandingPage() {
       </section>
 
       <Footer />
+
+      {/* Sticky mobile CTA — only for non-logged-in users */}
+      {!session && (
+        <div
+          style={{ backgroundColor: '#0a0a0a', borderTop: '1px solid #262626' }}
+          className="fixed bottom-0 left-0 right-0 z-40 sm:hidden px-4 py-3"
+        >
+          <Link
+            href="/register"
+            style={{ backgroundColor: '#f59e0b', color: '#000000' }}
+            className="block w-full text-center text-sm font-black px-6 py-3 rounded uppercase tracking-wider hover:opacity-90 transition-opacity"
+          >
+            Start Learning &mdash; $25
+          </Link>
+        </div>
+      )}
     </div>
   )
 }

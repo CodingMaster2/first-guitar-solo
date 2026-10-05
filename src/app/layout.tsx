@@ -1,12 +1,25 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import Providers from '@/components/Providers'
+import MobileBottomNav from '@/components/MobileBottomNav'
 
 export const metadata: Metadata = {
   title: 'First Guitar Solo | Sixth String Labs',
   description:
     'A structured 30-day program to take you from basic guitar skills to confidently performing your first complete guitar solo.',
   keywords: ['guitar', 'guitar solo', 'learn guitar', 'guitar lessons', 'blues rock'],
+  openGraph: {
+    title: 'First Guitar Solo | Sixth String Labs',
+    description: '30 days. One complete blues-rock solo. Structured curriculum + AI Guitar Coach. $25 one-time payment.',
+    type: 'website',
+    url: 'https://first-guitar-solo.vercel.app',
+    siteName: 'First Guitar Solo by Sixth String Labs',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'First Guitar Solo | Sixth String Labs',
+    description: '30 days. One complete blues-rock solo. $25 one-time.',
+  },
 }
 
 export default function RootLayout({
@@ -17,7 +30,10 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className="min-h-full flex flex-col antialiased" style={{ backgroundColor: '#0a0a0a', color: '#ffffff' }}>
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <MobileBottomNav />
+        </Providers>
       </body>
     </html>
   )

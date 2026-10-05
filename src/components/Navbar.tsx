@@ -54,11 +54,17 @@ export default function Navbar() {
                 <Link href="/dashboard" style={{ color: '#a3a3a3' }} className="text-sm hover:text-white transition-colors">
                   Dashboard
                 </Link>
+                <Link href="/lessons" style={{ color: '#a3a3a3' }} className="text-sm hover:text-white transition-colors">
+                  Lessons
+                </Link>
                 <Link href="/coach" style={{ color: '#a3a3a3' }} className="text-sm hover:text-white transition-colors">
                   AI Coach
                 </Link>
                 <Link href="/progress" style={{ color: '#a3a3a3' }} className="text-sm hover:text-white transition-colors">
                   Progress
+                </Link>
+                <Link href="/settings" style={{ color: '#a3a3a3' }} className="text-sm hover:text-white transition-colors">
+                  Settings
                 </Link>
                 {session.user.role === 'ADMIN' && (
                   <Link href="/admin" style={{ color: '#f59e0b' }} className="text-sm hover:opacity-80 transition-opacity">
@@ -110,8 +116,10 @@ export default function Navbar() {
             ) : (
               <>
                 <Link href="/dashboard" style={{ color: '#a3a3a3' }} className="text-sm" onClick={() => setMobileOpen(false)}>Dashboard</Link>
+                <Link href="/lessons" style={{ color: '#a3a3a3' }} className="text-sm" onClick={() => setMobileOpen(false)}>Lessons</Link>
                 <Link href="/coach" style={{ color: '#a3a3a3' }} className="text-sm" onClick={() => setMobileOpen(false)}>AI Coach</Link>
                 <Link href="/progress" style={{ color: '#a3a3a3' }} className="text-sm" onClick={() => setMobileOpen(false)}>Progress</Link>
+                <Link href="/settings" style={{ color: '#a3a3a3' }} className="text-sm" onClick={() => setMobileOpen(false)}>Settings</Link>
                 {session.user.role === 'ADMIN' && (
                   <Link href="/admin" style={{ color: '#f59e0b' }} className="text-sm" onClick={() => setMobileOpen(false)}>Admin</Link>
                 )}

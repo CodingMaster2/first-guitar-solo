@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import type { Lesson } from '@/types'
 import AudioPlayer from '@/components/AudioPlayer'
 
@@ -21,6 +22,7 @@ interface LessonClientProps {
 const DIFFICULT_AREAS = ['Bends', 'Timing', 'Speed', 'Memorization', 'Picking', 'Transitions']
 
 export default function LessonClient({ lesson, existingProgress, audioUrl, audioLabel, currentDay }: LessonClientProps) {
+  const router = useRouter()
   const [difficulty, setDifficulty] = useState(existingProgress?.difficulty ?? '')
   const [difficultAreas, setDifficultAreas] = useState<string[]>(
     existingProgress?.difficultAreas ? existingProgress.difficultAreas.split(',') : []
@@ -33,6 +35,7 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
   const [newAchievements, setNewAchievements] = useState<string[]>([])
   const [timerSeconds, setTimerSeconds] = useState(0)
   const [timerRunning, setTimerRunning] = useState(false)
+  const [showBackToTop, setShowBackToTop] = useState(false)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
@@ -43,6 +46,25 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [timerRunning])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLButtonElement) return
+      if (e.key === 'ArrowLeft' && lesson.day > 1) {
+        router.push(`/lesson/${lesson.day - 1}`)
+      } else if (e.key === 'ArrowRight' && lesson.day < 30) {
+        router.push(`/lesson/${lesson.day + 1}`)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [lesson.day, router])
+
+  useEffect(() => {
+    const handleScroll = () => setShowBackToTop(window.scrollY > 400)
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   const formatTimer = (s: number) => {
     const m = Math.floor(s / 60)
@@ -104,15 +126,43 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
 
   return (
     <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Day indicator */}
-      <div className="flex items-center gap-3 mb-6">
-        <Link href="/dashboard" style={{ color: '#a3a3a3' }} className="text-sm hover:text-white transition-colors">
-          &#8592; Dashboard
+      {/* Breadcrumbs */}
+      <nav className="flex items-center gap-2 mb-6 flex-wrap">
+        <Link href="/dashboard" style={{ color: '#525252' }} className="text-xs hover:text-white transition-colors">
+          Dashboard
         </Link>
-        <span style={{ color: '#262626' }}>&#124;</span>
-        <span style={{ color: weekColor }} className="text-xs font-bold uppercase tracking-widest">
-          Week {lesson.week} · Day {lesson.day}
+        <span style={{ color: '#404040' }} className="text-xs">&#8250;</span>
+        <Link href="/lessons" style={{ color: '#525252' }} className="text-xs hover:text-white transition-colors">
+          All Lessons
+        </Link>
+        <span style={{ color: '#404040' }} className="text-xs">&#8250;</span>
+        <span style={{ color: weekColor }} className="text-xs font-bold uppercase tracking-wider">
+          Day {lesson.day}: {lesson.title}
         </span>
+      </nav>
+
+      {/* Keyboard nav hint */}
+      <div className="hidden sm:flex justify-between items-center mb-6">
+        {lesson.day > 1 ? (
+          <button
+            onClick={() => router.push(`/lesson/${lesson.day - 1}`)}
+            style={{ color: '#525252', border: '1px solid #1f1f1f' }}
+            className="text-xs px-3 py-1.5 rounded-lg hover:text-white hover:border-gray-600 transition-colors flex items-center gap-1.5"
+          >
+            &#8592; Day {lesson.day - 1}
+            <span style={{ color: '#404040' }} className="text-xs">(←)</span>
+          </button>
+        ) : <div />}
+        {lesson.day < 30 && (
+          <button
+            onClick={() => router.push(`/lesson/${lesson.day + 1}`)}
+            style={{ color: '#525252', border: '1px solid #1f1f1f' }}
+            className="text-xs px-3 py-1.5 rounded-lg hover:text-white hover:border-gray-600 transition-colors flex items-center gap-1.5"
+          >
+            <span style={{ color: '#404040' }} className="text-xs">(→)</span>
+            Day {lesson.day + 1} &#8594;
+          </button>
+        )}
       </div>
 
       {/* Title */}
@@ -370,9 +420,9 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
         )}
       </section>
 
-      {/* Navigation */}
-      <div className="flex justify-between">
-        {lesson.day > 1 && (
+      {/* Bottom navigation */}
+      <div className="flex justify-between mt-4 mb-8">
+        {lesson.day > 1 ? (
           <Link
             href={`/lesson/${lesson.day - 1}`}
             style={{ border: '1px solid #262626', color: '#a3a3a3' }}
@@ -380,18 +430,23 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
           >
             &#8592; Day {lesson.day - 1}
           </Link>
-        )}
-        <div className="ml-auto">
-          {lesson.day < 30 && (
-            <Link
-              href={`/lesson/${lesson.day + 1}`}
-              style={{ border: '1px solid #262626', color: '#a3a3a3' }}
-              className="px-4 py-2 rounded-lg text-sm hover:text-white transition-colors"
-            >
-              Day {lesson.day + 1} &#8594;
-            </Link>
-          )}
-        </div>
+        ) : <div />}
+        <Link
+          href="/lessons"
+          style={{ border: '1px solid #262626', color: '#525252' }}
+          className="px-4 py-2 rounded-lg text-sm hover:text-white transition-colors"
+        >
+          All Lessons
+        </Link>
+        {lesson.day < 30 ? (
+          <Link
+            href={`/lesson/${lesson.day + 1}`}
+            style={{ border: '1px solid #262626', color: '#a3a3a3' }}
+            className="px-4 py-2 rounded-lg text-sm hover:text-white transition-colors"
+          >
+            Day {lesson.day + 1} &#8594;
+          </Link>
+        ) : <div />}
       </div>
 
       {/* Toast */}
@@ -402,6 +457,18 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
         >
           &#9733; +{xpEarned} XP! {newAchievements.length > 0 && `Achievement unlocked: ${newAchievements.join(', ')}`}
         </div>
+      )}
+
+      {/* Back to top */}
+      {showBackToTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          style={{ backgroundColor: '#1a1a1a', border: '1px solid #262626', color: '#a3a3a3' }}
+          className="fixed bottom-6 left-6 w-10 h-10 rounded-full flex items-center justify-center hover:text-white hover:border-gray-500 transition-colors z-40 text-base"
+          aria-label="Back to top"
+        >
+          &#8593;
+        </button>
       )}
 
       <style>{`
