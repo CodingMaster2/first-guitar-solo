@@ -1,11 +1,11 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 
-export default function SuccessPage() {
+function SuccessContent() {
   const { data: session, update } = useSession()
   const searchParams = useSearchParams()
   const isNew = searchParams.get('new') === 'true'
@@ -134,6 +134,14 @@ export default function SuccessPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function SuccessPage() {
+  return (
+    <Suspense fallback={<div style={{ backgroundColor: '#0a0a0a', minHeight: '100vh' }} />}>
+      <SuccessContent />
+    </Suspense>
   )
 }
 

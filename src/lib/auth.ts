@@ -50,8 +50,8 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
-        token.role = (user as { role?: string }).role
-        token.purchaseStatus = (user as { purchaseStatus?: string }).purchaseStatus
+        token.role = (user as { role?: string }).role ?? 'USER'
+        token.purchaseStatus = (user as { purchaseStatus?: string }).purchaseStatus ?? 'UNPAID'
       }
       return token
     },

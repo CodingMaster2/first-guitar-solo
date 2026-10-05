@@ -180,7 +180,7 @@ G |------------------------|</pre>
 <p>In tab, slides are shown with "/" (slide up) or "\" (slide down):</p>
 <pre>e |-------------|
 G |---5/7-------|  ← slide up from 5 to 7
-G |---7\5-------|  ← slide down from 7 to 5
+G |---7\\5-------|  ← slide down from 7 to 5
 </pre>
 
 <h3>Two Types of Slides</h3>
@@ -194,7 +194,7 @@ G |---7\5-------|  ← slide down from 7 to 5
 <h3>Slide Phrase on G String</h3>
 <pre>e |------------------------|
 B |------------------------|
-G |---5/7---7\5---5/9-----|
+G |---5/7---7\\5---5/9-----|
 D |------------------------|</pre>`,
     exercise: 'Part 1: On the G string, pick fret 5, slide up to fret 7. Hold fret 7 for a beat. Then slide back down to fret 5. Repeat 10 times. Part 2: Try ascending then descending quickly: 5/7/9\\7\\5. One continuous phrase. Part 3: Play the 3-note slide phrase from the tab above. Focus on making the arriving note ring clearly at the correct pitch.',
     selfCheck: 'The note at your destination should sound in tune and clear. If the slide "dies" before you reach the destination, you\'re releasing pressure. If it sounds off-pitch, you may be landing on the wrong fret. Count the frets as you slide — feel the bumps of the frets under your finger.',
