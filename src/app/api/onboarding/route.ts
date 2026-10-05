@@ -9,6 +9,9 @@ export async function POST(req: NextRequest) {
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    if (session.user.purchaseStatus !== 'PAID') {
+      return NextResponse.json({ error: 'Payment required' }, { status: 403 })
+    }
 
     const body = await req.json() as {
       instrument?: string

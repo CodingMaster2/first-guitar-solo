@@ -32,7 +32,7 @@ export default async function CoachPage() {
         <div style={{ borderBottom: '1px solid #262626' }} className="px-4 py-4">
           <h1 className="text-xl font-black text-white uppercase">AI Guitar Coach</h1>
           <p style={{ color: '#a3a3a3' }} className="text-xs mt-1">
-            Powered by Claude AI &bull; Knows your current progress
+            Powered by AI &bull; Knows your current progress
           </p>
         </div>
         <div className="flex-1 overflow-hidden">

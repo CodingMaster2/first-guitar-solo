@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 
 const TOTAL_STEPS = 5
 
 export default function OnboardingPage() {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const router = useRouter()
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
@@ -42,6 +42,14 @@ export default function OnboardingPage() {
     '20': 20,
     '30+': 30,
   }
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.replace('/login')
+    } else if (status === 'authenticated' && session?.user?.purchaseStatus !== 'PAID') {
+      router.replace('/success?new=true')
+    }
+  }, [status, session, router])
 
   const toggleStyle = (s: string) => {
     setStyles((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s])

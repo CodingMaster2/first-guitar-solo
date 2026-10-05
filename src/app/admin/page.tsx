@@ -129,7 +129,7 @@ export default async function AdminPage() {
           {/* Day completion rates */}
           <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-5 mt-6">
             <h2 className="text-white font-bold text-sm uppercase tracking-wider mb-4">Lesson Completion Rates</h2>
-            <div className="grid grid-cols-10 sm:grid-cols-15 gap-1">
+            <div className="grid grid-cols-10 gap-1">
               {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => {
                 const count = dayCompletionCounts[day] ?? 0
                 const maxCount = Math.max(...Object.values(dayCompletionCounts), 1)

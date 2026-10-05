@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { LESSONS } from '@/lib/lessons'
+import { ACHIEVEMENTS } from '@/lib/achievements'
 
 export async function GET() {
   try {
@@ -121,6 +122,18 @@ export async function POST(req: NextRequest) {
         currentDay: newCurrentDay > 30 ? 30 : newCurrentDay,
       },
     })
+
+    // Seed achievements if they haven't been created yet
+    const achievementCount = await prisma.achievement.count()
+    if (achievementCount === 0) {
+      for (const a of ACHIEVEMENTS) {
+        await prisma.achievement.upsert({
+          where: { key: a.key },
+          update: {},
+          create: { key: a.key, name: a.name, description: a.description, xpReward: a.xpReward },
+        })
+      }
+    }
 
     // Check and award achievements
     const newAchievements: string[] = []

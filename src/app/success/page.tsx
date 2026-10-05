@@ -95,6 +95,30 @@ function SuccessContent() {
     )
   }
 
+  if (!paid) {
+    return (
+      <div style={{ backgroundColor: '#0a0a0a', minHeight: '100vh' }} className="flex items-center justify-center px-4">
+        <div className="max-w-md w-full text-center">
+          <div style={{ color: '#a3a3a3' }} className="text-sm mb-4">
+            Payment not yet confirmed. It may take a moment to process.
+          </div>
+          <PaymentButton />
+          <p style={{ color: '#a3a3a3' }} className="text-xs mt-4">
+            If you already paid, please wait a moment and{' '}
+            <button
+              onClick={() => window.location.reload()}
+              style={{ color: '#f59e0b' }}
+              className="underline cursor-pointer"
+            >
+              refresh
+            </button>
+            .
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={{ backgroundColor: '#0a0a0a', minHeight: '100vh' }} className="flex items-center justify-center px-4">
       <div className="max-w-md w-full text-center">
