@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { LESSONS } from '@/lib/lessons'
+import Groq from 'groq-sdk'
 
 
 export async function GET() {
@@ -87,22 +88,12 @@ Rules:
       take: 18,
     })
 
-    // Save user message
-    await prisma.coachMessage.create({
-      data: {
-        userId: session.user.id,
-        role: 'user',
-        content: message,
-      },
-    })
-
     const groqMessages: { role: 'user' | 'assistant'; content: string }[] = recentMessages.map((m) => ({
       role: m.role as 'user' | 'assistant',
       content: m.content,
     }))
     groqMessages.push({ role: 'user', content: message })
 
-    const Groq = (await import('groq-sdk')).default
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
     const response = await groq.chat.completions.create({
@@ -116,13 +107,12 @@ Rules:
 
     const assistantMessage = response.choices[0]?.message?.content ?? ''
 
-    // Save assistant message
-    await prisma.coachMessage.create({
-      data: {
-        userId: session.user.id,
-        role: 'assistant',
-        content: assistantMessage,
-      },
+    // Save both messages only after Groq succeeds
+    await prisma.coachMessage.createMany({
+      data: [
+        { userId: session.user.id, role: 'user', content: message },
+        { userId: session.user.id, role: 'assistant', content: assistantMessage },
+      ],
     })
 
     // Return last 20 messages
