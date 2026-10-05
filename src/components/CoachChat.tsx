@@ -52,10 +52,13 @@ export default function CoachChat({ initialMessages, currentDay, lessonTitle }: 
         throw new Error('Failed to send message')
       }
 
-      const data = await res.json() as { messages: CoachMessageRecord[] }
-      setMessages(data.messages)
-    } catch {
-      setError('Failed to send message. Please try again.')
+      const data = await res.json() as { messages?: CoachMessageRecord[]; error?: string }
+      if (!res.ok) {
+        throw new Error(data.error ?? 'Server error')
+      }
+      setMessages(data.messages ?? [])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send message. Please try again.')
       // Remove the optimistic message on error
       setMessages((prev) => prev.filter((m) => m.id !== tempId))
     } finally {

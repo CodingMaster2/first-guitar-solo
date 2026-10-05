@@ -2,12 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import Groq from 'groq-sdk'
 import { LESSONS } from '@/lib/lessons'
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-})
 
 export async function GET() {
   try {
@@ -37,6 +33,10 @@ export async function POST(req: NextRequest) {
     }
     if (session.user.purchaseStatus !== 'PAID') {
       return NextResponse.json({ error: 'Payment required' }, { status: 403 })
+    }
+
+    if (!process.env.GROQ_API_KEY) {
+      return NextResponse.json({ error: 'AI Coach is not configured. Please contact support.' }, { status: 503 })
     }
 
     const body = await req.json() as { message: string }
@@ -102,6 +102,9 @@ Rules:
     }))
     groqMessages.push({ role: 'user', content: message })
 
+    const Groq = (await import('groq-sdk')).default
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+
     const response = await groq.chat.completions.create({
       model: 'llama-3.1-8b-instant',
       max_tokens: 400,
@@ -132,6 +135,7 @@ Rules:
     return NextResponse.json({ messages: allMessages, reply: assistantMessage })
   } catch (error) {
     console.error('Coach POST error:', error)
-    return NextResponse.json({ error: 'Failed to send message' }, { status: 500 })
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    return NextResponse.json({ error: `Coach error: ${message}` }, { status: 500 })
   }
 }
