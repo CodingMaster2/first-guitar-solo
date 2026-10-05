@@ -36,7 +36,6 @@ export default async function DashboardPage() {
     return session.user.name ? `Welcome back, ${session.user.name}.` : 'Welcome back.'
   })()
 
-  // Skill levels based on profile + completed days
   const skills = [
     { name: 'Picking', level: Math.min(100, (profile.pickingLevel ?? 1) * 15 + completedDays.size * 1.5) },
     { name: 'Hammer-ons', level: Math.min(100, (profile.hammerOnLevel ?? 1) * 15 + Math.max(0, completedDays.size - 3) * 2) },
@@ -53,39 +52,95 @@ export default async function DashboardPage() {
       <Navbar />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        {/* Streak banner */}
+        {profile.streak >= 2 && (
+          <div
+            style={{ background: 'linear-gradient(135deg, #1a0f00 0%, #0f0800 100%)', border: '1px solid #78350f' }}
+            className="rounded-xl p-4 mb-6 flex items-center gap-4"
+          >
+            <span style={{ fontSize: '2rem', lineHeight: 1 }}>&#128293;</span>
+            <div className="flex-1">
+              <p className="text-white font-black text-base">{profile.streak}-day streak — keep it going</p>
+              <p style={{ color: '#a3a3a3' }} className="text-xs mt-0.5">
+                Practice today to stay on track. {profile.streak >= 7 ? "You're in the top tier of learners." : "Streaks build the habit faster than anything."}
+              </p>
+            </div>
+            <div style={{ color: '#f59e0b' }} className="text-2xl font-black hidden sm:block">{profile.streak}d</div>
+          </div>
+        )}
+
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-3xl font-black uppercase">
             <span style={{ color: '#f59e0b' }}>Day {currentDay}</span> of 30
           </h1>
-          <p style={{ color: '#a3a3a3' }} className="text-sm mt-1">
-            {motivationalMessage}
-          </p>
+          <p style={{ color: '#a3a3a3' }} className="text-sm mt-1">{motivationalMessage}</p>
         </div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-          <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-lg p-4">
-            <p style={{ color: '#a3a3a3' }} className="text-xs uppercase tracking-wider mb-1">Progress</p>
-            <p className="text-white text-2xl font-black">{completionPct}%</p>
-            <ProgressBar value={completionPct} height={4} />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          {[
+            { label: 'Progress', value: `${completionPct}%`, sub: `${completedDays.size} of 30 days`, color: '#ffffff' },
+            { label: 'Streak', value: `${profile.streak}d`, sub: 'current', color: '#f59e0b' },
+            { label: 'Total XP', value: profile.totalXP.toLocaleString(), sub: 'experience', color: '#f59e0b' },
+            { label: 'This Week', value: `${[...completedDays].filter(d => d >= currentDay - 6 && d <= currentDay).length}/7`, sub: 'days practiced', color: '#ffffff' },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              style={{ backgroundColor: '#111111', border: '1px solid #262626' }}
+              className="rounded-lg p-4 hover:border-amber-800 transition-colors"
+            >
+              <p style={{ color: '#a3a3a3' }} className="text-xs uppercase tracking-wider mb-1">{stat.label}</p>
+              <p style={{ color: stat.color }} className="text-2xl font-black">{stat.value}</p>
+              <p style={{ color: '#525252' }} className="text-xs">{stat.sub}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* 30-day journey grid */}
+        <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-5 mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-white font-bold text-sm uppercase tracking-wider">Your Journey</h3>
+            <span style={{ color: '#a3a3a3' }} className="text-xs">{completedDays.size}/30 days complete</span>
           </div>
-          <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-lg p-4">
-            <p style={{ color: '#a3a3a3' }} className="text-xs uppercase tracking-wider mb-1">Streak</p>
-            <p className="text-white text-2xl font-black">
-              {profile.streak} <span className="text-xl">&#128293;</span>
-            </p>
-            <p style={{ color: '#a3a3a3' }} className="text-xs">days</p>
+          <div className="grid grid-cols-10 gap-1.5">
+            {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => {
+              const isDone = completedDays.has(day)
+              const isCurrent = day === currentDay
+              const isPast = day < currentDay && !isDone
+              return (
+                <Link href={`/lesson/${day}`} key={day} title={`Day ${day}: ${LESSONS.find(l => l.day === day)?.title ?? ''}`}>
+                  <div
+                    style={{
+                      backgroundColor: isDone ? '#f59e0b' : isCurrent ? '#1a1000' : '#161616',
+                      border: isCurrent ? '2px solid #f59e0b' : isDone ? '1px solid #d97706' : '1px solid #1f1f1f',
+                      aspectRatio: '1',
+                      opacity: isPast ? 0.5 : 1,
+                    }}
+                    className="rounded flex items-center justify-center transition-all hover:scale-110 hover:z-10 relative"
+                  >
+                    <span style={{ color: isDone ? '#000' : isCurrent ? '#f59e0b' : '#404040', fontSize: '0.6rem' }} className="font-black">
+                      {isDone ? '✓' : day}
+                    </span>
+                  </div>
+                </Link>
+              )
+            })}
           </div>
-          <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-lg p-4">
-            <p style={{ color: '#a3a3a3' }} className="text-xs uppercase tracking-wider mb-1">Total XP</p>
-            <p style={{ color: '#f59e0b' }} className="text-2xl font-black">{profile.totalXP}</p>
-            <p style={{ color: '#a3a3a3' }} className="text-xs">experience</p>
-          </div>
-          <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-lg p-4">
-            <p style={{ color: '#a3a3a3' }} className="text-xs uppercase tracking-wider mb-1">Days Done</p>
-            <p className="text-white text-2xl font-black">{completedDays.size}</p>
-            <p style={{ color: '#a3a3a3' }} className="text-xs">of 30</p>
+          <div className="flex gap-4 mt-3">
+            <div className="flex items-center gap-1.5">
+              <div style={{ backgroundColor: '#f59e0b', width: 10, height: 10 }} className="rounded-sm" />
+              <span style={{ color: '#525252' }} className="text-xs">Done</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div style={{ border: '2px solid #f59e0b', backgroundColor: '#1a1000', width: 10, height: 10 }} className="rounded-sm" />
+              <span style={{ color: '#525252' }} className="text-xs">Today</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div style={{ backgroundColor: '#161616', border: '1px solid #1f1f1f', width: 10, height: 10 }} className="rounded-sm" />
+              <span style={{ color: '#525252' }} className="text-xs">Upcoming</span>
+            </div>
           </div>
         </div>
 
@@ -93,29 +148,34 @@ export default async function DashboardPage() {
           {/* Today's lesson */}
           <div className="lg:col-span-2">
             <div
-              style={{ backgroundColor: '#111111', border: '2px solid #f59e0b' }}
+              style={{ backgroundColor: '#111111', border: '2px solid #f59e0b', background: 'linear-gradient(135deg, #111111 0%, #0f0e00 100%)' }}
               className="rounded-xl p-6 mb-6"
             >
               <div style={{ color: '#f59e0b' }} className="text-xs font-bold uppercase tracking-widest mb-2">
                 Today&apos;s Lesson
               </div>
-              <p style={{ color: '#a3a3a3' }} className="text-xs mb-1">Week {currentLesson.week} · Day {currentLesson.day}</p>
+              <p style={{ color: '#a3a3a3' }} className="text-xs mb-1">Week {currentLesson.week} &middot; Day {currentLesson.day}</p>
               <h2 className="text-2xl font-black text-white mb-2">{currentLesson.title}</h2>
               <p style={{ color: '#a3a3a3' }} className="text-sm mb-4">{currentLesson.subtitle}</p>
-              <div className="flex items-center gap-4 mb-6">
+              <div className="flex items-center gap-3 mb-6 flex-wrap">
                 <span style={{ backgroundColor: '#1a1a1a', color: '#a3a3a3', border: '1px solid #262626' }} className="text-xs px-3 py-1 rounded">
                   {currentLesson.duration} min
                 </span>
-                <span style={{ backgroundColor: '#1a1a1a', color: '#f59e0b', border: '1px solid #262626' }} className="text-xs px-3 py-1 rounded">
+                <span style={{ backgroundColor: '#1a0f00', color: '#f59e0b', border: '1px solid #78350f' }} className="text-xs px-3 py-1 rounded font-bold">
                   +{currentLesson.xpReward} XP
                 </span>
+                {currentLesson.week && (
+                  <span style={{ backgroundColor: '#0a0a0a', color: '#525252', border: '1px solid #1f1f1f' }} className="text-xs px-3 py-1 rounded">
+                    Week {currentLesson.week}
+                  </span>
+                )}
               </div>
               {completedDays.has(currentDay) ? (
                 <div className="flex gap-3">
                   <Link
                     href={`/lesson/${currentDay}`}
                     style={{ border: '1px solid #262626', color: '#a3a3a3' }}
-                    className="px-6 py-3 rounded-lg text-sm font-bold uppercase tracking-wider hover:text-white transition-colors"
+                    className="px-6 py-3 rounded-lg text-sm font-bold uppercase tracking-wider hover:text-white hover:border-gray-400 transition-colors"
                   >
                     Review
                   </Link>
@@ -144,25 +204,35 @@ export default async function DashboardPage() {
             <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6">
               <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-4">Recent Activity</h3>
               {practiceSessions.length === 0 ? (
-                <p style={{ color: '#a3a3a3' }} className="text-sm">No practice sessions yet. Complete your first lesson to start!</p>
+                <div className="text-center py-6">
+                  <p style={{ color: '#f59e0b' }} className="text-2xl mb-2">&#9654;</p>
+                  <p style={{ color: '#a3a3a3' }} className="text-sm">No sessions yet.</p>
+                  <p style={{ color: '#525252' }} className="text-xs mt-1">Complete your first lesson to start.</p>
+                </div>
               ) : (
                 <div className="space-y-2">
                   {practiceSessions.map((s) => {
                     const lesson = LESSONS.find((l) => l.day === s.day)
                     return (
-                      <div
+                      <Link
                         key={s.id}
+                        href={`/lesson/${s.day}`}
                         style={{ borderBottom: '1px solid #1a1a1a' }}
-                        className="flex justify-between items-center py-2"
+                        className="flex justify-between items-center py-2.5 hover:opacity-80 transition-opacity block"
                       >
                         <div>
                           <p className="text-white text-sm">Day {s.day}: {lesson?.title ?? 'Lesson'}</p>
-                          <p style={{ color: '#a3a3a3' }} className="text-xs">
+                          <p style={{ color: '#525252' }} className="text-xs">
                             {new Date(s.createdAt).toLocaleDateString()}
                           </p>
                         </div>
-                        <span style={{ color: '#a3a3a3' }} className="text-xs">{s.duration} min</span>
-                      </div>
+                        <div className="text-right">
+                          <span style={{ color: '#a3a3a3' }} className="text-xs">{s.duration} min</span>
+                          {s.difficulty && (
+                            <p style={{ color: s.difficulty === 'easy' ? '#22c55e' : s.difficulty === 'struggled' ? '#ef4444' : '#f59e0b' }} className="text-xs capitalize">{s.difficulty}</p>
+                          )}
+                        </div>
+                      </Link>
                     )
                   })}
                 </div>
@@ -177,13 +247,7 @@ export default async function DashboardPage() {
               <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-4">Skills</h3>
               <div className="space-y-3">
                 {skills.map((skill) => (
-                  <ProgressBar
-                    key={skill.name}
-                    value={skill.level}
-                    label={skill.name}
-                    showLabel
-                    height={6}
-                  />
+                  <ProgressBar key={skill.name} value={skill.level} label={skill.name} showLabel height={6} />
                 ))}
               </div>
             </div>
@@ -195,18 +259,24 @@ export default async function DashboardPage() {
                 <Link
                   href="/coach"
                   style={{ backgroundColor: '#1a1a1a', border: '1px solid #262626' }}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg hover:border-amber-500 transition-colors"
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg hover:border-amber-600 transition-colors group"
                 >
-                  <span style={{ color: '#f59e0b' }}>&#9899;</span>
-                  <span className="text-white text-sm">AI Guitar Coach</span>
+                  <span style={{ color: '#f59e0b' }} className="text-lg">&#9899;</span>
+                  <div>
+                    <p className="text-white text-sm group-hover:text-amber-400 transition-colors">AI Guitar Coach</p>
+                    <p style={{ color: '#525252' }} className="text-xs">Ask anything</p>
+                  </div>
                 </Link>
                 <Link
                   href="/progress"
                   style={{ backgroundColor: '#1a1a1a', border: '1px solid #262626' }}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg hover:border-amber-500 transition-colors"
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg hover:border-amber-600 transition-colors group"
                 >
-                  <span style={{ color: '#f59e0b' }}>&#8593;</span>
-                  <span className="text-white text-sm">Full Progress View</span>
+                  <span style={{ color: '#f59e0b' }} className="text-lg">&#8593;</span>
+                  <div>
+                    <p className="text-white text-sm group-hover:text-amber-400 transition-colors">Full Progress</p>
+                    <p style={{ color: '#525252' }} className="text-xs">Stats &amp; achievements</p>
+                  </div>
                 </Link>
               </div>
             </div>

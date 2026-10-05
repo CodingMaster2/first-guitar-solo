@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import type { Lesson } from '@/types'
 import AudioPlayer from '@/components/AudioPlayer'
@@ -31,6 +31,24 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
   const [xpEarned, setXpEarned] = useState(0)
   const [showToast, setShowToast] = useState(false)
   const [newAchievements, setNewAchievements] = useState<string[]>([])
+  const [timerSeconds, setTimerSeconds] = useState(0)
+  const [timerRunning, setTimerRunning] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => {
+    if (timerRunning) {
+      timerRef.current = setInterval(() => setTimerSeconds((s) => s + 1), 1000)
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+  }, [timerRunning])
+
+  const formatTimer = (s: number) => {
+    const m = Math.floor(s / 60)
+    const sec = s % 60
+    return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`
+  }
 
   const toggleArea = (area: string) => {
     setDifficultAreas((prev) =>
@@ -109,15 +127,23 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
 
       {/* Duration badge */}
       <div className="flex flex-wrap gap-2 mb-8">
-        <span style={{ backgroundColor: '#1a1a1a', color: '#a3a3a3', border: '1px solid #262626' }} className="text-xs px-3 py-1 rounded">
-          {lesson.duration} min session
+        <span style={{ backgroundColor: '#1a1a1a', color: '#a3a3a3', border: '1px solid #262626' }} className="text-xs px-3 py-1 rounded font-medium">
+          &#9201; {lesson.duration} min
         </span>
-        <span style={{ backgroundColor: '#1a1a1a', color: '#f59e0b', border: '1px solid #262626' }} className="text-xs px-3 py-1 rounded">
+        <span style={{ backgroundColor: '#1a0f00', color: '#f59e0b', border: '1px solid #78350f' }} className="text-xs px-3 py-1 rounded font-bold">
           +{lesson.xpReward} XP
         </span>
+        <span style={{ backgroundColor: '#1a1a1a', color: '#a3a3a3', border: '1px solid #262626' }} className="text-xs px-3 py-1 rounded">
+          Week {lesson.week}
+        </span>
         {lesson.soloSection && (
-          <span style={{ backgroundColor: '#1a1a1a', color: '#a855f7', border: '1px solid #262626' }} className="text-xs px-3 py-1 rounded">
+          <span style={{ backgroundColor: '#160a1f', color: '#a855f7', border: '1px solid #6b21a8' }} className="text-xs px-3 py-1 rounded font-bold">
             Solo Section {lesson.soloSection}
+          </span>
+        )}
+        {completed && (
+          <span style={{ backgroundColor: '#052e16', color: '#86efac', border: '1px solid #166534' }} className="text-xs px-3 py-1 rounded font-bold">
+            ✓ Completed
           </span>
         )}
       </div>
@@ -174,6 +200,65 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
             className="rounded-lg p-4 text-center"
           >
             <p style={{ color: '#a3a3a3' }} className="text-sm">Audio coming soon</p>
+          </div>
+        )}
+      </section>
+
+      {/* Practice timer */}
+      <section style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-5 mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-white text-xs font-bold uppercase tracking-widest mb-0.5">Practice Timer</h2>
+            <p style={{ color: '#525252' }} className="text-xs">Track your session time</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span
+              style={{ color: timerRunning ? '#f59e0b' : '#ffffff', fontVariantNumeric: 'tabular-nums' }}
+              className="text-3xl font-black tracking-tight"
+            >
+              {formatTimer(timerSeconds)}
+            </span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setTimerRunning((r) => !r)}
+                style={{
+                  backgroundColor: timerRunning ? '#1a1a1a' : '#f59e0b',
+                  color: timerRunning ? '#a3a3a3' : '#000',
+                  border: timerRunning ? '1px solid #262626' : 'none',
+                }}
+                className="px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all"
+              >
+                {timerRunning ? 'Pause' : timerSeconds > 0 ? 'Resume' : 'Start'}
+              </button>
+              {timerSeconds > 0 && !timerRunning && (
+                <button
+                  onClick={() => { setTimerSeconds(0); setTimerRunning(false) }}
+                  style={{ color: '#525252', border: '1px solid #262626' }}
+                  className="px-3 py-2 rounded-lg text-xs transition-colors hover:text-white"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+        {timerSeconds > 0 && (
+          <div className="mt-3">
+            <div style={{ backgroundColor: '#1a1a1a', height: 4 }} className="rounded-full overflow-hidden">
+              <div
+                style={{
+                  backgroundColor: '#f59e0b',
+                  width: `${Math.min(100, (timerSeconds / (lesson.duration * 60)) * 100)}%`,
+                  height: '100%',
+                  transition: 'width 1s linear',
+                }}
+                className="rounded-full"
+              />
+            </div>
+            <p style={{ color: '#525252' }} className="text-xs mt-1">
+              Target: {lesson.duration} min
+              {timerSeconds >= lesson.duration * 60 && <span style={{ color: '#f59e0b' }}> — Goal reached! ✓</span>}
+            </p>
           </div>
         )}
       </section>

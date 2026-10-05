@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { LESSONS } from '@/lib/lessons'
+import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import ProgressBar from '@/components/ProgressBar'
@@ -54,24 +55,45 @@ export default async function ProgressPage() {
         <h1 className="text-3xl font-black text-white uppercase mb-8">Your Progress</h1>
 
         {/* Overview */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
-          <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-lg p-4">
-            <p style={{ color: '#a3a3a3' }} className="text-xs uppercase tracking-wider mb-1">Completion</p>
-            <p className="text-white text-2xl font-black">{completionPct}%</p>
-          </div>
-          <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-lg p-4">
-            <p style={{ color: '#a3a3a3' }} className="text-xs uppercase tracking-wider mb-1">Current Streak</p>
-            <p style={{ color: '#f59e0b' }} className="text-2xl font-black">{profile.streak}</p>
-            <p style={{ color: '#a3a3a3' }} className="text-xs">days</p>
-          </div>
-          <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-lg p-4">
-            <p style={{ color: '#a3a3a3' }} className="text-xs uppercase tracking-wider mb-1">Practice Sessions</p>
-            <p className="text-white text-2xl font-black">{practiceSessions.length}</p>
-          </div>
-          <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-lg p-4">
-            <p style={{ color: '#a3a3a3' }} className="text-xs uppercase tracking-wider mb-1">Total Time</p>
-            <p className="text-white text-2xl font-black">{totalPracticeTime}</p>
-            <p style={{ color: '#a3a3a3' }} className="text-xs">minutes</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+          {[
+            { label: 'Completion', value: `${completionPct}%`, sub: `${completedDays.size}/30 days`, color: '#ffffff' },
+            { label: 'Current Streak', value: `${profile.streak}d`, sub: 'days in a row', color: '#f59e0b' },
+            { label: 'Total Sessions', value: String(practiceSessions.length), sub: 'practice sessions', color: '#ffffff' },
+            { label: 'Total Time', value: `${totalPracticeTime}`, sub: 'minutes practiced', color: '#ffffff' },
+          ].map((s) => (
+            <div key={s.label} style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-lg p-4 hover:border-amber-800 transition-colors">
+              <p style={{ color: '#a3a3a3' }} className="text-xs uppercase tracking-wider mb-1">{s.label}</p>
+              <p style={{ color: s.color }} className="text-2xl font-black">{s.value}</p>
+              <p style={{ color: '#525252' }} className="text-xs">{s.sub}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* 30-day grid */}
+        <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-5 mb-8">
+          <h2 className="text-white font-bold text-sm uppercase tracking-wider mb-4">All 30 Days</h2>
+          <div className="grid grid-cols-10 gap-1.5">
+            {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => {
+              const isDone = completedDays.has(day)
+              const lesson = LESSONS.find((l) => l.day === day)
+              return (
+                <Link href={`/lesson/${day}`} key={day} title={`Day ${day}: ${lesson?.title ?? ''}`}>
+                  <div
+                    style={{
+                      backgroundColor: isDone ? '#f59e0b' : '#161616',
+                      border: isDone ? '1px solid #d97706' : '1px solid #1f1f1f',
+                      aspectRatio: '1',
+                    }}
+                    className="rounded flex items-center justify-center transition-all hover:scale-110"
+                  >
+                    <span style={{ color: isDone ? '#000' : '#404040', fontSize: '0.6rem' }} className="font-black">
+                      {isDone ? '✓' : day}
+                    </span>
+                  </div>
+                </Link>
+              )
+            })}
           </div>
         </div>
 
