@@ -23,16 +23,19 @@ export default async function LessonPage({ params }: PageProps) {
   const lesson = LESSONS.find((l) => l.day === day)
   if (!lesson) notFound()
 
-  const [profile, progress, audioAsset] = await Promise.all([
+  const [profile, progress, audioAsset, completedCount] = await Promise.all([
     prisma.profile.findUnique({ where: { userId: session.user.id } }),
     prisma.progress.findUnique({ where: { userId_day: { userId: session.user.id, day } } }),
     prisma.audioAsset.findFirst({
       where: { day, published: true },
       orderBy: { createdAt: 'desc' },
     }),
+    prisma.progress.count({ where: { userId: session.user.id, completed: true } }),
   ])
 
   if (!profile) redirect('/onboarding')
+
+  const completionPct = (completedCount / 30) * 100
 
   return (
     <div style={{ backgroundColor: '#0a0a0a', minHeight: '100vh' }}>
@@ -44,10 +47,12 @@ export default async function LessonPage({ params }: PageProps) {
           difficulty: progress.difficulty,
           difficultAreas: progress.difficultAreas,
           rating: progress.rating,
+          notes: progress.notes,
         } : null}
         audioUrl={audioAsset?.url ?? null}
         audioLabel={audioAsset?.label ?? null}
         currentDay={profile.currentDay}
+        completionPct={completionPct}
       />
       <Footer />
     </div>

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import Providers from '@/components/Providers'
 import MobileBottomNav from '@/components/MobileBottomNav'
@@ -8,6 +8,15 @@ export const metadata: Metadata = {
   description:
     'A structured 30-day program to take you from basic guitar skills to confidently performing your first complete guitar solo.',
   keywords: ['guitar', 'guitar solo', 'learn guitar', 'guitar lessons', 'blues rock'],
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'First Guitar Solo',
+  },
+  icons: {
+    apple: '/icon-192.png',
+  },
   openGraph: {
     title: 'First Guitar Solo | Sixth String Labs',
     description: '30 days. One complete blues-rock solo. Structured curriculum + AI Guitar Coach. $25 one-time payment.',
@@ -20,6 +29,10 @@ export const metadata: Metadata = {
     title: 'First Guitar Solo | Sixth String Labs',
     description: '30 days. One complete blues-rock solo. $25 one-time.',
   },
+}
+
+export const viewport: Viewport = {
+  themeColor: '#f59e0b',
 }
 
 export default function RootLayout({

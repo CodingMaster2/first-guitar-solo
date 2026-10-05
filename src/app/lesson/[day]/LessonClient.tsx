@@ -5,6 +5,12 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { Lesson } from '@/types'
 import AudioPlayer from '@/components/AudioPlayer'
+import { triggerConfetti } from '@/components/ConfettiEffect'
+import MilestoneModal from '@/components/MilestoneModal'
+import XPLevelUp from '@/components/XPLevelUp'
+import Metronome from '@/components/Metronome'
+import TechniqueTooltip from '@/components/TechniqueTooltip'
+import KeyboardShortcutMap from '@/components/KeyboardShortcutMap'
 
 interface LessonClientProps {
   lesson: Lesson
@@ -13,21 +19,24 @@ interface LessonClientProps {
     difficulty: string | null
     difficultAreas: string | null
     rating: number | null
+    notes: string | null
   } | null
   audioUrl: string | null
   audioLabel: string | null
   currentDay: number
+  completionPct: number
 }
 
 const DIFFICULT_AREAS = ['Bends', 'Timing', 'Speed', 'Memorization', 'Picking', 'Transitions']
 
-export default function LessonClient({ lesson, existingProgress, audioUrl, audioLabel, currentDay }: LessonClientProps) {
+export default function LessonClient({ lesson, existingProgress, audioUrl, audioLabel, currentDay: _currentDay, completionPct }: LessonClientProps) {
   const router = useRouter()
   const [difficulty, setDifficulty] = useState(existingProgress?.difficulty ?? '')
   const [difficultAreas, setDifficultAreas] = useState<string[]>(
     existingProgress?.difficultAreas ? existingProgress.difficultAreas.split(',') : []
   )
   const [rating, setRating] = useState(existingProgress?.rating ?? 0)
+  const [notes, setNotes] = useState(existingProgress?.notes ?? '')
   const [completing, setCompleting] = useState(false)
   const [completed, setCompleted] = useState(existingProgress?.completed ?? false)
   const [xpEarned, setXpEarned] = useState(0)
@@ -36,7 +45,12 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
   const [timerSeconds, setTimerSeconds] = useState(0)
   const [timerRunning, setTimerRunning] = useState(false)
   const [showBackToTop, setShowBackToTop] = useState(false)
+  const [showMilestone, setShowMilestone] = useState(false)
+  const [milestoneDay, setMilestoneDay] = useState(0)
+  const [levelUp, setLevelUp] = useState<{ from: string; to: string } | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const notesDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isFirstNotesRender = useRef(true)
 
   useEffect(() => {
     if (timerRunning) {
@@ -47,6 +61,26 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [timerRunning])
 
+  // Debounced notes auto-save
+  useEffect(() => {
+    if (isFirstNotesRender.current) {
+      isFirstNotesRender.current = false
+      return
+    }
+    try { localStorage.setItem(`lesson-${lesson.day}-notes`, notes) } catch {}
+    if (notesDebounceRef.current) clearTimeout(notesDebounceRef.current)
+    notesDebounceRef.current = setTimeout(() => {
+      fetch('/api/progress', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ day: lesson.day, notes }),
+      }).catch(() => {})
+    }, 1500)
+    return () => {
+      if (notesDebounceRef.current) clearTimeout(notesDebounceRef.current)
+    }
+  }, [notes, lesson.day])
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLButtonElement) return
@@ -54,6 +88,8 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
         router.push(`/lesson/${lesson.day - 1}`)
       } else if (e.key === 'ArrowRight' && lesson.day < 30) {
         router.push(`/lesson/${lesson.day + 1}`)
+      } else if (e.key === 'Enter') {
+        setTimerRunning((r) => !r)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -91,6 +127,7 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
           difficulty,
           difficultAreas: difficultAreas.join(','),
           rating: rating || null,
+          notes,
         }),
       })
 
@@ -98,21 +135,38 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
         xpEarned?: number
         newAchievements?: string[]
         alreadyCompleted?: boolean
+        totalXPBefore?: number
+        totalXPAfter?: number
       }
 
       if (res.ok) {
-        // Log practice session
         await fetch('/api/practice', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ day: lesson.day, duration: lesson.duration, difficulty }),
         })
 
+        const earned = data.xpEarned ?? lesson.xpReward
         setCompleted(true)
-        setXpEarned(data.xpEarned ?? lesson.xpReward)
+        setXpEarned(earned)
         setNewAchievements(data.newAchievements ?? [])
         setShowToast(true)
         setTimeout(() => setShowToast(false), 5000)
+
+        triggerConfetti()
+
+        if ([7, 14, 21, 30].includes(lesson.day)) {
+          setMilestoneDay(lesson.day)
+          setShowMilestone(true)
+        }
+
+        if (data.totalXPBefore !== undefined && data.totalXPAfter !== undefined) {
+          const fromLevel = getXPLevel(data.totalXPBefore)
+          const toLevel = getXPLevel(data.totalXPAfter)
+          if (fromLevel !== toLevel) {
+            setLevelUp({ from: fromLevel, to: toLevel })
+          }
+        }
       }
     } catch {
       // ignore
@@ -121,11 +175,33 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
     }
   }
 
+  const getXPLevel = (xp: number) => {
+    if (xp >= 2000) return 'Solo Artist'
+    if (xp >= 1000) return 'Lead Guitarist'
+    if (xp >= 500) return 'Practitioner'
+    if (xp >= 200) return 'Student'
+    return 'Beginner'
+  }
+
   const weekColors = ['#f59e0b', '#0ea5e9', '#a855f7', '#22c55e']
   const weekColor = weekColors[(lesson.week - 1) % weekColors.length]
 
   return (
     <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* 30-day progress bar */}
+      <div style={{ height: 4, backgroundColor: '#1a1a1a', borderRadius: 2, overflow: 'hidden', marginBottom: '1.5rem' }}>
+        <div
+          style={{
+            backgroundColor: '#f59e0b',
+            width: `${Math.min(100, Math.max(0, completionPct))}%`,
+            height: '100%',
+            borderRadius: 2,
+            transition: 'width 0.4s ease',
+          }}
+          aria-label={`${Math.round(completionPct)}% of 30-day program complete`}
+        />
+      </div>
+
       {/* Breadcrumbs */}
       <nav className="flex items-center gap-2 mb-6 flex-wrap">
         <Link href="/dashboard" style={{ color: '#525252' }} className="text-xs hover:text-white transition-colors">
@@ -150,7 +226,7 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
             className="text-xs px-3 py-1.5 rounded-lg hover:text-white hover:border-gray-600 transition-colors flex items-center gap-1.5"
           >
             &#8592; Day {lesson.day - 1}
-            <span style={{ color: '#404040' }} className="text-xs">(←)</span>
+            <span style={{ color: '#404040' }} className="text-xs">(&#8592;)</span>
           </button>
         ) : <div />}
         {lesson.day < 30 && (
@@ -159,7 +235,7 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
             style={{ color: '#525252', border: '1px solid #1f1f1f' }}
             className="text-xs px-3 py-1.5 rounded-lg hover:text-white hover:border-gray-600 transition-colors flex items-center gap-1.5"
           >
-            <span style={{ color: '#404040' }} className="text-xs">(→)</span>
+            <span style={{ color: '#404040' }} className="text-xs">(&#8594;)</span>
             Day {lesson.day + 1} &#8594;
           </button>
         )}
@@ -215,10 +291,21 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
       </section>
 
       {/* Exercise */}
-      <section style={{ backgroundColor: '#111111', border: '1px solid #262626', borderLeft: '4px solid #f59e0b' }} className="rounded-r-lg p-5 mb-6">
+      <section style={{ backgroundColor: '#111111', border: '1px solid #262626', borderLeft: '4px solid #f59e0b' }} className="rounded-r-lg p-5 mb-4">
         <h2 style={{ color: '#f59e0b' }} className="text-xs font-bold uppercase tracking-widest mb-3">Today&apos;s Exercise</h2>
         <p style={{ color: '#d4d4d4' }} className="text-sm leading-relaxed">{lesson.exercise}</p>
       </section>
+
+      {/* I'm stuck button */}
+      <div className="mb-6 flex justify-end">
+        <Link
+          href={`/coach?prompt=${encodeURIComponent(`I'm stuck on Day ${lesson.day}: ${lesson.title}`)}`}
+          style={{ color: '#f59e0b', border: '1px solid #f59e0b', backgroundColor: 'transparent' }}
+          className="text-xs px-4 py-1.5 rounded-lg font-bold uppercase tracking-wider hover:opacity-80 transition-opacity inline-block"
+        >
+          I&apos;m Stuck — Ask Coach
+        </Link>
+      </div>
 
       {/* Self-check */}
       <section style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-lg p-5 mb-6">
@@ -229,13 +316,14 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
       {/* Techniques */}
       <div className="flex flex-wrap gap-2 mb-8">
         {lesson.techniques.map((tech) => (
-          <span
-            key={tech}
-            style={{ backgroundColor: '#1a1a1a', color: '#a3a3a3', border: '1px solid #262626' }}
-            className="text-xs px-3 py-1 rounded capitalize"
-          >
-            {tech}
-          </span>
+          <TechniqueTooltip key={tech} term={tech}>
+            <span
+              style={{ backgroundColor: '#1a1a1a', color: '#a3a3a3', border: '1px solid #262626', cursor: 'default' }}
+              className="text-xs px-3 py-1 rounded capitalize inline-block"
+            >
+              {tech}
+            </span>
+          </TechniqueTooltip>
         ))}
       </div>
 
@@ -313,8 +401,13 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
         )}
       </section>
 
+      {/* Metronome */}
+      <section className="mb-6">
+        <Metronome />
+      </section>
+
       {/* Self-assessment */}
-      <section style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6 mb-8">
+      <section style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6 mb-6">
         <h2 className="text-white font-bold text-sm uppercase tracking-wider mb-4">How Did It Feel?</h2>
 
         <div className="mb-4">
@@ -420,6 +513,35 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
         )}
       </section>
 
+      {/* Your Notes */}
+      <section style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-5 mb-8">
+        <label htmlFor="lesson-notes" className="block text-white text-xs font-bold uppercase tracking-widest mb-3">
+          Your Notes
+        </label>
+        <textarea
+          id="lesson-notes"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Write anything you want to remember about today's lesson..."
+          rows={4}
+          style={{
+            backgroundColor: '#0a0a0a',
+            border: '1px solid #262626',
+            color: '#d4d4d4',
+            borderRadius: '8px',
+            padding: '10px 12px',
+            width: '100%',
+            fontSize: '0.875rem',
+            lineHeight: '1.6',
+            resize: 'vertical',
+            outline: 'none',
+          }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = '#f59e0b' }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = '#262626' }}
+        />
+        <p style={{ color: '#404040' }} className="text-xs mt-2">Auto-saved as you type</p>
+      </section>
+
       {/* Bottom navigation */}
       <div className="flex justify-between mt-4 mb-8">
         {lesson.day > 1 ? (
@@ -470,6 +592,19 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
           &#8593;
         </button>
       )}
+
+      {/* Milestone modal */}
+      {showMilestone && (
+        <MilestoneModal day={milestoneDay} xpEarned={xpEarned} onClose={() => setShowMilestone(false)} />
+      )}
+
+      {/* XP level-up */}
+      {levelUp && (
+        <XPLevelUp fromLevel={levelUp.from} toLevel={levelUp.to} onClose={() => setLevelUp(null)} />
+      )}
+
+      {/* Keyboard shortcut map */}
+      <KeyboardShortcutMap />
 
       <style>{`
         .lesson-content h3 { color: #ffffff; font-weight: 700; font-size: 1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }

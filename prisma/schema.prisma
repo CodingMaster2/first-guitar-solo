@@ -47,6 +47,9 @@ model Profile {
   totalXP          Int       @default(0)
   streak           Int       @default(0)
   lastPracticeDate DateTime?
+  streakFreezes    Int       @default(1)
+  bestStreak       Int       @default(0)
+  weeklyGoalDays   Int       @default(5)
 }
 
 model Progress {

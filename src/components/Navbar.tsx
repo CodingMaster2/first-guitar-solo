@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
 import { useState } from 'react'
+import DarkModeToggle from '@/components/DarkModeToggle'
 
 export default function Navbar() {
   const { data: session } = useSession()
@@ -71,6 +72,7 @@ export default function Navbar() {
                     Admin
                   </Link>
                 )}
+                <DarkModeToggle />
                 <button
                   onClick={() => signOut({ callbackUrl: '/' })}
                   style={{ color: '#a3a3a3' }}

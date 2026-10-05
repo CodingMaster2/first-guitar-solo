@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import PracticeReminder from '@/components/PracticeReminder'
 
 export default function SettingsPage() {
   const { data: session, status, update } = useSession()
@@ -195,6 +196,11 @@ export default function SettingsPage() {
               {pwStatus === 'saving' ? 'Updating...' : pwStatus === 'saved' ? '✓ Password Updated' : 'Update Password'}
             </button>
           </div>
+        </div>
+
+        {/* Practice Reminder */}
+        <div className="mb-6">
+          <PracticeReminder />
         </div>
 
         {/* Danger Zone */}

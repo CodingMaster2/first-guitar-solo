@@ -27,6 +27,17 @@ export default async function ProgressPage() {
   const completionPct = Math.round((completedDays.size / 30) * 100)
   const totalPracticeTime = practiceSessions.reduce((sum, s) => sum + s.duration, 0)
 
+  const longestSession = practiceSessions.length > 0 ? Math.max(...practiceSessions.map((s) => s.duration)) : 0
+  const totalSessionCount = practiceSessions.length
+  const earnedAchievementXP = userAchievements.reduce((sum, ua) => sum + ua.achievement.xpReward, 0)
+  const weeklyPractice = (() => {
+    const now = new Date()
+    const weekStart = new Date(now)
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay())
+    weekStart.setHours(0, 0, 0, 0)
+    return practiceSessions.filter((s) => new Date(s.createdAt) >= weekStart).length
+  })()
+
   const earnedAchievementIds = new Set(userAchievements.map((ua) => ua.achievementId))
 
   // Week completion
@@ -178,6 +189,45 @@ export default async function ProgressPage() {
             })}
           </div>
         </div>
+
+        {/* Personal Records */}
+        <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6 mb-8">
+          <h2 className="text-white font-bold text-sm uppercase tracking-wider mb-5">Personal Records</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[
+              { label: 'Best Streak', value: `${profile.streak}d`, sub: 'days in a row', color: '#f59e0b' },
+              { label: 'This Week', value: `${weeklyPractice}`, sub: 'sessions', color: '#ffffff' },
+              { label: 'Longest Session', value: longestSession > 0 ? `${longestSession} min` : '—', sub: 'single session', color: '#ffffff' },
+              { label: 'Achievement XP', value: `+${earnedAchievementXP}`, sub: 'from achievements', color: '#f59e0b' },
+            ].map((r) => (
+              <div key={r.label} style={{ backgroundColor: '#0a0a0a', border: '1px solid #1f1f1f' }} className="rounded-lg p-4">
+                <p style={{ color: '#525252' }} className="text-xs uppercase tracking-wider mb-1">{r.label}</p>
+                <p style={{ color: r.color }} className="text-xl font-black">{r.value}</p>
+                <p style={{ color: '#404040' }} className="text-xs">{r.sub}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Certificate banner */}
+        {completedDays.has(30) && (
+          <div
+            style={{ backgroundColor: '#1a1200', border: '1px solid #d97706' }}
+            className="rounded-xl p-5 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4"
+          >
+            <div>
+              <p style={{ color: '#f59e0b' }} className="font-bold text-sm mb-1">🎸 You completed the program!</p>
+              <p style={{ color: '#a3a3a3' }} className="text-xs">Your certificate of completion is ready to download and share.</p>
+            </div>
+            <Link
+              href="/certificate"
+              style={{ backgroundColor: '#f59e0b', color: '#000000', whiteSpace: 'nowrap' }}
+              className="text-sm font-bold px-5 py-2.5 rounded-lg hover:opacity-90 transition-opacity flex-shrink-0"
+            >
+              View Certificate
+            </Link>
+          </div>
+        )}
 
         {/* Practice history */}
         <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6">

@@ -1,98 +1,91 @@
 'use client'
-
-import { useRef, useState, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import WaveSurfer from 'wavesurfer.js'
 
 interface AudioPlayerProps {
   url: string
-  label: string
+  label?: string
 }
 
 export default function AudioPlayer({ url, label }: AudioPlayerProps) {
-  const audioRef = useRef<HTMLAudioElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const wsRef = useRef<WaveSurfer | null>(null)
   const [playing, setPlaying] = useState(false)
-  const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
-  const [loading, setLoading] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
 
   useEffect(() => {
-    const audio = audioRef.current
-    if (!audio) return
-
-    const onTimeUpdate = () => setCurrentTime(audio.currentTime)
-    const onLoadedMetadata = () => setDuration(audio.duration)
-    const onEnded = () => setPlaying(false)
-    const onWaiting = () => setLoading(true)
-    const onCanPlay = () => setLoading(false)
-
-    audio.addEventListener('timeupdate', onTimeUpdate)
-    audio.addEventListener('loadedmetadata', onLoadedMetadata)
-    audio.addEventListener('ended', onEnded)
-    audio.addEventListener('waiting', onWaiting)
-    audio.addEventListener('canplay', onCanPlay)
-
-    return () => {
-      audio.removeEventListener('timeupdate', onTimeUpdate)
-      audio.removeEventListener('loadedmetadata', onLoadedMetadata)
-      audio.removeEventListener('ended', onEnded)
-      audio.removeEventListener('waiting', onWaiting)
-      audio.removeEventListener('canplay', onCanPlay)
-    }
-  }, [])
+    if (!containerRef.current) return
+    const ws = WaveSurfer.create({
+      container: containerRef.current,
+      waveColor: '#262626',
+      progressColor: '#f59e0b',
+      cursorColor: '#f59e0b',
+      barWidth: 2,
+      barGap: 1,
+      height: 48,
+      normalize: true,
+    })
+    wsRef.current = ws
+    ws.load(url)
+    ws.on('ready', () => { setLoading(false); setDuration(ws.getDuration()) })
+    ws.on('error', () => { setError(true); setLoading(false) })
+    ws.on('audioprocess', () => setCurrentTime(ws.getCurrentTime()))
+    ws.on('finish', () => setPlaying(false))
+    return () => ws.destroy()
+  }, [url])
 
   const togglePlay = () => {
-    const audio = audioRef.current
-    if (!audio) return
-    if (playing) {
-      audio.pause()
-      setPlaying(false)
-    } else {
-      audio.play()
-      setPlaying(true)
-    }
+    wsRef.current?.playPause()
+    setPlaying((p) => !p)
   }
 
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const audio = audioRef.current
-    if (!audio) return
-    const time = parseFloat(e.target.value)
-    audio.currentTime = time
-    setCurrentTime(time)
-  }
+  const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
 
-  const formatTime = (t: number) => {
-    if (!isFinite(t)) return '0:00'
-    const m = Math.floor(t / 60)
-    const s = Math.floor(t % 60)
-    return `${m}:${s.toString().padStart(2, '0')}`
-  }
+  if (error) return (
+    <div style={{ backgroundColor: '#111111', border: '1px dashed #262626' }} className="rounded-lg p-4 text-center">
+      <p style={{ color: '#525252' }} className="text-sm">Audio unavailable</p>
+    </div>
+  )
 
   return (
-    <div style={{ backgroundColor: '#1a1a1a', border: '1px solid #262626' }} className="rounded-lg p-4">
-      <audio ref={audioRef} src={url} preload="metadata" />
-      <p style={{ color: '#a3a3a3' }} className="text-xs mb-3">{label}</p>
+    <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-4">
+      {label && <p style={{ color: '#a3a3a3' }} className="text-xs mb-3 font-medium">{label}</p>}
       <div className="flex items-center gap-3">
         <button
           onClick={togglePlay}
-          style={{ backgroundColor: '#f59e0b', color: '#000', width: '36px', height: '36px', flexShrink: 0 }}
-          className="rounded-full flex items-center justify-center font-bold text-sm"
+          disabled={loading}
+          style={{
+            backgroundColor: playing ? '#1a1a1a' : '#f59e0b',
+            color: playing ? '#a3a3a3' : '#000',
+            border: playing ? '1px solid #262626' : 'none',
+            width: 36,
+            height: 36,
+            borderRadius: '50%',
+            flexShrink: 0,
+          }}
+          className="flex items-center justify-center transition-all disabled:opacity-50"
         >
-          {loading ? '...' : playing ? '&#9646;&#9646;' : '&#9654;'}
+          {loading ? '...' : playing ? '⏸' : '▶'}
         </button>
-        <div className="flex-1 flex flex-col gap-1">
-          <input
-            type="range"
-            min={0}
-            max={duration || 0}
-            value={currentTime}
-            onChange={handleSeek}
-            style={{ accentColor: '#f59e0b', width: '100%' }}
-            className="h-1 cursor-pointer"
+        <div className="flex-1 relative" style={{ minHeight: 48 }}>
+          {loading && (
+            <div
+              style={{ backgroundColor: '#1a1a1a', height: 48, position: 'absolute', inset: 0 }}
+              className="rounded animate-pulse"
+            />
+          )}
+          <div
+            ref={containerRef}
+            className="w-full cursor-pointer"
+            style={{ visibility: loading ? 'hidden' : 'visible' }}
           />
-          <div className="flex justify-between">
-            <span style={{ color: '#a3a3a3' }} className="text-xs">{formatTime(currentTime)}</span>
-            <span style={{ color: '#a3a3a3' }} className="text-xs">{formatTime(duration)}</span>
-          </div>
         </div>
+        <span style={{ color: '#525252', flexShrink: 0 }} className="text-xs tabular-nums">
+          {fmt(currentTime)}/{fmt(duration)}
+        </span>
       </div>
     </div>
   )

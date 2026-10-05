@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import Footer from '@/components/Footer'
 import Navbar from '@/components/Navbar'
@@ -29,9 +29,94 @@ const faqs = [
   },
 ]
 
+function StudentCount() {
+  const [count, setCount] = useState<number | null>(null)
+
+  useEffect(() => {
+    fetch('/api/stats')
+      .then((r) => r.json())
+      .then((d: { userCount: number }) => setCount(d.userCount))
+      .catch(() => {})
+  }, [])
+
+  if (count === null) {
+    return (
+      <p style={{ color: '#a3a3a3' }} className="text-sm text-center mb-10">
+        Join guitarists who started their first solo.
+      </p>
+    )
+  }
+
+  return (
+    <p style={{ color: '#a3a3a3' }} className="text-sm text-center mb-10">
+      Join <span className="text-white font-bold">{count.toLocaleString()}+</span> guitarists who started their first solo.
+    </p>
+  )
+}
+
 export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const { data: session } = useSession()
+  const [showExitIntent, setShowExitIntent] = useState(false)
+  const [tabPreviewPlaying, setTabPreviewPlaying] = useState(false)
+
+  // Exit intent — triggers once per session for non-logged-in users
+  useEffect(() => {
+    if (session) return
+    const shown = sessionStorage.getItem('exit-intent-shown')
+    if (shown) return
+
+    const handleMouseLeave = (e: MouseEvent) => {
+      if (e.clientY <= 5) {
+        setShowExitIntent(true)
+        sessionStorage.setItem('exit-intent-shown', '1')
+      }
+    }
+    document.addEventListener('mouseleave', handleMouseLeave)
+    return () => document.removeEventListener('mouseleave', handleMouseLeave)
+  }, [session])
+
+  // Tab preview — play a simple pentatonic sequence via Web Audio API
+  const playTabPreview = () => {
+    if (tabPreviewPlaying) return
+    setTabPreviewPlaying(true)
+
+    const AudioContextClass =
+      window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+    if (!AudioContextClass) { setTabPreviewPlaying(false); return }
+    const ctx = new AudioContextClass()
+
+    // A minor pentatonic notes (fret positions from solo section 1)
+    // e string fret 10 = E5 (329.63 Hz), fret 12 = F#5/Gb5 (369.99 Hz)
+    // B string fret 10 = A4 (220 Hz * 2 = 440), fret 12 = B4 (493.88 Hz)
+    const noteFreqs: number[] = [
+      440,    // B string fret 10 — A4
+      493.88, // B string fret 12 — B4
+      440,    // B string fret 10 — A4
+      493.88, // B string fret 12 — B4
+      440,    // pull-off 12p10
+      329.63, // e string fret 10
+      369.99, // e string fret 12
+    ]
+
+    let time = ctx.currentTime + 0.05
+    noteFreqs.forEach((freq) => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.type = 'triangle'
+      osc.frequency.value = freq
+      gain.gain.setValueAtTime(0, time)
+      gain.gain.linearRampToValueAtTime(0.18, time + 0.02)
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.35)
+      osc.start(time)
+      osc.stop(time + 0.35)
+      time += 0.22
+    })
+
+    setTimeout(() => setTabPreviewPlaying(false), noteFreqs.length * 220 + 400)
+  }
 
   return (
     <div style={{ backgroundColor: '#0a0a0a', color: '#ffffff' }} className="min-h-screen">
@@ -64,6 +149,13 @@ export default function LandingPage() {
               className="text-base font-black px-8 py-4 rounded uppercase tracking-wider hover:opacity-90 transition-opacity text-center"
             >
               Start Learning &mdash; $25
+            </Link>
+            <Link
+              href="/lesson/preview/1"
+              style={{ border: '2px solid #f59e0b', color: '#f59e0b' }}
+              className="text-base font-bold px-8 py-4 rounded uppercase tracking-wider hover:opacity-80 transition-opacity text-center"
+            >
+              Try Day 1 Free
             </Link>
             <a
               href="#how-it-works"
@@ -230,9 +322,7 @@ export default function LandingPage() {
           <h2 className="text-3xl sm:text-4xl font-black uppercase mb-4 text-center">
             Real guitarists.<br /><span style={{ color: '#a3a3a3' }} className="font-normal normal-case">Real progress.</span>
           </h2>
-          <p style={{ color: '#a3a3a3' }} className="text-sm text-center mb-16 max-w-xl mx-auto">
-            From frustrated strummers to lead guitarists in 30 days.
-          </p>
+          <StudentCount />
           <div className="grid sm:grid-cols-3 gap-6">
             {[
               {
@@ -303,6 +393,86 @@ export default function LandingPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* TAB TEASER */}
+      <section style={{ backgroundColor: '#0a0a0a', borderBottom: '1px solid #1a1a1a' }} className="py-24 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-5xl mx-auto">
+          <div style={{ color: '#f59e0b' }} className="text-xs font-bold uppercase tracking-widest mb-4">The Tab</div>
+          <h2 className="text-3xl sm:text-4xl font-black uppercase mb-4">
+            This is what you&apos;ll be playing<br />
+            <span style={{ color: '#f59e0b' }}>on Day 30.</span>
+          </h2>
+          <p style={{ color: '#a3a3a3' }} className="text-base mb-10 max-w-xl">
+            Four sections. All learned step by step. By the end of the program, you play them start to finish.
+          </p>
+
+          <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6 mb-6 overflow-x-auto">
+            <pre
+              style={{
+                fontFamily: '"Courier New", Courier, monospace',
+                fontSize: 13,
+                lineHeight: 1.7,
+                color: '#d4d4d4',
+                margin: 0,
+                whiteSpace: 'pre',
+              }}
+            >{`SECTION 1 (bars 1-4):
+e |------------------------------12-10--|
+B |--10/12---12---10---12h10-----------|
+G |-------------------------------------|
+
+SECTION 2 (bars 5-8):
+e |------------------------------------------|
+B |--10---12h10h12---10h12p10---12----------|
+G |--9/10---10p9---10h12p10-----------------|
+
+SECTION 3 (bars 9-12):
+e |------------------------------------------|
+B |--12b14~~---12---10h12---10--------------|
+G |------------------------------------------|
+
+SECTION 4 (bars 13-16):
+e |--12---10---12~~----------------------|
+B |--10---12---10---12p10---10~~---------|
+G |--------------------------------------|`}</pre>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <button
+              onClick={playTabPreview}
+              disabled={tabPreviewPlaying}
+              style={{
+                backgroundColor: tabPreviewPlaying ? '#1a1a1a' : '#f59e0b',
+                color: tabPreviewPlaying ? '#a3a3a3' : '#000',
+                border: tabPreviewPlaying ? '1px solid #262626' : 'none',
+              }}
+              className="text-sm font-black px-6 py-3 rounded uppercase tracking-wider hover:opacity-90 transition-all disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {tabPreviewPlaying ? '♪ Playing...' : '🎸 Play preview'}
+            </button>
+            <p style={{ color: '#525252' }} className="text-xs">
+              Plays a preview of the Section 1 melody via your browser.
+            </p>
+          </div>
+
+          <div className="mt-6 flex flex-col sm:flex-row gap-4">
+            <Link
+              href="/lesson/preview/1"
+              style={{ backgroundColor: '#111111', border: '1px solid #f59e0b', color: '#f59e0b' }}
+              className="text-sm font-bold px-6 py-3 rounded uppercase tracking-wider hover:bg-amber-900/20 transition-colors text-center"
+            >
+              Try Day 1 Free &rarr;
+            </Link>
+            <Link
+              href="/register"
+              style={{ backgroundColor: '#f59e0b', color: '#000' }}
+              className="text-sm font-black px-6 py-3 rounded uppercase tracking-wider hover:opacity-90 transition-opacity text-center"
+            >
+              Start the Full Program &mdash; $25
+            </Link>
           </div>
         </div>
       </section>
@@ -479,6 +649,84 @@ export default function LandingPage() {
           >
             Start Learning &mdash; $25
           </Link>
+        </div>
+      )}
+
+      {/* Exit intent modal */}
+      {showExitIntent && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.85)',
+            zIndex: 100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+          }}
+          onClick={() => setShowExitIntent(false)}
+        >
+          <div
+            style={{
+              backgroundColor: '#111111',
+              border: '2px solid #f59e0b',
+              borderRadius: 16,
+              padding: '40px 32px',
+              maxWidth: 420,
+              width: '100%',
+              textAlign: 'center',
+              position: 'relative',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowExitIntent(false)}
+              style={{
+                position: 'absolute',
+                top: 16,
+                right: 16,
+                color: '#525252',
+                background: 'none',
+                border: 'none',
+                fontSize: 20,
+                cursor: 'pointer',
+                lineHeight: 1,
+              }}
+              aria-label="Close"
+            >
+              &times;
+            </button>
+
+            <div style={{ color: '#f59e0b' }} className="text-3xl mb-4">🎸</div>
+            <h3 className="text-white text-2xl font-black uppercase mb-3">
+              Wait &mdash; want to try Day 1 for free?
+            </h3>
+            <p style={{ color: '#a3a3a3' }} className="text-sm leading-relaxed mb-8">
+              See exactly what the program is like before committing.
+              Day 1 is completely free &mdash; no account required.
+            </p>
+
+            <Link
+              href="/lesson/preview/1"
+              style={{ backgroundColor: '#f59e0b', color: '#000' }}
+              className="block w-full text-center text-base font-black px-6 py-4 rounded uppercase tracking-wider hover:opacity-90 transition-opacity mb-4"
+              onClick={() => setShowExitIntent(false)}
+            >
+              Start with Day 1 (Free)
+            </Link>
+
+            <button
+              onClick={() => setShowExitIntent(false)}
+              style={{ color: '#525252', background: 'none', border: 'none', cursor: 'pointer' }}
+              className="text-xs hover:text-white transition-colors"
+            >
+              Or{' '}
+              <Link href="/register" style={{ color: '#f59e0b' }} className="hover:underline">
+                continue to register for the full program
+              </Link>
+            </button>
+          </div>
         </div>
       )}
     </div>

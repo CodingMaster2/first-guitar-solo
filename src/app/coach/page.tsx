@@ -40,6 +40,8 @@ export default async function CoachPage() {
             initialMessages={messages.map(m => ({ ...m, createdAt: m.createdAt }))}
             currentDay={currentDay}
             lessonTitle={currentLesson?.title ?? `Day ${currentDay}`}
+            lastLessonTitle={currentLesson?.title}
+            lastLessonDay={currentDay}
           />
         </div>
       </main>

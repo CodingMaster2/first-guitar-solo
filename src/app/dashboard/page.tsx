@@ -7,6 +7,7 @@ import Link from 'next/link'
 import ProgressBar from '@/components/ProgressBar'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import StreakFreezeButton from '@/components/StreakFreezeButton'
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions)
@@ -125,8 +126,8 @@ export default async function DashboardPage() {
           {[
             { label: 'Progress', value: `${completionPct}%`, sub: `${completedDays.size} of 30 days`, color: '#ffffff' },
             { label: 'Streak', value: `${profile.streak}d`, sub: 'current', color: '#f59e0b' },
+            { label: 'Best Streak', value: `${profile.bestStreak}d`, sub: 'all time', color: '#f59e0b' },
             { label: 'Total XP', value: profile.totalXP.toLocaleString(), sub: xpLevel.title, color: '#f59e0b' },
-            { label: 'This Week', value: `${[...completedDays].filter(d => d >= currentDay - 6 && d <= currentDay).length}/7`, sub: completionEstimate ? `finish ~${completionEstimate}` : 'days practiced', color: '#ffffff' },
           ].map((stat) => (
             <div
               key={stat.label}
@@ -321,6 +322,46 @@ export default async function DashboardPage() {
                   </div>
                 </Link>
               </div>
+            </div>
+
+            {/* Weekly goal */}
+            {(() => {
+              const now = new Date()
+              const dayOfWeek = now.getDay() // 0 = Sunday
+              const startOfWeek = new Date(now)
+              startOfWeek.setDate(now.getDate() - dayOfWeek)
+              startOfWeek.setHours(0, 0, 0, 0)
+              const completedThisWeek = progress.filter(
+                (p) => p.completedAt && new Date(p.completedAt) >= startOfWeek
+              ).length
+              const goalDays = profile.weeklyGoalDays
+              const pct = Math.min(100, Math.round((completedThisWeek / goalDays) * 100))
+              return (
+                <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6">
+                  <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-3">Weekly Goal</h3>
+                  <div className="flex items-end justify-between mb-2">
+                    <p style={{ color: '#f59e0b' }} className="text-xl font-black">
+                      {completedThisWeek}/{goalDays}
+                    </p>
+                    <p style={{ color: '#525252' }} className="text-xs">days this week</p>
+                  </div>
+                  <div style={{ backgroundColor: '#1a1a1a', height: 6 }} className="rounded-full overflow-hidden mb-1">
+                    <div
+                      style={{ backgroundColor: '#f59e0b', width: `${pct}%`, height: '100%', transition: 'width 0.3s' }}
+                      className="rounded-full"
+                    />
+                  </div>
+                  <p style={{ color: '#525252' }} className="text-xs">
+                    {pct >= 100 ? 'Weekly goal met!' : `${goalDays - completedThisWeek} day${goalDays - completedThisWeek !== 1 ? 's' : ''} to go`}
+                  </p>
+                </div>
+              )
+            })()}
+
+            {/* Streak freeze */}
+            <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6">
+              <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-3">Streak Protection</h3>
+              <StreakFreezeButton streakFreezes={profile.streakFreezes} streak={profile.streak} />
             </div>
           </div>
         </div>

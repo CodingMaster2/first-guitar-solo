@@ -33,6 +33,32 @@ export async function GET() {
   }
 }
 
+export async function PATCH(req: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    if (session.user.purchaseStatus !== 'PAID') {
+      return NextResponse.json({ error: 'Payment required' }, { status: 403 })
+    }
+
+    const body = await req.json() as { day: number; notes: string }
+    const { day, notes } = body
+
+    await prisma.progress.upsert({
+      where: { userId_day: { userId: session.user.id, day } },
+      update: { notes },
+      create: { userId: session.user.id, day, completed: false, notes },
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Progress PATCH error:', error)
+    return NextResponse.json({ error: 'Failed to save notes' }, { status: 500 })
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -111,13 +137,16 @@ export async function POST(req: NextRequest) {
     }
 
     const newCurrentDay = Math.max(profile.currentDay, day + 1)
+    const totalXPBefore = profile.totalXP
     const newTotalXP = profile.totalXP + xpReward
+    const newBestStreak = Math.max(profile.bestStreak, newStreak)
 
     await prisma.profile.update({
       where: { userId: session.user.id },
       data: {
         totalXP: newTotalXP,
         streak: newStreak,
+        bestStreak: newBestStreak,
         lastPracticeDate: now,
         currentDay: newCurrentDay > 30 ? 30 : newCurrentDay,
       },
@@ -171,7 +200,7 @@ export async function POST(req: NextRequest) {
       await checkAchievement('solo_complete')
     if (completedDays.includes(30)) await checkAchievement('first_solo')
 
-    return NextResponse.json({ success: true, xpEarned: xpReward, newAchievements })
+    return NextResponse.json({ success: true, xpEarned: xpReward, newAchievements, totalXPBefore, totalXPAfter: newTotalXP })
   } catch (error) {
     console.error('Progress POST error:', error)
     return NextResponse.json({ error: 'Failed to update progress' }, { status: 500 })

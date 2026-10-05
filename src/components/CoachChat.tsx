@@ -7,6 +7,8 @@ interface CoachChatProps {
   initialMessages: CoachMessageRecord[]
   currentDay: number
   lessonTitle: string
+  lastLessonTitle?: string
+  lastLessonDay?: number
 }
 
 const STARTER_PROMPTS = [
@@ -14,6 +16,10 @@ const STARTER_PROMPTS = [
   "I'm struggling with bends — any tips?",
   "How do I build speed without losing accuracy?",
   "What's a good warm-up for today?",
+]
+
+const TECHNIQUE_CHIPS = [
+  'Bends', 'Vibrato', 'Speed', 'Timing', 'Hammer-ons', 'Pull-offs', 'Slides', 'Picking',
 ]
 
 const FOLLOW_UP_SUGGESTIONS = [
@@ -25,18 +31,51 @@ const FOLLOW_UP_SUGGESTIONS = [
 
 const MAX_CHARS = 500
 
-export default function CoachChat({ initialMessages, currentDay, lessonTitle }: CoachChatProps) {
+export default function CoachChat({ initialMessages, currentDay, lessonTitle, lastLessonTitle, lastLessonDay: _lastLessonDay }: CoachChatProps) {
   const [messages, setMessages] = useState<CoachMessageRecord[]>(initialMessages)
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [clearing, setClearing] = useState(false)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [isRecording, setIsRecording] = useState(false)
+  const [speechSupported, setSpeechSupported] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recognitionRef = useRef<any>(null)
+
+  useEffect(() => {
+    const supported =
+      typeof window !== 'undefined' &&
+      ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
+    setSpeechSupported(supported)
+    if (supported) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const SpeechRecognitionCtor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+      const recognition = new SpeechRecognitionCtor()
+      recognition.continuous = false
+      recognition.interimResults = false
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript as string
+        setInput((prev) => prev + transcript)
+        setIsRecording(false)
+      }
+      recognition.onerror = () => setIsRecording(false)
+      recognition.onend = () => setIsRecording(false)
+      recognitionRef.current = recognition
+    }
+  }, [])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
+
+  const startRecording = () => {
+    if (!recognitionRef.current || isRecording) return
+    setIsRecording(true)
+    recognitionRef.current.start()
+  }
 
   const sendMessage = async (text?: string) => {
     const userMessage = (text ?? input).trim()
@@ -99,7 +138,7 @@ export default function CoachChat({ initialMessages, currentDay, lessonTitle }: 
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   }
 
-  const lastMessageIsAssistant = messages.length > 0 && messages[messages.length - 1]?.role === 'assistant'
+  const displayTitle = lastLessonTitle ?? lessonTitle
 
   return (
     <div className="flex flex-col h-full">
@@ -141,12 +180,22 @@ export default function CoachChat({ initialMessages, currentDay, lessonTitle }: 
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
         {messages.length === 0 && !clearing && (
           <div className="flex flex-col items-center justify-center h-full py-8">
+            {/* Context-aware banner */}
+            <div
+              style={{ backgroundColor: '#1a1200', border: '1px solid #78350f', color: '#f59e0b' }}
+              className="text-xs px-4 py-2 rounded-lg mb-6 text-center max-w-sm"
+            >
+              Your coach knows you&apos;re on Day {currentDay}: {displayTitle}
+            </div>
+
             <div style={{ color: '#f59e0b', fontSize: '2.5rem', lineHeight: 1 }} className="mb-4">&#9899;</div>
             <p className="text-white font-bold text-base mb-1">AI Guitar Coach</p>
-            <p style={{ color: '#a3a3a3' }} className="text-sm mb-8 text-center max-w-xs">
+            <p style={{ color: '#a3a3a3' }} className="text-sm mb-6 text-center max-w-xs">
               Ask anything about your playing, techniques, or where to focus next.
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-lg">
+
+            {/* Starter prompts */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-lg mb-4">
               {STARTER_PROMPTS.map((prompt) => (
                 <button
                   key={prompt}
@@ -157,6 +206,34 @@ export default function CoachChat({ initialMessages, currentDay, lessonTitle }: 
                   {prompt}
                 </button>
               ))}
+            </div>
+
+            {/* Practice plan button */}
+            <button
+              onClick={() => sendMessage(`Generate a focused 20-minute practice plan for today, Day ${currentDay}. Make it specific to where I am in the program.`)}
+              style={{ backgroundColor: '#1a1200', border: '1px solid #78350f', color: '#f59e0b' }}
+              className="text-xs px-4 py-2 rounded-lg hover:opacity-80 transition-opacity mb-6 font-medium"
+            >
+              Generate practice plan
+            </button>
+
+            {/* Technique trouble selector */}
+            <div className="w-full max-w-lg">
+              <p style={{ color: '#525252' }} className="text-xs mb-2 text-center uppercase tracking-wider">
+                I&apos;m struggling with...
+              </p>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {TECHNIQUE_CHIPS.map((tech) => (
+                  <button
+                    key={tech}
+                    onClick={() => sendMessage(`I'm struggling with ${tech}. I'm on Day ${currentDay} of the program. Can you give me a specific drill?`)}
+                    style={{ border: '1px solid #262626', backgroundColor: '#111111', color: '#a3a3a3' }}
+                    className="text-xs px-3 py-1.5 rounded-full hover:border-amber-600 hover:text-white transition-colors"
+                  >
+                    {tech}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -242,6 +319,23 @@ export default function CoachChat({ initialMessages, currentDay, lessonTitle }: 
               </span>
             </div>
           </div>
+          {speechSupported && (
+            <button
+              onClick={startRecording}
+              disabled={isRecording || loading}
+              title={isRecording ? 'Listening...' : 'Voice input'}
+              style={{
+                backgroundColor: isRecording ? '#7f1d1d' : '#1a1a1a',
+                border: `1px solid ${isRecording ? '#ef4444' : '#262626'}`,
+                color: isRecording ? '#ef4444' : '#a3a3a3',
+              }}
+              className={`px-3 py-2 rounded-lg text-sm transition-all self-start mt-0 ${
+                isRecording ? 'animate-pulse' : 'hover:border-amber-600 hover:text-white'
+              }`}
+            >
+              🎤
+            </button>
+          )}
           <button
             onClick={() => sendMessage()}
             disabled={loading || !input.trim() || input.length > MAX_CHARS}
