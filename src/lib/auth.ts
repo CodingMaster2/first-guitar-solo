@@ -47,11 +47,15 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session: sessionData }) {
       if (user) {
         token.id = user.id
         token.role = (user as { role?: string }).role ?? 'USER'
         token.purchaseStatus = (user as { purchaseStatus?: string }).purchaseStatus ?? 'UNPAID'
+      }
+      // When client calls update({ purchaseStatus: 'PAID' }), apply it to the token
+      if (trigger === 'update' && (sessionData as { purchaseStatus?: string })?.purchaseStatus) {
+        token.purchaseStatus = (sessionData as { purchaseStatus: string }).purchaseStatus
       }
       return token
     },

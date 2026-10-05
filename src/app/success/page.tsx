@@ -15,26 +15,49 @@ function SuccessContent() {
   const [paid, setPaid] = useState(false)
   const [polling, setPolling] = useState(fromStripe)
 
-  const refreshSession = useCallback(async () => {
+  const sessionId = searchParams.get('session_id') ?? ''
+
+  const verifyPayment = useCallback(async () => {
+    if (sessionId) {
+      try {
+        const res = await fetch('/api/stripe/verify-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId }),
+        })
+        const data = await res.json() as { paid?: boolean }
+        if (data.paid) {
+          await update({ purchaseStatus: 'PAID' })
+          setPaid(true)
+          return true
+        }
+      } catch {
+        // ignore, fall through to session check
+      }
+    }
     const updated = await update()
     if (updated?.user?.purchaseStatus === 'PAID') {
       setPaid(true)
       return true
     }
     return false
-  }, [update])
+  }, [sessionId, update])
 
   useEffect(() => {
     if (!fromStripe) {
-      refreshSession().then(() => setPolling(false))
+      // No Stripe redirect — just refresh session (covers already-paid users landing here)
+      update().then((s) => {
+        if (s?.user?.purchaseStatus === 'PAID') setPaid(true)
+        setPolling(false)
+      })
       return
     }
 
-    // Poll up to 12 seconds for webhook to fire
+    // Verify payment directly with Stripe, poll up to 12 seconds
     let attempts = 0
     const poll = async () => {
       attempts++
-      const confirmed = await refreshSession()
+      const confirmed = await verifyPayment()
       if (confirmed || attempts >= 6) {
         setPolling(false)
       } else {
@@ -42,11 +65,7 @@ function SuccessContent() {
       }
     }
     poll()
-  }, [fromStripe, refreshSession])
-
-  useEffect(() => {
-    if (session?.user?.purchaseStatus === 'PAID') setPaid(true)
-  }, [session])
+  }, [fromStripe, verifyPayment, update])
 
   useEffect(() => {
     if (!session?.user || polling) return
