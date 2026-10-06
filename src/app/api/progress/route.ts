@@ -96,7 +96,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Already completed', alreadyCompleted: true })
     }
 
-    // Mark day complete
+    // Compute tomorrow for spaced repetition initialization
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    tomorrow.setHours(0, 0, 0, 0)
+
+    // Mark day complete and initialize SM-2 schedule
     await prisma.progress.upsert({
       where: { userId_day: { userId: session.user.id, day } },
       update: {
@@ -106,6 +111,9 @@ export async function POST(req: NextRequest) {
         difficultAreas,
         rating,
         notes,
+        nextReviewAt: tomorrow,
+        reviewCount: 0,
+        easeFactor: 2.5,
       },
       create: {
         userId: session.user.id,
@@ -116,6 +124,9 @@ export async function POST(req: NextRequest) {
         difficultAreas,
         rating,
         notes,
+        nextReviewAt: tomorrow,
+        reviewCount: 0,
+        easeFactor: 2.5,
       },
     })
 

@@ -31,6 +31,8 @@ model User {
   lessonComments   LessonComment[]
   couponRedemptions CouponRedemption[]
   adminLogs        AdminLog[]
+  partnersAsUser    AccountabilityPartner[] @relation("partnerUser")
+  partnersAsPartner AccountabilityPartner[] @relation("partnerMatch")
 }
 
 model Profile {
@@ -57,12 +59,15 @@ model Profile {
   lastPracticeDate       DateTime?
   streakFreezes          Int       @default(1)
   bestStreak             Int       @default(0)
-  weeklyGoalDays         Int       @default(5)
-  leaderboardOptIn       Boolean   @default(false)
-  avatarUrl              String?
-  dailyChallengeStreak   Int       @default(0)
-  lastDailyChallengeDate DateTime?
-  pomodoroSessions       Int       @default(0)
+  weeklyGoalDays              Int       @default(5)
+  leaderboardOptIn            Boolean   @default(false)
+  avatarUrl                   String?
+  dailyChallengeStreak        Int       @default(0)
+  lastDailyChallengeDate      DateTime?
+  pomodoroSessions            Int       @default(0)
+  adaptivePath                String?
+  weeklyPlan                  String?
+  weeklyPlanGeneratedAt       DateTime?
 }
 
 model Progress {
@@ -76,6 +81,9 @@ model Progress {
   difficultAreas String?
   rating         Int?
   notes          String?
+  nextReviewAt   DateTime?
+  reviewCount    Int       @default(0)
+  easeFactor     Float     @default(2.5)
   createdAt      DateTime  @default(now())
 
   @@unique([userId, day])
@@ -208,4 +216,16 @@ model CouponRedemption {
   createdAt DateTime   @default(now())
 
   @@unique([couponId, userId])
+}
+
+model AccountabilityPartner {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation("partnerUser", fields: [userId], references: [id])
+  partnerId String
+  partner   User     @relation("partnerMatch", fields: [partnerId], references: [id])
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+
+  @@unique([userId, partnerId])
 }

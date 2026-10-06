@@ -25,6 +25,8 @@ export default async function LessonsPage() {
 
   const completedDays = new Set(progress.map((p) => p.day))
   const currentDay = profile.currentDay
+  const adaptivePath: number[] = profile?.adaptivePath ? JSON.parse(profile.adaptivePath as string) : []
+  const adaptivePathSet = new Set(adaptivePath)
 
   const weekGroups = [
     { label: 'Week 1 — Lead Guitar Foundations', color: '#f59e0b', num: 1 },
@@ -37,7 +39,7 @@ export default async function LessonsPage() {
     <div style={{ backgroundColor: '#0a0a0a', minHeight: '100vh' }}>
       <Navbar />
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-black text-white uppercase">All 30 Lessons</h1>
             <p style={{ color: '#a3a3a3' }} className="text-sm mt-1">The complete curriculum, one lesson at a time.</p>
@@ -46,6 +48,28 @@ export default async function LessonsPage() {
             {completedDays.size}/30 complete
           </span>
         </div>
+
+        {adaptivePath.length > 0 && (
+          <div
+            style={{ backgroundColor: '#1a1200', border: '1px solid #78350f' }}
+            className="rounded-xl p-4 mb-8 flex flex-wrap items-center gap-3"
+          >
+            <div>
+              <p style={{ color: '#f59e0b' }} className="text-xs font-bold uppercase tracking-wider">
+                Your Personalized Path — {adaptivePath.length} Lessons
+              </p>
+              <p style={{ color: '#d97706' }} className="text-xs mt-0.5">
+                Following your path:&nbsp;
+                {adaptivePath.slice(0, 8).map((d, i) => (
+                  <span key={d}>
+                    Day {d}{i < Math.min(adaptivePath.length - 1, 7) ? ' → ' : ''}
+                  </span>
+                ))}
+                {adaptivePath.length > 8 && <span> → … → Day {adaptivePath[adaptivePath.length - 1]}</span>}
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="space-y-10">
           {weekGroups.map((week) => {
@@ -68,13 +92,15 @@ export default async function LessonsPage() {
                   {weekLessons.map((lesson) => {
                     const isDone = completedDays.has(lesson.day)
                     const isCurrent = lesson.day === currentDay
+                    const isInPath = adaptivePathSet.size > 0 && adaptivePathSet.has(lesson.day)
+                    const pathBorder = isInPath && !isDone && !isCurrent ? '#92400e' : undefined
                     return (
                       <Link
                         href={`/lesson/${lesson.day}`}
                         key={lesson.day}
                         style={{
                           backgroundColor: isDone ? '#0f0c00' : '#111111',
-                          border: `1px solid ${isDone ? '#78350f' : isCurrent ? '#f59e0b' : '#262626'}`,
+                          border: `1px solid ${isDone ? '#78350f' : isCurrent ? '#f59e0b' : pathBorder ?? '#262626'}`,
                         }}
                         className="p-4 rounded-lg hover:border-amber-600 transition-all group block"
                       >
@@ -110,6 +136,14 @@ export default async function LessonsPage() {
                               className="text-xs px-2 py-0.5 rounded font-bold"
                             >
                               Solo §{lesson.soloSection}
+                            </span>
+                          )}
+                          {isInPath && !isDone && (
+                            <span
+                              style={{ color: '#f59e0b', backgroundColor: '#1a1200', border: '1px solid #78350f' }}
+                              className="text-xs px-2 py-0.5 rounded font-bold"
+                            >
+                              Your Path
                             </span>
                           )}
                         </div>

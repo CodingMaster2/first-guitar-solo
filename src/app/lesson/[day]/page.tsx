@@ -54,6 +54,7 @@ export default async function LessonPage({ params }: PageProps) {
         currentDay={profile.currentDay}
         completionPct={completionPct}
         userId={session.user.id}
+        userName={session.user.name ?? 'Student'}
       />
       <Footer />
     </div>

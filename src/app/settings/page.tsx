@@ -356,6 +356,21 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* Accountability Partner */}
+        <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6 mb-6">
+          <h2 className="text-white font-bold text-sm uppercase tracking-wider mb-2">Accountability Partner</h2>
+          <p style={{ color: '#a3a3a3' }} className="text-sm mb-4 leading-relaxed">
+            Get matched with a student at a similar level. You will each see the other&apos;s practice streak — keeping each other accountable.
+          </p>
+          <a
+            href="/partners"
+            style={{ backgroundColor: '#f59e0b', color: '#000' }}
+            className="inline-block px-5 py-2 rounded-lg text-sm font-bold uppercase tracking-wider hover:opacity-90 transition-all"
+          >
+            Manage Partner
+          </a>
+        </div>
+
         {/* Danger Zone */}
         <div style={{ backgroundColor: '#110000', border: '1px solid #7f1d1d' }} className="rounded-xl p-6">
           <h2 style={{ color: '#ef4444' }} className="font-bold text-sm uppercase tracking-wider mb-2">Danger Zone</h2>

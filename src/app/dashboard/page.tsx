@@ -14,6 +14,8 @@ import GuitarTip from '@/components/GuitarTip'
 import OnboardingTour from '@/components/OnboardingTour'
 import DailyChallenge from '@/components/DailyChallenge'
 import PomodoroTimer from '@/components/PomodoroTimer'
+import ReviewQueue from '@/components/ReviewQueue'
+import WeeklyPlanCard from '@/components/WeeklyPlanCard'
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions)
@@ -68,6 +70,12 @@ export default async function DashboardPage() {
     if (!profile.lastPracticeDate) return false
     const daysSince = Math.floor((Date.now() - new Date(profile.lastPracticeDate).getTime()) / (1000 * 60 * 60 * 24))
     return daysSince >= 3
+  })()
+
+  const isPlanStale = (() => {
+    if (!profile.weeklyPlanGeneratedAt) return true
+    const msSince = Date.now() - new Date(profile.weeklyPlanGeneratedAt).getTime()
+    return msSince > 7 * 24 * 60 * 60 * 1000
   })()
 
   const skills = [
@@ -226,6 +234,35 @@ export default async function DashboardPage() {
         {/* Pomodoro Timer */}
         <div className="mb-6">
           <PomodoroTimer />
+        </div>
+
+        {/* Stale weekly plan prompt */}
+        {isPlanStale && (
+          <div
+            style={{ background: 'linear-gradient(135deg, #1a0f00 0%, #0f0800 100%)', border: '1px solid #78350f' }}
+            className="rounded-xl p-4 mb-6 flex items-center gap-4"
+          >
+            <span style={{ fontSize: '1.25rem' }}>&#128197;</span>
+            <div className="flex-1">
+              <p className="text-white font-bold text-sm">Your weekly plan needs updating.</p>
+              <p style={{ color: '#a3a3a3' }} className="text-xs mt-0.5">Generate a fresh 7-day schedule tailored to your current progress.</p>
+            </div>
+            <a
+              href="#weekly-plan"
+              style={{ backgroundColor: '#f59e0b', color: '#000', fontSize: '0.75rem', fontWeight: 700, whiteSpace: 'nowrap' }}
+              className="px-3 py-1.5 rounded hover:opacity-90 transition-opacity"
+            >
+              Generate Plan &#8594;
+            </a>
+          </div>
+        )}
+
+        {/* Spaced Repetition Review Queue */}
+        <ReviewQueue />
+
+        {/* Weekly Practice Plan */}
+        <div id="weekly-plan">
+          <WeeklyPlanCard />
         </div>
 
         {/* 30-day journey grid */}
@@ -409,6 +446,28 @@ export default async function DashboardPage() {
                   <div>
                     <p className="text-white text-sm group-hover:text-amber-400 transition-colors">Full Progress</p>
                     <p style={{ color: '#525252' }} className="text-xs">Stats &amp; achievements</p>
+                  </div>
+                </Link>
+                <Link
+                  href="/journey"
+                  style={{ backgroundColor: '#1a1a1a', border: '1px solid #262626' }}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg hover:border-amber-600 transition-colors group"
+                >
+                  <span style={{ color: '#f59e0b' }} className="text-lg">&#127928;</span>
+                  <div>
+                    <p className="text-white text-sm group-hover:text-amber-400 transition-colors">Journey Map</p>
+                    <p style={{ color: '#525252' }} className="text-xs">View your 30-day path</p>
+                  </div>
+                </Link>
+                <Link
+                  href="/techniques"
+                  style={{ backgroundColor: '#1a1a1a', border: '1px solid #262626' }}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg hover:border-amber-600 transition-colors group"
+                >
+                  <span style={{ color: '#f59e0b' }} className="text-lg">&#128218;</span>
+                  <div>
+                    <p className="text-white text-sm group-hover:text-amber-400 transition-colors">Technique Library</p>
+                    <p style={{ color: '#525252' }} className="text-xs">Reference &amp; exercises</p>
                   </div>
                 </Link>
               </div>

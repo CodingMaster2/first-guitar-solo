@@ -40,8 +40,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'AI Coach is not configured. Please contact support.' }, { status: 503 })
     }
 
-    const body = await req.json() as { message: string }
-    const { message } = body
+    interface LessonContextPayload {
+      day: number
+      title: string
+      techniques: string[]
+      difficulty?: string
+      commonMistakes?: string[]
+    }
+    const body = await req.json() as { message: string; lessonContext?: LessonContextPayload }
+    const { message, lessonContext } = body
 
     const [profile, progress] = await Promise.all([
       prisma.profile.findUnique({ where: { userId: session.user.id } }),
@@ -61,6 +68,22 @@ export async function POST(req: NextRequest) {
       if ((profile.slideLevel ?? 5) <= 2) weakAreas.push('slides')
     }
 
+    let lessonContextBlock = ''
+    if (lessonContext) {
+      const diffText = lessonContext.difficulty
+        ? `\n- Their reported difficulty: ${lessonContext.difficulty}`
+        : ''
+      const mistakesText =
+        lessonContext.commonMistakes && lessonContext.commonMistakes.length > 0
+          ? `\n- Common mistakes for this lesson: ${lessonContext.commonMistakes.join(', ')}`
+          : ''
+      lessonContextBlock = `
+
+The student is currently working on Day ${lessonContext.day}: ${lessonContext.title}.
+- Techniques covered: ${lessonContext.techniques.join(', ')}.${diffText}${mistakesText}
+Give specific advice relevant to this lesson.`
+    }
+
     const systemPrompt = `You are the AI Guitar Coach for First Guitar Solo by Sixth String Labs. You are a knowledgeable, encouraging guitar teacher.
 
 Student context:
@@ -70,7 +93,7 @@ Student context:
 - Practice time available: ${profile?.practiceMinutes ?? 'unknown'} minutes
 - Weak areas: ${weakAreas.length > 0 ? weakAreas.join(', ') : 'none identified'}
 - Completed days: ${completedDays.length > 0 ? completedDays.join(', ') : 'none yet'}
-- Current lesson: ${currentLesson?.title ?? 'Day ' + currentDay}
+- Current lesson: ${currentLesson?.title ?? 'Day ' + currentDay}${lessonContextBlock}
 
 Rules:
 1. Give concise, actionable advice. Never write essays.

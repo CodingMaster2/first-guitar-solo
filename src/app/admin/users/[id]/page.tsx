@@ -17,20 +17,35 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
 
   const { id } = await params
 
-  const user = await prisma.user.findUnique({
-    where: { id },
-    include: {
-      profile: true,
-      progress: { orderBy: { day: 'asc' } },
-      practiceSessions: { orderBy: { createdAt: 'desc' }, take: 20 },
-      userAchievements: { include: { achievement: true }, orderBy: { unlockedAt: 'desc' } },
-      coachMessages: { orderBy: { createdAt: 'desc' }, take: 30 },
-      feedback: { orderBy: { createdAt: 'desc' } },
-      // adminNotes and tags are scalar fields included via full model
-    },
-  })
+  const [user, partnerRecord] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id },
+      include: {
+        profile: true,
+        progress: { orderBy: { day: 'asc' } },
+        practiceSessions: { orderBy: { createdAt: 'desc' }, take: 20 },
+        userAchievements: { include: { achievement: true }, orderBy: { unlockedAt: 'desc' } },
+        coachMessages: { orderBy: { createdAt: 'desc' }, take: 30 },
+        feedback: { orderBy: { createdAt: 'desc' } },
+        // adminNotes and tags are scalar fields included via full model
+      },
+    }),
+    prisma.accountabilityPartner.findFirst({
+      where: { OR: [{ userId: id }, { partnerId: id }], status: 'active' },
+    }),
+  ])
 
   if (!user) notFound()
+
+  // Resolve partner user info
+  let partnerUser: { id: string; name: string | null; email: string } | null = null
+  if (partnerRecord) {
+    const partnerId = partnerRecord.userId === id ? partnerRecord.partnerId : partnerRecord.userId
+    partnerUser = await prisma.user.findUnique({
+      where: { id: partnerId },
+      select: { id: true, name: true, email: true },
+    })
+  }
 
   const completedDays = new Set(user.progress.filter((p) => p.completed).map((p) => p.day))
   const completionPct = Math.round((completedDays.size / 30) * 100)
@@ -230,6 +245,28 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
                   </div>
                 ))}
               </div>
+            )}
+          </div>
+
+          {/* Accountability Partner */}
+          <div style={{ backgroundColor: '#111111', border: '1px solid #1f1f1f' }} className="rounded-xl p-5 mb-5">
+            <h2 className="text-white font-bold text-xs uppercase tracking-wider mb-3">Accountability Partner</h2>
+            {partnerUser ? (
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-white text-sm font-medium">{partnerUser.name ?? 'No name'}</p>
+                  <p style={{ color: '#737373' }} className="text-xs">{partnerUser.email}</p>
+                </div>
+                <Link
+                  href={`/admin/users/${partnerUser.id}`}
+                  style={{ color: '#f59e0b', border: '1px solid #78350f', borderRadius: 8 }}
+                  className="text-xs px-3 py-1.5 hover:opacity-80 transition-opacity"
+                >
+                  View Partner →
+                </Link>
+              </div>
+            ) : (
+              <p style={{ color: '#525252' }} className="text-sm">No active partner.</p>
             )}
           </div>
 

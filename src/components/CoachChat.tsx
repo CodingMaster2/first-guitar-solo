@@ -3,12 +3,21 @@
 import { useState, useRef, useEffect } from 'react'
 import type { CoachMessageRecord } from '@/types'
 
+interface LessonContext {
+  day: number
+  title: string
+  techniques: string[]
+  difficulty?: string
+  commonMistakes?: string[]
+}
+
 interface CoachChatProps {
   initialMessages: CoachMessageRecord[]
   currentDay: number
   lessonTitle: string
   lastLessonTitle?: string
   lastLessonDay?: number
+  lessonContext?: LessonContext
 }
 
 const STARTER_PROMPTS = [
@@ -31,7 +40,7 @@ const FOLLOW_UP_SUGGESTIONS = [
 
 const MAX_CHARS = 500
 
-export default function CoachChat({ initialMessages, currentDay, lessonTitle, lastLessonTitle, lastLessonDay: _lastLessonDay }: CoachChatProps) {
+export default function CoachChat({ initialMessages, currentDay, lessonTitle, lastLessonTitle, lastLessonDay: _lastLessonDay, lessonContext }: CoachChatProps) {
   const [messages, setMessages] = useState<CoachMessageRecord[]>(initialMessages)
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -96,7 +105,10 @@ export default function CoachChat({ initialMessages, currentDay, lessonTitle, la
       const res = await fetch('/api/coach', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage }),
+        body: JSON.stringify({
+          message: userMessage,
+          ...(lessonContext ? { lessonContext } : {}),
+        }),
       })
 
       const data = await res.json() as { messages?: CoachMessageRecord[]; error?: string }
@@ -147,11 +159,28 @@ export default function CoachChat({ initialMessages, currentDay, lessonTitle, la
       `}</style>
       {/* Context bar */}
       <div style={{ backgroundColor: '#111111', borderBottom: '1px solid #262626' }} className="px-4 py-2 flex items-center justify-between">
-        <p style={{ color: '#a3a3a3' }} className="text-xs">
-          <span style={{ color: '#f59e0b' }}>Day {currentDay}</span>
-          {' '}&bull;{' '}
-          <span>{lessonTitle}</span>
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <p style={{ color: '#a3a3a3' }} className="text-xs">
+            <span style={{ color: '#f59e0b' }}>Day {currentDay}</span>
+            {' '}&bull;{' '}
+            <span>{lessonTitle}</span>
+          </p>
+          {lessonContext && (
+            <span
+              style={{
+                backgroundColor: '#1a0f00',
+                color: '#f59e0b',
+                border: '1px solid #78350f',
+                borderRadius: '9999px',
+                padding: '0.1rem 0.5rem',
+                fontSize: '0.65rem',
+                fontWeight: 700,
+              }}
+            >
+              Day {lessonContext.day}: {lessonContext.title}
+            </span>
+          )}
+        </div>
         {messages.length > 0 && (
           <button
             onClick={() => setShowClearConfirm(true)}

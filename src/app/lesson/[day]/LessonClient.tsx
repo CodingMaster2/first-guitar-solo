@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import type { Lesson } from '@/types'
+import type { Lesson, CoachMessageRecord } from '@/types'
 import AudioPlayer from '@/components/AudioPlayer'
 import { triggerConfetti } from '@/components/ConfettiEffect'
 import MilestoneModal from '@/components/MilestoneModal'
@@ -15,6 +15,18 @@ import LessonQuiz from '@/components/LessonQuiz'
 import SpeedTrainer from '@/components/SpeedTrainer'
 import FretboardDiagram from '@/components/FretboardDiagram'
 import LessonComments from '@/components/LessonComments'
+import CoachChat from '@/components/CoachChat'
+import MicrophoneMode from '@/components/MicrophoneMode'
+import PerformanceRecorder from '@/components/PerformanceRecorder'
+
+type ActiveTab = 'learn' | 'play' | 'review' | 'community'
+
+const TABS: { id: ActiveTab; label: string }[] = [
+  { id: 'learn', label: 'Learn' },
+  { id: 'play', label: 'Play' },
+  { id: 'review', label: 'Review' },
+  { id: 'community', label: 'Community' },
+]
 
 interface LessonClientProps {
   lesson: Lesson
@@ -30,12 +42,23 @@ interface LessonClientProps {
   currentDay: number
   completionPct: number
   userId?: string
+  userName?: string
 }
 
 const DIFFICULT_AREAS = ['Bends', 'Timing', 'Speed', 'Memorization', 'Picking', 'Transitions']
 
-export default function LessonClient({ lesson, existingProgress, audioUrl, audioLabel, currentDay: _currentDay, completionPct, userId }: LessonClientProps) {
+export default function LessonClient({
+  lesson,
+  existingProgress,
+  audioUrl,
+  audioLabel,
+  currentDay: _currentDay,
+  completionPct,
+  userId,
+  userName = 'Student',
+}: LessonClientProps) {
   const router = useRouter()
+  const [activeTab, setActiveTab] = useState<ActiveTab>('learn')
   const [difficulty, setDifficulty] = useState(existingProgress?.difficulty ?? '')
   const [difficultAreas, setDifficultAreas] = useState<string[]>(
     existingProgress?.difficultAreas ? existingProgress.difficultAreas.split(',') : []
@@ -58,11 +81,55 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
   const [showQuiz, setShowQuiz] = useState(false)
   const [quizDone, setQuizDone] = useState(false)
   const [showSwipeHint, setShowSwipeHint] = useState(false)
+  const [coachMessages, setCoachMessages] = useState<CoachMessageRecord[]>([])
+
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const notesDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isFirstNotesRender = useRef(true)
   const touchStartX = useRef<number | null>(null)
   const touchStartY = useRef<number | null>(null)
+
+  // Restore tab from sessionStorage / URL hash on mount
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(`lesson-${lesson.day}-tab`)
+      if (saved && ['learn', 'play', 'review', 'community'].includes(saved)) {
+        setActiveTab(saved as ActiveTab)
+        return
+      }
+    } catch {}
+    const hash = typeof window !== 'undefined' ? window.location.hash.slice(1) : ''
+    if (['play', 'review', 'community'].includes(hash)) {
+      setActiveTab(hash as ActiveTab)
+    }
+  }, [lesson.day])
+
+  // Save tab + update URL hash
+  const switchTab = (tab: ActiveTab) => {
+    setActiveTab(tab)
+    try {
+      sessionStorage.setItem(`lesson-${lesson.day}-tab`, tab)
+    } catch {}
+    if (typeof window !== 'undefined') {
+      history.replaceState(
+        null,
+        '',
+        tab === 'learn'
+          ? window.location.pathname
+          : `${window.location.pathname}#${tab}`
+      )
+    }
+  }
+
+  // Load coach message history
+  useEffect(() => {
+    fetch('/api/coach')
+      .then((r) => r.json())
+      .then((data: { messages?: CoachMessageRecord[] }) => {
+        setCoachMessages(data.messages ?? [])
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (timerRunning) {
@@ -70,7 +137,9 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
     } else {
       if (timerRef.current) clearInterval(timerRef.current)
     }
-    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
   }, [timerRunning])
 
   // Debounced notes auto-save
@@ -79,7 +148,9 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
       isFirstNotesRender.current = false
       return
     }
-    try { localStorage.setItem(`lesson-${lesson.day}-notes`, notes) } catch {}
+    try {
+      localStorage.setItem(`lesson-${lesson.day}-notes`, notes)
+    } catch {}
     if (notesDebounceRef.current) clearTimeout(notesDebounceRef.current)
     notesDebounceRef.current = setTimeout(() => {
       fetch('/api/progress', {
@@ -95,7 +166,12 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLButtonElement) return
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLButtonElement
+      )
+        return
       if (e.key === 'ArrowLeft' && lesson.day > 1) {
         router.push(`/lesson/${lesson.day - 1}`)
       } else if (e.key === 'ArrowRight' && lesson.day < 30) {
@@ -125,7 +201,6 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Show swipe hint briefly on mobile
   useEffect(() => {
     const isMobile = window.matchMedia('(max-width: 640px)').matches
     if (!isMobile) return
@@ -141,17 +216,16 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (touchStartX.current === null || touchStartY.current === null) return
-    // Don't swipe if user is interacting with an input/textarea
     if (
       e.target instanceof HTMLInputElement ||
       e.target instanceof HTMLTextAreaElement ||
       e.target instanceof HTMLSelectElement
-    ) return
+    )
+      return
 
     const dx = e.changedTouches[0].clientX - touchStartX.current
     const dy = Math.abs(e.changedTouches[0].clientY - touchStartY.current)
 
-    // Only swipe horizontally (vertical scroll should win)
     if (Math.abs(dx) > 80 && Math.abs(dx) > dy) {
       if (dx < 0 && lesson.day < 30) {
         router.push(`/lesson/${lesson.day + 1}`)
@@ -192,7 +266,7 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
         }),
       })
 
-      const data = await res.json() as {
+      const data = (await res.json()) as {
         xpEarned?: number
         newAchievements?: string[]
         alreadyCompleted?: boolean
@@ -216,13 +290,14 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
 
         triggerConfetti()
 
-        // Haptic feedback on lesson completion
         try {
           if (navigator.vibrate) navigator.vibrate([80, 40, 120])
         } catch {}
 
         if (lesson.quiz && lesson.quiz.length > 0) {
           setShowQuiz(true)
+          // Switch to review tab to show the quiz
+          switchTab('review')
         }
 
         if ([7, 14, 21, 30].includes(lesson.day)) {
@@ -254,7 +329,7 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
     const rect = e.currentTarget.getBoundingClientRect()
     setRipple({ x: e.clientX - rect.left, y: e.clientY - rect.top })
     setTimeout(() => setRipple(null), 600)
-    completeLesson()
+    void completeLesson()
   }
 
   const getXPLevel = (xp: number) => {
@@ -268,600 +343,1125 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
   const weekColors = ['#f59e0b', '#0ea5e9', '#a855f7', '#22c55e']
   const weekColor = weekColors[(lesson.week - 1) % weekColors.length]
 
+  const lessonContext = {
+    day: lesson.day,
+    title: lesson.title,
+    techniques: lesson.techniques,
+    difficulty: difficulty || undefined,
+    commonMistakes: lesson.commonMistakes,
+  }
+
+  const showFretboard = lesson.techniques.some((t) =>
+    ['pentatonic box 1', 'pentatonic scale', 'box patterns', 'ascending/descending', 'scale fingering'].includes(t)
+  )
+
   return (
     <>
-      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '3px', zIndex: 9999, backgroundColor: '#1a1a1a' }}>
-        <div style={{ width: `${readProgress}%`, height: '100%', background: 'linear-gradient(90deg, #f59e0b, #fde68a)', transition: 'width 0.1s ease', boxShadow: '0 0 8px rgba(245,158,11,0.6)' }} />
+      {/* Fixed read progress bar */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '3px',
+          zIndex: 9999,
+          backgroundColor: '#1a1a1a',
+        }}
+      >
+        <div
+          style={{
+            width: `${readProgress}%`,
+            height: '100%',
+            background: 'linear-gradient(90deg, #f59e0b, #fde68a)',
+            transition: 'width 0.1s ease',
+            boxShadow: '0 0 8px rgba(245,158,11,0.6)',
+          }}
+        />
       </div>
+
       <main
         className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         aria-label={`Lesson: Day ${lesson.day} — ${lesson.title}`}
       >
-      {/* Mobile swipe hint */}
-      {showSwipeHint && (
+        <style>{`
+          .lesson-content h3 { color: #ffffff; font-weight: 700; font-size: 1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+          .lesson-content p { color: #d4d4d4; font-size: 0.875rem; line-height: 1.75; margin-bottom: 0.75rem; }
+          .lesson-content ul { list-style: disc; padding-left: 1.5rem; color: #d4d4d4; font-size: 0.875rem; margin-bottom: 0.75rem; }
+          .lesson-content ol { list-style: decimal; padding-left: 1.5rem; color: #d4d4d4; font-size: 0.875rem; margin-bottom: 0.75rem; }
+          .lesson-content li { margin-bottom: 0.25rem; line-height: 1.6; }
+          .lesson-content pre { background-color: #1a1a1a; border: 1px solid #262626; padding: 1rem; border-radius: 0.5rem; font-size: 0.8rem; overflow-x: auto; margin-bottom: 1rem; color: #86efac; }
+          .lesson-content strong { color: #f59e0b; font-weight: 600; }
+          @keyframes rippleEffect { 0% { transform: translate(-50%,-50%) scale(0); opacity: 0.6; } 100% { transform: translate(-50%,-50%) scale(20); opacity: 0; } }
+          @keyframes tabFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        `}</style>
+
+        {/* Mobile swipe hint */}
+        {showSwipeHint && (
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'fixed',
+              bottom: 80,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              backgroundColor: 'rgba(0,0,0,0.75)',
+              border: '1px solid #262626',
+              borderRadius: 9999,
+              padding: '6px 16px',
+              fontSize: '0.75rem',
+              color: '#a3a3a3',
+              zIndex: 30,
+              pointerEvents: 'none',
+            }}
+          >
+            &larr; Swipe to navigate lessons &rarr;
+          </div>
+        )}
+
+        {/* 30-day progress bar */}
         <div
-          aria-hidden="true"
           style={{
-            position: 'fixed',
-            bottom: 80,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            backgroundColor: 'rgba(0,0,0,0.75)',
-            border: '1px solid #262626',
-            borderRadius: 9999,
-            padding: '6px 16px',
-            fontSize: '0.75rem',
-            color: '#a3a3a3',
-            zIndex: 30,
-            pointerEvents: 'none',
-            opacity: showSwipeHint ? 1 : 0,
-            transition: 'opacity 0.5s ease',
-          }}
-        >
-          &larr; Swipe &rarr;
-        </div>
-      )}
-      {/* 30-day progress bar */}
-      <div style={{ height: 4, backgroundColor: '#1a1a1a', borderRadius: 2, overflow: 'hidden', marginBottom: '1.5rem' }}>
-        <div
-          style={{
-            backgroundColor: '#f59e0b',
-            width: `${Math.min(100, Math.max(0, completionPct))}%`,
-            height: '100%',
+            height: 4,
+            backgroundColor: '#1a1a1a',
             borderRadius: 2,
-            transition: 'width 0.4s ease',
+            overflow: 'hidden',
+            marginBottom: '1.5rem',
           }}
-          aria-label={`${Math.round(completionPct)}% of 30-day program complete`}
-        />
-      </div>
-
-      {/* Breadcrumbs */}
-      <nav className="flex items-center gap-2 mb-6 flex-wrap">
-        <Link href="/dashboard" style={{ color: '#525252' }} className="text-xs hover:text-white transition-colors">
-          Dashboard
-        </Link>
-        <span style={{ color: '#404040' }} className="text-xs">&#8250;</span>
-        <Link href="/lessons" style={{ color: '#525252' }} className="text-xs hover:text-white transition-colors">
-          All Lessons
-        </Link>
-        <span style={{ color: '#404040' }} className="text-xs">&#8250;</span>
-        <span style={{ color: weekColor }} className="text-xs font-bold uppercase tracking-wider">
-          Day {lesson.day}: {lesson.title}
-        </span>
-      </nav>
-
-      {/* Keyboard nav hint */}
-      <div className="hidden sm:flex justify-between items-center mb-6">
-        {lesson.day > 1 ? (
-          <button
-            onClick={() => router.push(`/lesson/${lesson.day - 1}`)}
-            style={{ color: '#525252', border: '1px solid #1f1f1f' }}
-            className="text-xs px-3 py-1.5 rounded-lg hover:text-white hover:border-gray-600 transition-colors flex items-center gap-1.5"
-          >
-            &#8592; Day {lesson.day - 1}
-            <span style={{ color: '#404040' }} className="text-xs">(&#8592;)</span>
-          </button>
-        ) : <div />}
-        {lesson.day < 30 && (
-          <button
-            onClick={() => router.push(`/lesson/${lesson.day + 1}`)}
-            style={{ color: '#525252', border: '1px solid #1f1f1f' }}
-            className="text-xs px-3 py-1.5 rounded-lg hover:text-white hover:border-gray-600 transition-colors flex items-center gap-1.5"
-          >
-            <span style={{ color: '#404040' }} className="text-xs">(&#8594;)</span>
-            Day {lesson.day + 1} &#8594;
-          </button>
-        )}
-      </div>
-
-      {/* Lesson header */}
-      <div style={{ background: 'linear-gradient(135deg, #111111 0%, #0f0e00 50%, #111111 100%)', borderTop: '3px solid #f59e0b', borderBottom: '1px solid rgba(245,158,11,0.1)', borderRadius: '0.75rem', padding: '1.25rem', marginBottom: '1.5rem' }}>
-        {/* Title */}
-        <h1 className="text-4xl font-black text-white uppercase mb-2">{lesson.title}</h1>
-        <p style={{ color: '#a3a3a3' }} className="text-base mb-4">{lesson.subtitle}</p>
-
-        {/* Why this matters */}
-        <div style={{ borderLeft: '3px solid #f59e0b', backgroundColor: 'rgba(0,0,0,0.25)' }} className="pl-4 py-3 pr-4 rounded-r-lg">
-          <p style={{ color: '#f59e0b' }} className="text-xs font-bold uppercase tracking-wider mb-1">Why This Matters</p>
-          <p style={{ color: '#a3a3a3' }} className="text-sm leading-relaxed">{lesson.why}</p>
-        </div>
-      </div>
-
-      {/* Prerequisites */}
-      {lesson.prerequisites && lesson.prerequisites.length > 0 && (
-        <div style={{ backgroundColor: '#0a0a0a', border: '1px solid #1f1f1f', borderRadius: '0.5rem', padding: '0.875rem', marginBottom: '1rem' }}>
-          <p style={{ color: '#f59e0b' }} className="text-xs font-bold uppercase tracking-wider mb-2">
-            Before This Lesson
-          </p>
-          <ul className="flex flex-col gap-1">
-            {lesson.prerequisites.map((p, i) => (
-              <li key={i} style={{ color: '#a3a3a3' }} className="text-xs flex items-start gap-2">
-                <span style={{ color: '#f59e0b', flexShrink: 0 }}>&#8227;</span>
-                {p}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Duration badge */}
-      <div className="flex flex-wrap gap-2 mb-8">
-        <span style={{ backgroundColor: '#1a1a1a', color: '#a3a3a3', border: '1px solid #262626' }} className="text-xs px-3 py-1 rounded font-medium">
-          &#9201; {lesson.duration} min
-        </span>
-        <span style={{ backgroundColor: '#1a0f00', color: '#f59e0b', border: '1px solid #78350f' }} className="text-xs px-3 py-1 rounded font-bold">
-          +{lesson.xpReward} XP
-        </span>
-        <span style={{ backgroundColor: '#1a1a1a', color: '#a3a3a3', border: '1px solid #262626' }} className="text-xs px-3 py-1 rounded">
-          Week {lesson.week}
-        </span>
-        {lesson.soloSection && (
-          <span style={{ backgroundColor: '#160a1f', color: '#a855f7', border: '1px solid #6b21a8' }} className="text-xs px-3 py-1 rounded font-bold">
-            Solo Section {lesson.soloSection}
-          </span>
-        )}
-        {completed && (
-          <span style={{ backgroundColor: '#052e16', color: '#86efac', border: '1px solid #166534' }} className="text-xs px-3 py-1 rounded font-bold">
-            ✓ Completed
-          </span>
-        )}
-      </div>
-
-      {/* Warmup */}
-      <section className="mb-6">
-        <h2 style={{ color: '#a3a3a3' }} className="text-xs font-bold uppercase tracking-widest mb-3">Warm-up</h2>
-        <p style={{ color: '#a3a3a3' }} className="text-sm leading-relaxed">{lesson.warmup}</p>
-      </section>
-
-      {/* Fretboard diagram — shown when lesson involves scale/position techniques */}
-      {lesson.techniques.some((t) =>
-        ['pentatonic box 1', 'pentatonic scale', 'box patterns', 'ascending/descending', 'scale fingering'].includes(t)
-      ) && (
-        <section className="mb-6">
-          <h2 style={{ color: '#a3a3a3' }} className="text-xs font-bold uppercase tracking-widest mb-3">Fretboard Reference</h2>
-          <div className="overflow-x-auto">
-            <FretboardDiagram
-              startFret={5}
-              title="A Minor Pentatonic — Box 1 (fret 5)"
-              notes={[
-                { string: 6, fret: 5, label: 'R', color: '#f59e0b' },
-                { string: 6, fret: 8, label: '♭3' },
-                { string: 5, fret: 5, label: '4' },
-                { string: 5, fret: 7, label: '5' },
-                { string: 4, fret: 5, label: '♭7' },
-                { string: 4, fret: 7, label: 'R', color: '#f59e0b' },
-                { string: 3, fret: 5, label: '♭3' },
-                { string: 3, fret: 7, label: '4' },
-                { string: 2, fret: 5, label: '5' },
-                { string: 2, fret: 8, label: '♭7' },
-                { string: 1, fret: 5, label: 'R', color: '#f59e0b' },
-                { string: 1, fret: 8, label: '♭3' },
-              ]}
-            />
-          </div>
-        </section>
-      )}
-
-      {/* Main content */}
-      <section className="mb-6">
-        <h2 className="text-white text-xs font-bold uppercase tracking-widest mb-4">Lesson Content</h2>
-        <div
-          style={{ color: '#d4d4d4' }}
-          className="prose prose-sm max-w-none lesson-content"
-          dangerouslySetInnerHTML={{ __html: lesson.mainContent }}
-        />
-      </section>
-
-      {/* Exercise */}
-      <section style={{ backgroundColor: '#111111', border: '1px solid #262626', borderLeft: '4px solid #f59e0b' }} className="rounded-r-lg p-5 mb-4">
-        <h2 style={{ color: '#f59e0b' }} className="text-xs font-bold uppercase tracking-widest mb-3">Today&apos;s Exercise</h2>
-        <p style={{ color: '#d4d4d4' }} className="text-sm leading-relaxed">{lesson.exercise}</p>
-      </section>
-
-      {/* Speed Trainer */}
-      <section className="mb-6">
-        <SpeedTrainer />
-      </section>
-
-      {/* I'm stuck button */}
-      <div className="mb-6 flex justify-end">
-        <Link
-          href={`/coach?prompt=${encodeURIComponent(`I'm stuck on Day ${lesson.day}: ${lesson.title}`)}`}
-          style={{ color: '#f59e0b', border: '1px solid #f59e0b', backgroundColor: 'transparent' }}
-          className="text-xs px-4 py-1.5 rounded-lg font-bold uppercase tracking-wider hover:opacity-80 transition-opacity inline-block"
         >
-          I&apos;m Stuck — Ask Coach
-        </Link>
-      </div>
+          <div
+            style={{
+              backgroundColor: '#f59e0b',
+              width: `${Math.min(100, Math.max(0, completionPct))}%`,
+              height: '100%',
+              borderRadius: 2,
+              transition: 'width 0.4s ease',
+            }}
+            aria-label={`${Math.round(completionPct)}% of 30-day program complete`}
+          />
+        </div>
 
-      {/* Self-check */}
-      <section style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-lg p-5 mb-6">
-        <h2 className="text-white text-xs font-bold uppercase tracking-widest mb-3">Self-Check</h2>
-        <p style={{ color: '#a3a3a3' }} className="text-sm leading-relaxed">{lesson.selfCheck}</p>
-      </section>
+        {/* Breadcrumbs */}
+        <nav className="flex items-center gap-2 mb-4 flex-wrap">
+          <Link
+            href="/dashboard"
+            style={{ color: '#525252' }}
+            className="text-xs hover:text-white transition-colors"
+          >
+            Dashboard
+          </Link>
+          <span style={{ color: '#404040' }} className="text-xs">
+            &#8250;
+          </span>
+          <Link
+            href="/lessons"
+            style={{ color: '#525252' }}
+            className="text-xs hover:text-white transition-colors"
+          >
+            All Lessons
+          </Link>
+          <span style={{ color: '#404040' }} className="text-xs">
+            &#8250;
+          </span>
+          <span style={{ color: weekColor }} className="text-xs font-bold uppercase tracking-wider">
+            Day {lesson.day}: {lesson.title}
+          </span>
+        </nav>
 
-      {/* Common Mistakes */}
-      {lesson.commonMistakes && lesson.commonMistakes.length > 0 && (
-        <section style={{ backgroundColor: '#111111', border: '1px solid #262626', borderLeft: '4px solid #ef4444' }} className="rounded-r-lg p-5 mb-6">
-          <h2 style={{ color: '#ef4444' }} className="text-xs font-bold uppercase tracking-widest mb-3">Common Mistakes</h2>
-          <ul className="flex flex-col gap-2">
-            {lesson.commonMistakes.map((m, i) => (
-              <li key={i} style={{ color: '#d4d4d4' }} className="text-sm flex items-start gap-2 leading-relaxed">
-                <span style={{ color: '#ef4444', flexShrink: 0, marginTop: 2 }}>&#9888;</span>
-                {m}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {/* Bonus Content */}
-      {lesson.bonusContent && (
-        <section style={{ backgroundColor: '#111111', border: '1px solid #262626', borderLeft: '4px solid #a855f7' }} className="rounded-r-lg p-5 mb-6">
-          <h2 style={{ color: '#a855f7' }} className="text-xs font-bold uppercase tracking-widest mb-3">
-            Bonus — Go Deeper
-          </h2>
-          <p style={{ color: '#d4d4d4' }} className="text-sm leading-relaxed">{lesson.bonusContent}</p>
-        </section>
-      )}
-
-      {/* Cross-references */}
-      {lesson.crossRefs && lesson.crossRefs.length > 0 && (
-        <section className="mb-6">
-          <h2 style={{ color: '#a3a3a3' }} className="text-xs font-bold uppercase tracking-widest mb-3">Connects To</h2>
-          <div className="flex flex-col gap-2">
-            {lesson.crossRefs.map((ref, i) => (
-              <a
-                key={i}
-                href={`/lesson/${ref.day}`}
-                style={{ backgroundColor: '#111111', border: '1px solid #1f1f1f', borderRadius: '0.5rem', padding: '0.625rem 0.875rem', display: 'flex', alignItems: 'flex-start', gap: '0.625rem', textDecoration: 'none' }}
-                className="hover:border-gray-600 transition-colors"
-              >
-                <span style={{ backgroundColor: '#1a0f00', color: '#f59e0b', borderRadius: '0.25rem', padding: '0.125rem 0.375rem', fontSize: '0.7rem', fontWeight: 700, flexShrink: 0, marginTop: 1 }}>
-                  Day {ref.day}
-                </span>
-                <span style={{ color: '#a3a3a3' }} className="text-xs leading-relaxed">{ref.description}</span>
-              </a>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Techniques */}
-      <div className="flex flex-wrap gap-2 mb-8">
-        {lesson.techniques.map((tech) => (
-          <TechniqueTooltip key={tech} term={tech}>
-            <span
-              style={{ backgroundColor: '#1a1a1a', color: '#a3a3a3', border: '1px solid #262626', cursor: 'default' }}
-              className="text-xs px-3 py-1 rounded capitalize inline-block"
+        {/* Keyboard nav hint */}
+        <div className="hidden sm:flex justify-between items-center mb-4">
+          {lesson.day > 1 ? (
+            <button
+              onClick={() => router.push(`/lesson/${lesson.day - 1}`)}
+              style={{ color: '#525252', border: '1px solid #1f1f1f' }}
+              className="text-xs px-3 py-1.5 rounded-lg hover:text-white hover:border-gray-600 transition-colors flex items-center gap-1.5"
             >
-              {tech}
-            </span>
-          </TechniqueTooltip>
-        ))}
-      </div>
-
-      {/* Audio Player */}
-      <section className="mb-8">
-        <h2 className="text-white text-xs font-bold uppercase tracking-widest mb-3">Audio</h2>
-        {audioUrl ? (
-          <AudioPlayer url={audioUrl} label={audioLabel ?? `Day ${lesson.day} Audio`} />
-        ) : (
-          <div style={{ textAlign: 'center', padding: '24px', opacity: 0.6 }}>
-            <div style={{ fontSize: '2rem', marginBottom: 8 }}>🎸</div>
-            <p style={{ color: '#a3a3a3', fontStyle: 'italic', fontSize: '0.875rem' }}>Audio coming soon — check back after the next update.</p>
-          </div>
-        )}
-      </section>
-
-      {/* Practice timer */}
-      <section style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-5 mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-white text-xs font-bold uppercase tracking-widest mb-0.5">Practice Timer</h2>
-            <p style={{ color: '#525252' }} className="text-xs">Track your session time</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <span
-              style={{ color: timerRunning ? '#f59e0b' : '#ffffff', fontVariantNumeric: 'tabular-nums' }}
-              className="text-3xl font-black tracking-tight"
+              &#8592; Day {lesson.day - 1}
+              <span style={{ color: '#404040' }} className="text-xs">
+                (&#8592;)
+              </span>
+            </button>
+          ) : (
+            <div />
+          )}
+          {lesson.day < 30 && (
+            <button
+              onClick={() => router.push(`/lesson/${lesson.day + 1}`)}
+              style={{ color: '#525252', border: '1px solid #1f1f1f' }}
+              className="text-xs px-3 py-1.5 rounded-lg hover:text-white hover:border-gray-600 transition-colors flex items-center gap-1.5"
             >
-              {formatTimer(timerSeconds)}
-            </span>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setTimerRunning((r) => !r)}
-                style={{
-                  backgroundColor: timerRunning ? '#1a1a1a' : '#f59e0b',
-                  color: timerRunning ? '#a3a3a3' : '#000',
-                  border: timerRunning ? '1px solid #262626' : 'none',
-                }}
-                className="px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all"
-              >
-                {timerRunning ? 'Pause' : timerSeconds > 0 ? 'Resume' : 'Start'}
-              </button>
-              {timerSeconds > 0 && !timerRunning && (
+              <span style={{ color: '#404040' }} className="text-xs">
+                (&#8594;)
+              </span>
+              Day {lesson.day + 1} &#8594;
+            </button>
+          )}
+        </div>
+
+        {/* ─── STICKY TAB BAR ─── */}
+        <div
+          style={{
+            position: 'sticky',
+            top: 64,
+            zIndex: 30,
+            backgroundColor: '#0a0a0a',
+            borderBottom: '1px solid #1f1f1f',
+            marginBottom: '1.5rem',
+            marginLeft: '-1rem',
+            marginRight: '-1rem',
+            paddingLeft: '1rem',
+            paddingRight: '1rem',
+          }}
+        >
+          <div style={{ display: 'flex', gap: 0 }}>
+            {TABS.map((tab) => {
+              const isActive = activeTab === tab.id
+              return (
                 <button
-                  onClick={() => { setTimerSeconds(0); setTimerRunning(false) }}
-                  style={{ color: '#525252', border: '1px solid #262626' }}
-                  className="px-3 py-2 rounded-lg text-xs transition-colors hover:text-white"
+                  key={tab.id}
+                  onClick={() => switchTab(tab.id)}
+                  style={{
+                    padding: '0.75rem 1.25rem',
+                    fontSize: '0.8rem',
+                    fontWeight: isActive ? 700 : 500,
+                    color: isActive ? '#ffffff' : '#525252',
+                    borderBottom: isActive ? '2px solid #f59e0b' : '2px solid transparent',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    borderBottomColor: isActive ? '#f59e0b' : 'transparent',
+                    borderBottomStyle: 'solid',
+                    borderBottomWidth: 2,
+                    cursor: 'pointer',
+                    transition: 'color 0.15s ease, border-color 0.15s ease',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                  }}
                 >
-                  Reset
+                  {tab.label}
                 </button>
-              )}
+              )
+            })}
+          </div>
+        </div>
+
+        {/* ─── TAB: LEARN ─── */}
+        <div
+          style={{
+            display: activeTab === 'learn' ? 'block' : 'none',
+            animation: activeTab === 'learn' ? 'tabFadeIn 0.15s ease' : 'none',
+          }}
+        >
+          {/* Lesson header */}
+          <div
+            style={{
+              background: 'linear-gradient(135deg, #111111 0%, #0f0e00 50%, #111111 100%)',
+              borderTop: '3px solid #f59e0b',
+              borderBottom: '1px solid rgba(245,158,11,0.1)',
+              borderLeft: '1px solid rgba(245,158,11,0.05)',
+              borderRight: '1px solid rgba(245,158,11,0.05)',
+              borderRadius: '0.75rem',
+              padding: '1.25rem',
+              marginBottom: '1.5rem',
+            }}
+          >
+            <h1 className="text-4xl font-black text-white uppercase mb-2">{lesson.title}</h1>
+            <p style={{ color: '#a3a3a3' }} className="text-base mb-4">
+              {lesson.subtitle}
+            </p>
+            <div
+              style={{
+                borderLeft: '3px solid #f59e0b',
+                backgroundColor: 'rgba(0,0,0,0.25)',
+              }}
+              className="pl-4 py-3 pr-4 rounded-r-lg"
+            >
+              <p
+                style={{ color: '#f59e0b' }}
+                className="text-xs font-bold uppercase tracking-wider mb-1"
+              >
+                Why This Matters
+              </p>
+              <p style={{ color: '#a3a3a3' }} className="text-sm leading-relaxed">
+                {lesson.why}
+              </p>
             </div>
           </div>
-        </div>
-        {timerSeconds > 0 && (
-          <div className="mt-3">
-            <div style={{ backgroundColor: '#1a1a1a', height: 4 }} className="rounded-full overflow-hidden">
-              <div
+
+          {/* Prerequisites */}
+          {lesson.prerequisites && lesson.prerequisites.length > 0 && (
+            <div
+              style={{
+                backgroundColor: '#0a0a0a',
+                border: '1px solid #1f1f1f',
+                borderRadius: '0.5rem',
+                padding: '0.875rem',
+                marginBottom: '1rem',
+              }}
+            >
+              <p
+                style={{ color: '#f59e0b' }}
+                className="text-xs font-bold uppercase tracking-wider mb-2"
+              >
+                Before This Lesson
+              </p>
+              <ul className="flex flex-col gap-1">
+                {lesson.prerequisites.map((p, i) => (
+                  <li
+                    key={i}
+                    style={{ color: '#a3a3a3' }}
+                    className="text-xs flex items-start gap-2"
+                  >
+                    <span style={{ color: '#f59e0b', flexShrink: 0 }}>&#8227;</span>
+                    {p}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Duration / XP badges */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            <span
+              style={{
+                backgroundColor: '#1a1a1a',
+                color: '#a3a3a3',
+                border: '1px solid #262626',
+              }}
+              className="text-xs px-3 py-1 rounded font-medium"
+            >
+              &#9201; {lesson.duration} min
+            </span>
+            <span
+              style={{
+                backgroundColor: '#1a0f00',
+                color: '#f59e0b',
+                border: '1px solid #78350f',
+              }}
+              className="text-xs px-3 py-1 rounded font-bold"
+            >
+              +{lesson.xpReward} XP
+            </span>
+            <span
+              style={{
+                backgroundColor: '#1a1a1a',
+                color: '#a3a3a3',
+                border: '1px solid #262626',
+              }}
+              className="text-xs px-3 py-1 rounded"
+            >
+              Week {lesson.week}
+            </span>
+            {lesson.soloSection && (
+              <span
                 style={{
-                  backgroundColor: '#f59e0b',
-                  width: `${Math.min(100, (timerSeconds / (lesson.duration * 60)) * 100)}%`,
-                  height: '100%',
-                  transition: 'width 1s linear',
+                  backgroundColor: '#160a1f',
+                  color: '#a855f7',
+                  border: '1px solid #6b21a8',
                 }}
-                className="rounded-full"
+                className="text-xs px-3 py-1 rounded font-bold"
+              >
+                Solo Section {lesson.soloSection}
+              </span>
+            )}
+            {completed && (
+              <span
+                style={{
+                  backgroundColor: '#052e16',
+                  color: '#86efac',
+                  border: '1px solid #166534',
+                }}
+                className="text-xs px-3 py-1 rounded font-bold"
+              >
+                ✓ Completed
+              </span>
+            )}
+          </div>
+
+          {/* Techniques tags */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            {lesson.techniques.map((tech) => (
+              <TechniqueTooltip key={tech} term={tech}>
+                <span
+                  style={{
+                    backgroundColor: '#1a1a1a',
+                    color: '#a3a3a3',
+                    border: '1px solid #262626',
+                    cursor: 'default',
+                  }}
+                  className="text-xs px-3 py-1 rounded capitalize inline-block"
+                >
+                  {tech}
+                </span>
+              </TechniqueTooltip>
+            ))}
+          </div>
+
+          {/* Main lesson content */}
+          <section className="mb-6">
+            <h2 className="text-white text-xs font-bold uppercase tracking-widest mb-4">
+              Lesson Content
+            </h2>
+            <div
+              style={{ color: '#d4d4d4' }}
+              className="prose prose-sm max-w-none lesson-content"
+              dangerouslySetInnerHTML={{ __html: lesson.mainContent }}
+            />
+          </section>
+
+          {/* Bonus content */}
+          {lesson.bonusContent && (
+            <section
+              style={{
+                backgroundColor: '#111111',
+                border: '1px solid #262626',
+                borderLeft: '4px solid #a855f7',
+              }}
+              className="rounded-r-lg p-5 mb-6"
+            >
+              <h2
+                style={{ color: '#a855f7' }}
+                className="text-xs font-bold uppercase tracking-widest mb-3"
+              >
+                Bonus — Go Deeper
+              </h2>
+              <p style={{ color: '#d4d4d4' }} className="text-sm leading-relaxed">
+                {lesson.bonusContent}
+              </p>
+            </section>
+          )}
+
+          {/* Common mistakes */}
+          {lesson.commonMistakes && lesson.commonMistakes.length > 0 && (
+            <section
+              style={{
+                backgroundColor: '#111111',
+                border: '1px solid #262626',
+                borderLeft: '4px solid #ef4444',
+              }}
+              className="rounded-r-lg p-5 mb-6"
+            >
+              <h2
+                style={{ color: '#ef4444' }}
+                className="text-xs font-bold uppercase tracking-widest mb-3"
+              >
+                Common Mistakes
+              </h2>
+              <ul className="flex flex-col gap-2">
+                {lesson.commonMistakes.map((m, i) => (
+                  <li
+                    key={i}
+                    style={{ color: '#d4d4d4' }}
+                    className="text-sm flex items-start gap-2 leading-relaxed"
+                  >
+                    <span style={{ color: '#ef4444', flexShrink: 0, marginTop: 2 }}>
+                      &#9888;
+                    </span>
+                    {m}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* Cross-references */}
+          {lesson.crossRefs && lesson.crossRefs.length > 0 && (
+            <section className="mb-6">
+              <h2
+                style={{ color: '#a3a3a3' }}
+                className="text-xs font-bold uppercase tracking-widest mb-3"
+              >
+                Connects To
+              </h2>
+              <div className="flex flex-col gap-2">
+                {lesson.crossRefs.map((ref, i) => (
+                  <a
+                    key={i}
+                    href={`/lesson/${ref.day}`}
+                    style={{
+                      backgroundColor: '#111111',
+                      border: '1px solid #1f1f1f',
+                      borderRadius: '0.5rem',
+                      padding: '0.625rem 0.875rem',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '0.625rem',
+                      textDecoration: 'none',
+                    }}
+                    className="hover:border-gray-600 transition-colors"
+                  >
+                    <span
+                      style={{
+                        backgroundColor: '#1a0f00',
+                        color: '#f59e0b',
+                        borderRadius: '0.25rem',
+                        padding: '0.125rem 0.375rem',
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        flexShrink: 0,
+                        marginTop: 1,
+                      }}
+                    >
+                      Day {ref.day}
+                    </span>
+                    <span style={{ color: '#a3a3a3' }} className="text-xs leading-relaxed">
+                      {ref.description}
+                    </span>
+                  </a>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Audio player */}
+          <section className="mb-8">
+            <h2 className="text-white text-xs font-bold uppercase tracking-widest mb-3">
+              Audio
+            </h2>
+            {audioUrl ? (
+              <AudioPlayer url={audioUrl} label={audioLabel ?? `Day ${lesson.day} Audio`} />
+            ) : (
+              <div style={{ textAlign: 'center', padding: '24px', opacity: 0.6 }}>
+                <div style={{ fontSize: '2rem', marginBottom: 8 }}>🎸</div>
+                <p
+                  style={{
+                    color: '#a3a3a3',
+                    fontStyle: 'italic',
+                    fontSize: '0.875rem',
+                  }}
+                >
+                  Audio coming soon — check back after the next update.
+                </p>
+              </div>
+            )}
+          </section>
+        </div>
+
+        {/* ─── TAB: PLAY ─── */}
+        <div
+          style={{
+            display: activeTab === 'play' ? 'block' : 'none',
+            animation: activeTab === 'play' ? 'tabFadeIn 0.15s ease' : 'none',
+          }}
+        >
+          {/* Warmup */}
+          <section className="mb-6">
+            <h2
+              style={{ color: '#a3a3a3' }}
+              className="text-xs font-bold uppercase tracking-widest mb-3"
+            >
+              Warm-up
+            </h2>
+            <p style={{ color: '#a3a3a3' }} className="text-sm leading-relaxed">
+              {lesson.warmup}
+            </p>
+          </section>
+
+          {/* Fretboard diagram */}
+          {showFretboard && (
+            <section className="mb-6">
+              <h2
+                style={{ color: '#a3a3a3' }}
+                className="text-xs font-bold uppercase tracking-widest mb-3"
+              >
+                Fretboard Reference
+              </h2>
+              <div className="overflow-x-auto">
+                <FretboardDiagram
+                  startFret={5}
+                  title="A Minor Pentatonic — Box 1 (fret 5)"
+                  notes={[
+                    { string: 6, fret: 5, label: 'R', color: '#f59e0b' },
+                    { string: 6, fret: 8, label: '♭3' },
+                    { string: 5, fret: 5, label: '4' },
+                    { string: 5, fret: 7, label: '5' },
+                    { string: 4, fret: 5, label: '♭7' },
+                    { string: 4, fret: 7, label: 'R', color: '#f59e0b' },
+                    { string: 3, fret: 5, label: '♭3' },
+                    { string: 3, fret: 7, label: '4' },
+                    { string: 2, fret: 5, label: '5' },
+                    { string: 2, fret: 8, label: '♭7' },
+                    { string: 1, fret: 5, label: 'R', color: '#f59e0b' },
+                    { string: 1, fret: 8, label: '♭3' },
+                  ]}
+                />
+              </div>
+            </section>
+          )}
+
+          {/* Exercise */}
+          <section
+            style={{
+              backgroundColor: '#111111',
+              border: '1px solid #262626',
+              borderLeft: '4px solid #f59e0b',
+            }}
+            className="rounded-r-lg p-5 mb-6"
+          >
+            <h2
+              style={{ color: '#f59e0b' }}
+              className="text-xs font-bold uppercase tracking-widest mb-3"
+            >
+              Today&apos;s Exercise
+            </h2>
+            <p style={{ color: '#d4d4d4' }} className="text-sm leading-relaxed">
+              {lesson.exercise}
+            </p>
+          </section>
+
+          {/* Speed Trainer */}
+          <section className="mb-6">
+            <SpeedTrainer />
+          </section>
+
+          {/* Metronome */}
+          <section className="mb-6">
+            <Metronome />
+          </section>
+
+          {/* Practice Timer */}
+          <section
+            style={{ backgroundColor: '#111111', border: '1px solid #262626' }}
+            className="rounded-xl p-5 mb-6"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-white text-xs font-bold uppercase tracking-widest mb-0.5">
+                  Practice Timer
+                </h2>
+                <p style={{ color: '#525252' }} className="text-xs">
+                  Track your session time
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span
+                  style={{
+                    color: timerRunning ? '#f59e0b' : '#ffffff',
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                  className="text-3xl font-black tracking-tight"
+                >
+                  {formatTimer(timerSeconds)}
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setTimerRunning((r) => !r)}
+                    style={{
+                      backgroundColor: timerRunning ? '#1a1a1a' : '#f59e0b',
+                      color: timerRunning ? '#a3a3a3' : '#000',
+                      border: timerRunning ? '1px solid #262626' : 'none',
+                    }}
+                    className="px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all"
+                  >
+                    {timerRunning ? 'Pause' : timerSeconds > 0 ? 'Resume' : 'Start'}
+                  </button>
+                  {timerSeconds > 0 && !timerRunning && (
+                    <button
+                      onClick={() => {
+                        setTimerSeconds(0)
+                        setTimerRunning(false)
+                      }}
+                      style={{ color: '#525252', border: '1px solid #262626' }}
+                      className="px-3 py-2 rounded-lg text-xs transition-colors hover:text-white"
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+            {timerSeconds > 0 && (
+              <div className="mt-3">
+                <div
+                  style={{ backgroundColor: '#1a1a1a', height: 4 }}
+                  className="rounded-full overflow-hidden"
+                >
+                  <div
+                    style={{
+                      backgroundColor: '#f59e0b',
+                      width: `${Math.min(100, (timerSeconds / (lesson.duration * 60)) * 100)}%`,
+                      height: '100%',
+                      transition: 'width 1s linear',
+                    }}
+                    className="rounded-full"
+                  />
+                </div>
+                <p style={{ color: '#525252' }} className="text-xs mt-1">
+                  Target: {lesson.duration} min
+                  {timerSeconds >= lesson.duration * 60 && (
+                    <span style={{ color: '#f59e0b' }}> — Goal reached! ✓</span>
+                  )}
+                </p>
+              </div>
+            )}
+          </section>
+
+          {/* Microphone Practice Mode */}
+          <section className="mb-6">
+            <h2
+              style={{ color: '#a3a3a3' }}
+              className="text-xs font-bold uppercase tracking-widest mb-3"
+            >
+              Mic Practice Mode
+            </h2>
+            <MicrophoneMode day={lesson.day} />
+          </section>
+
+          {/* Performance Recorder — days 25+ */}
+          {lesson.day >= 25 && (
+            <section className="mb-6">
+              <PerformanceRecorder day={lesson.day} userName={userName} />
+            </section>
+          )}
+
+          {/* AI Coach embedded */}
+          <section className="mb-6">
+            <h2
+              style={{ color: '#a3a3a3' }}
+              className="text-xs font-bold uppercase tracking-widest mb-3"
+            >
+              AI Coach
+            </h2>
+            <div
+              style={{
+                height: 450,
+                border: '1px solid #1f1f1f',
+                borderRadius: '0.75rem',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <CoachChat
+                initialMessages={coachMessages}
+                currentDay={lesson.day}
+                lessonTitle={lesson.title}
+                lessonContext={lessonContext}
               />
             </div>
-            <p style={{ color: '#525252' }} className="text-xs mt-1">
-              Target: {lesson.duration} min
-              {timerSeconds >= lesson.duration * 60 && <span style={{ color: '#f59e0b' }}> — Goal reached! ✓</span>}
-            </p>
-          </div>
-        )}
-      </section>
+          </section>
 
-      {/* Metronome */}
-      <section className="mb-6">
-        <Metronome />
-      </section>
-
-      {/* Self-assessment */}
-      <section style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6 mb-6">
-        <h2 className="text-white font-bold text-sm uppercase tracking-wider mb-4">How Did It Feel?</h2>
-
-        <div className="mb-4">
-          <div className="flex gap-2">
-            {[
-              { val: 'easy', label: 'Easy' },
-              { val: 'good', label: 'Good Challenge' },
-              { val: 'struggled', label: 'Struggled' },
-            ].map((opt) => (
-              <button
-                key={opt.val}
-                onClick={() => setDifficulty(opt.val)}
-                disabled={completed}
-                style={{
-                  backgroundColor: difficulty === opt.val ? '#f59e0b' : '#1a1a1a',
-                  color: difficulty === opt.val ? '#000' : '#a3a3a3',
-                  border: `1px solid ${difficulty === opt.val ? '#f59e0b' : '#262626'}`,
-                }}
-                className="flex-1 py-2 rounded-lg text-xs font-bold transition-colors disabled:cursor-not-allowed"
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {difficulty === 'struggled' && (
-          <div className="mb-4">
-            <p style={{ color: '#a3a3a3' }} className="text-xs mb-2">What was difficult?</p>
-            <div className="flex flex-wrap gap-2">
-              {DIFFICULT_AREAS.map((area) => (
-                <button
-                  key={area}
-                  onClick={() => !completed && toggleArea(area)}
-                  disabled={completed}
-                  style={{
-                    backgroundColor: difficultAreas.includes(area) ? '#1a1a1a' : 'transparent',
-                    color: difficultAreas.includes(area) ? '#f59e0b' : '#a3a3a3',
-                    border: `1px solid ${difficultAreas.includes(area) ? '#f59e0b' : '#262626'}`,
-                  }}
-                  className="text-xs px-3 py-1 rounded-full transition-colors disabled:cursor-not-allowed"
-                >
-                  {area}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="mb-6">
-          <p style={{ color: '#a3a3a3' }} className="text-xs mb-2">Rate this lesson</p>
-          <div className="flex gap-1">
-            {[1, 2, 3, 4, 5].map((n) => (
-              <button
-                key={n}
-                onClick={() => !completed && setRating(n)}
-                disabled={completed}
-                style={{ color: n <= rating ? '#f59e0b' : '#262626', fontSize: '1.5rem' }}
-                className="transition-colors disabled:cursor-not-allowed"
-              >
-                &#9733;
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {completed ? (
-          <div>
-            <div style={{ backgroundColor: '#052e16', border: '1px solid #166534', color: '#86efac' }} className="rounded-lg px-4 py-3 text-sm mb-4">
-              &#10003; Lesson completed! +{xpEarned} XP earned
-              {newAchievements.length > 0 && (
-                <span className="ml-2">&#127942; {newAchievements.join(', ')}</span>
-              )}
-            </div>
-            {lesson.day < 30 && (
-              <Link
-                href={`/lesson/${lesson.day + 1}`}
-                style={{ backgroundColor: '#f59e0b', color: '#000' }}
-                className="block w-full py-3 rounded-lg font-black text-sm uppercase tracking-wider text-center hover:opacity-90 transition-opacity"
-              >
-                Next Lesson: Day {lesson.day + 1} &#8594;
-              </Link>
-            )}
-            {lesson.day === 30 && (
-              <Link
-                href="/dashboard"
-                style={{ backgroundColor: '#f59e0b', color: '#000' }}
-                className="block w-full py-3 rounded-lg font-black text-sm uppercase tracking-wider text-center hover:opacity-90 transition-opacity"
-              >
-                Back to Dashboard &#8594;
-              </Link>
-            )}
-          </div>
-        ) : (
-          <button
-            onClick={handleCompleteClick}
-            disabled={completing}
-            style={{ backgroundColor: completing ? '#262626' : '#f59e0b', color: completing ? '#a3a3a3' : '#000', position: 'relative', overflow: 'hidden' }}
-            className="w-full py-3 rounded-lg font-black text-sm uppercase tracking-wider transition-colors disabled:cursor-not-allowed"
+          {/* Mark Complete */}
+          <section
+            style={{ backgroundColor: '#111111', border: '1px solid #262626' }}
+            className="rounded-xl p-6 mb-8"
           >
-            {completing ? 'Saving...' : 'Complete Lesson'}
-            {ripple && (
-              <span style={{
-                position: 'absolute',
-                left: ripple.x,
-                top: ripple.y,
-                width: 10, height: 10,
-                transform: 'translate(-50%, -50%)',
-                backgroundColor: 'rgba(255,255,255,0.4)',
-                borderRadius: '50%',
-                animation: 'rippleEffect 0.6s ease-out forwards',
-                pointerEvents: 'none',
-              }} />
+            {completed ? (
+              <div>
+                <div
+                  style={{
+                    backgroundColor: '#052e16',
+                    border: '1px solid #166534',
+                    color: '#86efac',
+                  }}
+                  className="rounded-lg px-4 py-3 text-sm mb-4"
+                >
+                  &#10003; Lesson completed! +{xpEarned} XP earned
+                  {newAchievements.length > 0 && (
+                    <span className="ml-2">
+                      &#127942; {newAchievements.join(', ')}
+                    </span>
+                  )}
+                </div>
+                <div className="flex gap-3">
+                  {lesson.day < 30 && (
+                    <Link
+                      href={`/lesson/${lesson.day + 1}`}
+                      style={{ backgroundColor: '#f59e0b', color: '#000' }}
+                      className="flex-1 py-3 rounded-lg font-black text-sm uppercase tracking-wider text-center hover:opacity-90 transition-opacity"
+                    >
+                      Next: Day {lesson.day + 1} &#8594;
+                    </Link>
+                  )}
+                  {lesson.day === 30 && (
+                    <Link
+                      href="/dashboard"
+                      style={{ backgroundColor: '#f59e0b', color: '#000' }}
+                      className="flex-1 py-3 rounded-lg font-black text-sm uppercase tracking-wider text-center hover:opacity-90 transition-opacity"
+                    >
+                      Back to Dashboard &#8594;
+                    </Link>
+                  )}
+                  <button
+                    onClick={() => switchTab('review')}
+                    style={{ border: '1px solid #262626', color: '#a3a3a3' }}
+                    className="px-4 py-3 rounded-lg text-sm hover:text-white transition-colors"
+                  >
+                    Review Tab
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <p style={{ color: '#525252' }} className="text-xs mb-4">
+                  Finished practicing? Mark this lesson complete to earn your XP.
+                </p>
+                <button
+                  onClick={handleCompleteClick}
+                  disabled={completing}
+                  style={{
+                    backgroundColor: completing ? '#262626' : '#f59e0b',
+                    color: completing ? '#a3a3a3' : '#000',
+                    position: 'relative',
+                    overflow: 'hidden',
+                  }}
+                  className="w-full py-3 rounded-lg font-black text-sm uppercase tracking-wider transition-colors disabled:cursor-not-allowed"
+                >
+                  {completing ? 'Saving...' : 'Mark Complete'}
+                  {ripple && (
+                    <span
+                      style={{
+                        position: 'absolute',
+                        left: ripple.x,
+                        top: ripple.y,
+                        width: 10,
+                        height: 10,
+                        transform: 'translate(-50%, -50%)',
+                        backgroundColor: 'rgba(255,255,255,0.4)',
+                        borderRadius: '50%',
+                        animation: 'rippleEffect 0.6s ease-out forwards',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                  )}
+                </button>
+              </>
             )}
+          </section>
+        </div>
+
+        {/* ─── TAB: REVIEW ─── */}
+        <div
+          style={{
+            display: activeTab === 'review' ? 'block' : 'none',
+            animation: activeTab === 'review' ? 'tabFadeIn 0.15s ease' : 'none',
+          }}
+        >
+          {/* Self-check */}
+          <section
+            style={{ backgroundColor: '#111111', border: '1px solid #262626' }}
+            className="rounded-lg p-5 mb-6"
+          >
+            <h2 className="text-white text-xs font-bold uppercase tracking-widest mb-3">
+              Self-Check
+            </h2>
+            <p style={{ color: '#a3a3a3' }} className="text-sm leading-relaxed">
+              {lesson.selfCheck}
+            </p>
+          </section>
+
+          {/* How Did It Feel? */}
+          <section
+            style={{ backgroundColor: '#111111', border: '1px solid #262626' }}
+            className="rounded-xl p-6 mb-6"
+          >
+            <h2 className="text-white font-bold text-sm uppercase tracking-wider mb-4">
+              How Did It Feel?
+            </h2>
+
+            <div className="mb-4">
+              <div className="flex gap-2">
+                {[
+                  { val: 'easy', label: 'Easy' },
+                  { val: 'good', label: 'Good Challenge' },
+                  { val: 'struggled', label: 'Struggled' },
+                ].map((opt) => (
+                  <button
+                    key={opt.val}
+                    onClick={() => setDifficulty(opt.val)}
+                    disabled={completed}
+                    style={{
+                      backgroundColor: difficulty === opt.val ? '#f59e0b' : '#1a1a1a',
+                      color: difficulty === opt.val ? '#000' : '#a3a3a3',
+                      border: `1px solid ${difficulty === opt.val ? '#f59e0b' : '#262626'}`,
+                    }}
+                    className="flex-1 py-2 rounded-lg text-xs font-bold transition-colors disabled:cursor-not-allowed"
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {difficulty === 'struggled' && (
+              <div className="mb-4">
+                <p style={{ color: '#a3a3a3' }} className="text-xs mb-2">
+                  What was difficult?
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {DIFFICULT_AREAS.map((area) => (
+                    <button
+                      key={area}
+                      onClick={() => !completed && toggleArea(area)}
+                      disabled={completed}
+                      style={{
+                        backgroundColor: difficultAreas.includes(area)
+                          ? '#1a1a1a'
+                          : 'transparent',
+                        color: difficultAreas.includes(area) ? '#f59e0b' : '#a3a3a3',
+                        border: `1px solid ${
+                          difficultAreas.includes(area) ? '#f59e0b' : '#262626'
+                        }`,
+                      }}
+                      className="text-xs px-3 py-1 rounded-full transition-colors disabled:cursor-not-allowed"
+                    >
+                      {area}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="mb-4">
+              <p style={{ color: '#a3a3a3' }} className="text-xs mb-2">
+                Rate this lesson
+              </p>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => !completed && setRating(n)}
+                    disabled={completed}
+                    style={{
+                      color: n <= rating ? '#f59e0b' : '#262626',
+                      fontSize: '1.5rem',
+                    }}
+                    className="transition-colors disabled:cursor-not-allowed"
+                  >
+                    &#9733;
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {!completed && (
+              <button
+                onClick={handleCompleteClick}
+                disabled={completing}
+                style={{
+                  backgroundColor: completing ? '#262626' : '#f59e0b',
+                  color: completing ? '#a3a3a3' : '#000',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+                className="w-full py-3 rounded-lg font-black text-sm uppercase tracking-wider transition-colors disabled:cursor-not-allowed"
+              >
+                {completing ? 'Saving...' : 'Complete Lesson'}
+                {ripple && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      left: ripple.x,
+                      top: ripple.y,
+                      width: 10,
+                      height: 10,
+                      transform: 'translate(-50%, -50%)',
+                      backgroundColor: 'rgba(255,255,255,0.4)',
+                      borderRadius: '50%',
+                      animation: 'rippleEffect 0.6s ease-out forwards',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                )}
+              </button>
+            )}
+
+            {completed && (
+              <div>
+                <div
+                  style={{
+                    backgroundColor: '#052e16',
+                    border: '1px solid #166534',
+                    color: '#86efac',
+                  }}
+                  className="rounded-lg px-4 py-3 text-sm mb-4"
+                >
+                  &#10003; Lesson completed! +{xpEarned} XP earned
+                  {newAchievements.length > 0 && (
+                    <span className="ml-2">&#127942; {newAchievements.join(', ')}</span>
+                  )}
+                </div>
+                {lesson.day < 30 && (
+                  <Link
+                    href={`/lesson/${lesson.day + 1}`}
+                    style={{ backgroundColor: '#f59e0b', color: '#000' }}
+                    className="block w-full py-3 rounded-lg font-black text-sm uppercase tracking-wider text-center hover:opacity-90 transition-opacity"
+                  >
+                    Next Lesson: Day {lesson.day + 1} &#8594;
+                  </Link>
+                )}
+                {lesson.day === 30 && (
+                  <Link
+                    href="/dashboard"
+                    style={{ backgroundColor: '#f59e0b', color: '#000' }}
+                    className="block w-full py-3 rounded-lg font-black text-sm uppercase tracking-wider text-center hover:opacity-90 transition-opacity"
+                  >
+                    Back to Dashboard &#8594;
+                  </Link>
+                )}
+              </div>
+            )}
+          </section>
+
+          {/* Your Notes */}
+          <section
+            style={{ backgroundColor: '#111111', border: '1px solid #262626' }}
+            className="rounded-xl p-5 mb-6"
+          >
+            <label
+              htmlFor="lesson-notes"
+              className="block text-white text-xs font-bold uppercase tracking-widest mb-3"
+            >
+              Your Notes
+            </label>
+            <textarea
+              id="lesson-notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Write anything you want to remember about today's lesson..."
+              rows={4}
+              style={{
+                backgroundColor: '#0a0a0a',
+                border: '1px solid #262626',
+                color: '#d4d4d4',
+                borderRadius: '8px',
+                padding: '10px 12px',
+                width: '100%',
+                fontSize: '0.875rem',
+                lineHeight: '1.6',
+                resize: 'vertical',
+                outline: 'none',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = '#f59e0b'
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = '#262626'
+              }}
+            />
+            <p style={{ color: '#404040' }} className="text-xs mt-2">
+              Auto-saved as you type
+            </p>
+          </section>
+
+          {/* Post-lesson Quiz */}
+          {showQuiz && lesson.quiz && lesson.quiz.length > 0 && !quizDone && (
+            <section className="mb-6">
+              <LessonQuiz quiz={lesson.quiz} onComplete={handleQuizComplete} />
+            </section>
+          )}
+
+          {quizDone && (
+            <div
+              style={{
+                backgroundColor: '#052e16',
+                border: '1px solid #166534',
+                borderRadius: '0.5rem',
+                padding: '0.75rem 1rem',
+                marginBottom: '1.5rem',
+              }}
+              className="flex items-center gap-2"
+            >
+              <span style={{ color: '#86efac' }} className="text-xs font-bold">
+                &#10003; Knowledge check complete
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* ─── TAB: COMMUNITY ─── */}
+        <div
+          style={{
+            display: activeTab === 'community' ? 'block' : 'none',
+            animation: activeTab === 'community' ? 'tabFadeIn 0.15s ease' : 'none',
+          }}
+        >
+          <LessonComments day={lesson.day} userId={userId} />
+        </div>
+
+        {/* ─── BOTTOM NAVIGATION ─── */}
+        <div className="flex justify-between mt-4 mb-8">
+          {lesson.day > 1 ? (
+            <Link
+              href={`/lesson/${lesson.day - 1}`}
+              style={{ border: '1px solid #262626', color: '#a3a3a3' }}
+              className="px-4 py-2 rounded-lg text-sm hover:text-white transition-colors"
+            >
+              &#8592; Day {lesson.day - 1}
+            </Link>
+          ) : (
+            <div />
+          )}
+          <Link
+            href="/lessons"
+            style={{ border: '1px solid #262626', color: '#525252' }}
+            className="px-4 py-2 rounded-lg text-sm hover:text-white transition-colors"
+          >
+            All Lessons
+          </Link>
+          {lesson.day < 30 ? (
+            <Link
+              href={`/lesson/${lesson.day + 1}`}
+              style={{ border: '1px solid #262626', color: '#a3a3a3' }}
+              className="px-4 py-2 rounded-lg text-sm hover:text-white transition-colors"
+            >
+              Day {lesson.day + 1} &#8594;
+            </Link>
+          ) : (
+            <div />
+          )}
+        </div>
+
+        {/* Toast */}
+        {showToast && (
+          <div
+            style={{ backgroundColor: '#f59e0b', color: '#000' }}
+            className="fixed bottom-6 right-6 px-6 py-3 rounded-lg shadow-lg font-bold text-sm z-50"
+          >
+            &#9733; +{xpEarned} XP!{' '}
+            {newAchievements.length > 0 &&
+              `Achievement unlocked: ${newAchievements.join(', ')}`}
+          </div>
+        )}
+
+        {/* Back to top */}
+        {showBackToTop && (
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            style={{
+              backgroundColor: '#1a1a1a',
+              border: '1px solid #262626',
+              color: '#a3a3a3',
+            }}
+            className="fixed bottom-6 left-6 w-10 h-10 rounded-full flex items-center justify-center hover:text-white hover:border-gray-500 transition-colors z-40 text-base"
+            aria-label="Back to top"
+          >
+            &#8593;
           </button>
         )}
-      </section>
 
-      {/* Your Notes */}
-      <section style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-5 mb-8">
-        <label htmlFor="lesson-notes" className="block text-white text-xs font-bold uppercase tracking-widest mb-3">
-          Your Notes
-        </label>
-        <textarea
-          id="lesson-notes"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Write anything you want to remember about today's lesson..."
-          rows={4}
-          style={{
-            backgroundColor: '#0a0a0a',
-            border: '1px solid #262626',
-            color: '#d4d4d4',
-            borderRadius: '8px',
-            padding: '10px 12px',
-            width: '100%',
-            fontSize: '0.875rem',
-            lineHeight: '1.6',
-            resize: 'vertical',
-            outline: 'none',
-          }}
-          onFocus={(e) => { e.currentTarget.style.borderColor = '#f59e0b' }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = '#262626' }}
-        />
-        <p style={{ color: '#404040' }} className="text-xs mt-2">Auto-saved as you type</p>
-      </section>
+        {/* Milestone modal */}
+        {showMilestone && (
+          <MilestoneModal
+            day={milestoneDay}
+            xpEarned={xpEarned}
+            onClose={() => setShowMilestone(false)}
+          />
+        )}
 
-      {/* Post-lesson Quiz — appears after completing the lesson */}
-      {showQuiz && lesson.quiz && lesson.quiz.length > 0 && !quizDone && (
-        <section className="mb-6">
-          <LessonQuiz quiz={lesson.quiz} onComplete={handleQuizComplete} />
-        </section>
-      )}
+        {/* XP level-up */}
+        {levelUp && (
+          <XPLevelUp
+            fromLevel={levelUp.from}
+            toLevel={levelUp.to}
+            onClose={() => setLevelUp(null)}
+          />
+        )}
 
-      {quizDone && (
-        <div style={{ backgroundColor: '#052e16', border: '1px solid #166534', borderRadius: '0.5rem', padding: '0.75rem 1rem', marginBottom: '1.5rem' }} className="flex items-center gap-2">
-          <span style={{ color: '#86efac' }} className="text-xs font-bold">&#10003; Knowledge check complete</span>
-        </div>
-      )}
-
-      {/* Community Comments */}
-      <section className="mb-6">
-        <LessonComments day={lesson.day} userId={userId} />
-      </section>
-
-      {/* Bottom navigation */}
-      <div className="flex justify-between mt-4 mb-8">
-        {lesson.day > 1 ? (
-          <Link
-            href={`/lesson/${lesson.day - 1}`}
-            style={{ border: '1px solid #262626', color: '#a3a3a3' }}
-            className="px-4 py-2 rounded-lg text-sm hover:text-white transition-colors"
-          >
-            &#8592; Day {lesson.day - 1}
-          </Link>
-        ) : <div />}
-        <Link
-          href="/lessons"
-          style={{ border: '1px solid #262626', color: '#525252' }}
-          className="px-4 py-2 rounded-lg text-sm hover:text-white transition-colors"
-        >
-          All Lessons
-        </Link>
-        {lesson.day < 30 ? (
-          <Link
-            href={`/lesson/${lesson.day + 1}`}
-            style={{ border: '1px solid #262626', color: '#a3a3a3' }}
-            className="px-4 py-2 rounded-lg text-sm hover:text-white transition-colors"
-          >
-            Day {lesson.day + 1} &#8594;
-          </Link>
-        ) : <div />}
-      </div>
-
-      {/* Toast */}
-      {showToast && (
-        <div
-          style={{ backgroundColor: '#f59e0b', color: '#000' }}
-          className="fixed bottom-6 right-6 px-6 py-3 rounded-lg shadow-lg font-bold text-sm z-50"
-        >
-          &#9733; +{xpEarned} XP! {newAchievements.length > 0 && `Achievement unlocked: ${newAchievements.join(', ')}`}
-        </div>
-      )}
-
-      {/* Back to top */}
-      {showBackToTop && (
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          style={{ backgroundColor: '#1a1a1a', border: '1px solid #262626', color: '#a3a3a3' }}
-          className="fixed bottom-6 left-6 w-10 h-10 rounded-full flex items-center justify-center hover:text-white hover:border-gray-500 transition-colors z-40 text-base"
-          aria-label="Back to top"
-        >
-          &#8593;
-        </button>
-      )}
-
-      {/* Milestone modal */}
-      {showMilestone && (
-        <MilestoneModal day={milestoneDay} xpEarned={xpEarned} onClose={() => setShowMilestone(false)} />
-      )}
-
-      {/* XP level-up */}
-      {levelUp && (
-        <XPLevelUp fromLevel={levelUp.from} toLevel={levelUp.to} onClose={() => setLevelUp(null)} />
-      )}
-
-      {/* Keyboard shortcut map */}
-      <KeyboardShortcutMap />
-
-      <style>{`
-        .lesson-content h3 { color: #ffffff; font-weight: 700; font-size: 1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
-        .lesson-content p { color: #d4d4d4; font-size: 0.875rem; line-height: 1.75; margin-bottom: 0.75rem; }
-        .lesson-content ul { list-style: disc; padding-left: 1.5rem; color: #d4d4d4; font-size: 0.875rem; margin-bottom: 0.75rem; }
-        .lesson-content ol { list-style: decimal; padding-left: 1.5rem; color: #d4d4d4; font-size: 0.875rem; margin-bottom: 0.75rem; }
-        .lesson-content li { margin-bottom: 0.25rem; line-height: 1.6; }
-        .lesson-content pre { background-color: #1a1a1a; border: 1px solid #262626; padding: 1rem; border-radius: 0.5rem; font-size: 0.8rem; overflow-x: auto; margin-bottom: 1rem; color: #86efac; }
-        .lesson-content strong { color: #f59e0b; font-weight: 600; }
-        @keyframes rippleEffect { 0% { transform: translate(-50%,-50%) scale(0); opacity: 0.6; } 100% { transform: translate(-50%,-50%) scale(20); opacity: 0; } }
-      `}</style>
-    </main>
+        {/* Keyboard shortcut map */}
+        <KeyboardShortcutMap />
+      </main>
     </>
   )
 }
