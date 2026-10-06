@@ -15,6 +15,10 @@ model User {
   role             String            @default("USER")
   purchaseStatus   String            @default("UNPAID")
   stripeCustomerId String?
+  tags             String?
+  adminNotes       String?
+  referralCode     String?           @unique
+  referralCount    Int               @default(0)
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   profile          Profile?
@@ -23,6 +27,10 @@ model User {
   userAchievements UserAchievement[]
   coachMessages    CoachMessage[]
   feedback         Feedback[]
+  supportTickets   SupportTicket[]
+  lessonComments   LessonComment[]
+  couponRedemptions CouponRedemption[]
+  adminLogs        AdminLog[]
 }
 
 model Profile {
@@ -43,13 +51,18 @@ model Profile {
   pentatonicLevel  Int?
   styles           String?
   practiceMinutes  Int?
-  currentDay       Int       @default(1)
-  totalXP          Int       @default(0)
-  streak           Int       @default(0)
-  lastPracticeDate DateTime?
-  streakFreezes    Int       @default(1)
-  bestStreak       Int       @default(0)
-  weeklyGoalDays   Int       @default(5)
+  currentDay             Int       @default(1)
+  totalXP                Int       @default(0)
+  streak                 Int       @default(0)
+  lastPracticeDate       DateTime?
+  streakFreezes          Int       @default(1)
+  bestStreak             Int       @default(0)
+  weeklyGoalDays         Int       @default(5)
+  leaderboardOptIn       Boolean   @default(false)
+  avatarUrl              String?
+  dailyChallengeStreak   Int       @default(0)
+  lastDailyChallengeDate DateTime?
+  pomodoroSessions       Int       @default(0)
 }
 
 model Progress {
@@ -129,4 +142,70 @@ model Feedback {
   comment   String?
   type      String?
   createdAt DateTime @default(now())
+}
+
+model SupportTicket {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  subject   String
+  message   String
+  status    String   @default("open")
+  reply     String?
+  repliedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LessonComment {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  day       Int
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  message   String
+  type      String   @default("info")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AdminLog {
+  id        String   @id @default(cuid())
+  adminId   String
+  admin     User     @relation(fields: [adminId], references: [id])
+  action    String
+  target    String?
+  details   String?
+  createdAt DateTime @default(now())
+}
+
+model CouponCode {
+  id          String             @id @default(cuid())
+  code        String             @unique
+  discountPct Int
+  usageLimit  Int?
+  usedCount   Int                @default(0)
+  expiresAt   DateTime?
+  active      Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  redemptions CouponRedemption[]
+}
+
+model CouponRedemption {
+  id        String     @id @default(cuid())
+  couponId  String
+  coupon    CouponCode @relation(fields: [couponId], references: [id])
+  userId    String
+  user      User       @relation(fields: [userId], references: [id])
+  createdAt DateTime   @default(now())
+
+  @@unique([couponId, userId])
 }

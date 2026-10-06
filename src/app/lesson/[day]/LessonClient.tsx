@@ -11,6 +11,10 @@ import XPLevelUp from '@/components/XPLevelUp'
 import Metronome from '@/components/Metronome'
 import TechniqueTooltip from '@/components/TechniqueTooltip'
 import KeyboardShortcutMap from '@/components/KeyboardShortcutMap'
+import LessonQuiz from '@/components/LessonQuiz'
+import SpeedTrainer from '@/components/SpeedTrainer'
+import FretboardDiagram from '@/components/FretboardDiagram'
+import LessonComments from '@/components/LessonComments'
 
 interface LessonClientProps {
   lesson: Lesson
@@ -25,11 +29,12 @@ interface LessonClientProps {
   audioLabel: string | null
   currentDay: number
   completionPct: number
+  userId?: string
 }
 
 const DIFFICULT_AREAS = ['Bends', 'Timing', 'Speed', 'Memorization', 'Picking', 'Transitions']
 
-export default function LessonClient({ lesson, existingProgress, audioUrl, audioLabel, currentDay: _currentDay, completionPct }: LessonClientProps) {
+export default function LessonClient({ lesson, existingProgress, audioUrl, audioLabel, currentDay: _currentDay, completionPct, userId }: LessonClientProps) {
   const router = useRouter()
   const [difficulty, setDifficulty] = useState(existingProgress?.difficulty ?? '')
   const [difficultAreas, setDifficultAreas] = useState<string[]>(
@@ -50,9 +55,14 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
   const [levelUp, setLevelUp] = useState<{ from: string; to: string } | null>(null)
   const [readProgress, setReadProgress] = useState(0)
   const [ripple, setRipple] = useState<{ x: number; y: number } | null>(null)
+  const [showQuiz, setShowQuiz] = useState(false)
+  const [quizDone, setQuizDone] = useState(false)
+  const [showSwipeHint, setShowSwipeHint] = useState(false)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const notesDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isFirstNotesRender = useRef(true)
+  const touchStartX = useRef<number | null>(null)
+  const touchStartY = useRef<number | null>(null)
 
   useEffect(() => {
     if (timerRunning) {
@@ -115,6 +125,44 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  // Show swipe hint briefly on mobile
+  useEffect(() => {
+    const isMobile = window.matchMedia('(max-width: 640px)').matches
+    if (!isMobile) return
+    setShowSwipeHint(true)
+    const t = setTimeout(() => setShowSwipeHint(false), 3000)
+    return () => clearTimeout(t)
+  }, [])
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX
+    touchStartY.current = e.touches[0].clientY
+  }
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return
+    // Don't swipe if user is interacting with an input/textarea
+    if (
+      e.target instanceof HTMLInputElement ||
+      e.target instanceof HTMLTextAreaElement ||
+      e.target instanceof HTMLSelectElement
+    ) return
+
+    const dx = e.changedTouches[0].clientX - touchStartX.current
+    const dy = Math.abs(e.changedTouches[0].clientY - touchStartY.current)
+
+    // Only swipe horizontally (vertical scroll should win)
+    if (Math.abs(dx) > 80 && Math.abs(dx) > dy) {
+      if (dx < 0 && lesson.day < 30) {
+        router.push(`/lesson/${lesson.day + 1}`)
+      } else if (dx > 0 && lesson.day > 1) {
+        router.push(`/lesson/${lesson.day - 1}`)
+      }
+    }
+    touchStartX.current = null
+    touchStartY.current = null
+  }
+
   const formatTimer = (s: number) => {
     const m = Math.floor(s / 60)
     const sec = s % 60
@@ -168,6 +216,15 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
 
         triggerConfetti()
 
+        // Haptic feedback on lesson completion
+        try {
+          if (navigator.vibrate) navigator.vibrate([80, 40, 120])
+        } catch {}
+
+        if (lesson.quiz && lesson.quiz.length > 0) {
+          setShowQuiz(true)
+        }
+
         if ([7, 14, 21, 30].includes(lesson.day)) {
           setMilestoneDay(lesson.day)
           setShowMilestone(true)
@@ -186,6 +243,11 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
     } finally {
       setCompleting(false)
     }
+  }
+
+  const handleQuizComplete = (_score: number) => {
+    setShowQuiz(false)
+    setQuizDone(true)
   }
 
   const handleCompleteClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -211,7 +273,36 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '3px', zIndex: 9999, backgroundColor: '#1a1a1a' }}>
         <div style={{ width: `${readProgress}%`, height: '100%', background: 'linear-gradient(90deg, #f59e0b, #fde68a)', transition: 'width 0.1s ease', boxShadow: '0 0 8px rgba(245,158,11,0.6)' }} />
       </div>
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main
+        className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        aria-label={`Lesson: Day ${lesson.day} — ${lesson.title}`}
+      >
+      {/* Mobile swipe hint */}
+      {showSwipeHint && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'fixed',
+            bottom: 80,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: 'rgba(0,0,0,0.75)',
+            border: '1px solid #262626',
+            borderRadius: 9999,
+            padding: '6px 16px',
+            fontSize: '0.75rem',
+            color: '#a3a3a3',
+            zIndex: 30,
+            pointerEvents: 'none',
+            opacity: showSwipeHint ? 1 : 0,
+            transition: 'opacity 0.5s ease',
+          }}
+        >
+          &larr; Swipe &rarr;
+        </div>
+      )}
       {/* 30-day progress bar */}
       <div style={{ height: 4, backgroundColor: '#1a1a1a', borderRadius: 2, overflow: 'hidden', marginBottom: '1.5rem' }}>
         <div
@@ -278,6 +369,23 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
         </div>
       </div>
 
+      {/* Prerequisites */}
+      {lesson.prerequisites && lesson.prerequisites.length > 0 && (
+        <div style={{ backgroundColor: '#0a0a0a', border: '1px solid #1f1f1f', borderRadius: '0.5rem', padding: '0.875rem', marginBottom: '1rem' }}>
+          <p style={{ color: '#f59e0b' }} className="text-xs font-bold uppercase tracking-wider mb-2">
+            Before This Lesson
+          </p>
+          <ul className="flex flex-col gap-1">
+            {lesson.prerequisites.map((p, i) => (
+              <li key={i} style={{ color: '#a3a3a3' }} className="text-xs flex items-start gap-2">
+                <span style={{ color: '#f59e0b', flexShrink: 0 }}>&#8227;</span>
+                {p}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Duration badge */}
       <div className="flex flex-wrap gap-2 mb-8">
         <span style={{ backgroundColor: '#1a1a1a', color: '#a3a3a3', border: '1px solid #262626' }} className="text-xs px-3 py-1 rounded font-medium">
@@ -307,6 +415,35 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
         <p style={{ color: '#a3a3a3' }} className="text-sm leading-relaxed">{lesson.warmup}</p>
       </section>
 
+      {/* Fretboard diagram — shown when lesson involves scale/position techniques */}
+      {lesson.techniques.some((t) =>
+        ['pentatonic box 1', 'pentatonic scale', 'box patterns', 'ascending/descending', 'scale fingering'].includes(t)
+      ) && (
+        <section className="mb-6">
+          <h2 style={{ color: '#a3a3a3' }} className="text-xs font-bold uppercase tracking-widest mb-3">Fretboard Reference</h2>
+          <div className="overflow-x-auto">
+            <FretboardDiagram
+              startFret={5}
+              title="A Minor Pentatonic — Box 1 (fret 5)"
+              notes={[
+                { string: 6, fret: 5, label: 'R', color: '#f59e0b' },
+                { string: 6, fret: 8, label: '♭3' },
+                { string: 5, fret: 5, label: '4' },
+                { string: 5, fret: 7, label: '5' },
+                { string: 4, fret: 5, label: '♭7' },
+                { string: 4, fret: 7, label: 'R', color: '#f59e0b' },
+                { string: 3, fret: 5, label: '♭3' },
+                { string: 3, fret: 7, label: '4' },
+                { string: 2, fret: 5, label: '5' },
+                { string: 2, fret: 8, label: '♭7' },
+                { string: 1, fret: 5, label: 'R', color: '#f59e0b' },
+                { string: 1, fret: 8, label: '♭3' },
+              ]}
+            />
+          </div>
+        </section>
+      )}
+
       {/* Main content */}
       <section className="mb-6">
         <h2 className="text-white text-xs font-bold uppercase tracking-widest mb-4">Lesson Content</h2>
@@ -321,6 +458,11 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
       <section style={{ backgroundColor: '#111111', border: '1px solid #262626', borderLeft: '4px solid #f59e0b' }} className="rounded-r-lg p-5 mb-4">
         <h2 style={{ color: '#f59e0b' }} className="text-xs font-bold uppercase tracking-widest mb-3">Today&apos;s Exercise</h2>
         <p style={{ color: '#d4d4d4' }} className="text-sm leading-relaxed">{lesson.exercise}</p>
+      </section>
+
+      {/* Speed Trainer */}
+      <section className="mb-6">
+        <SpeedTrainer />
       </section>
 
       {/* I'm stuck button */}
@@ -339,6 +481,53 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
         <h2 className="text-white text-xs font-bold uppercase tracking-widest mb-3">Self-Check</h2>
         <p style={{ color: '#a3a3a3' }} className="text-sm leading-relaxed">{lesson.selfCheck}</p>
       </section>
+
+      {/* Common Mistakes */}
+      {lesson.commonMistakes && lesson.commonMistakes.length > 0 && (
+        <section style={{ backgroundColor: '#111111', border: '1px solid #262626', borderLeft: '4px solid #ef4444' }} className="rounded-r-lg p-5 mb-6">
+          <h2 style={{ color: '#ef4444' }} className="text-xs font-bold uppercase tracking-widest mb-3">Common Mistakes</h2>
+          <ul className="flex flex-col gap-2">
+            {lesson.commonMistakes.map((m, i) => (
+              <li key={i} style={{ color: '#d4d4d4' }} className="text-sm flex items-start gap-2 leading-relaxed">
+                <span style={{ color: '#ef4444', flexShrink: 0, marginTop: 2 }}>&#9888;</span>
+                {m}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Bonus Content */}
+      {lesson.bonusContent && (
+        <section style={{ backgroundColor: '#111111', border: '1px solid #262626', borderLeft: '4px solid #a855f7' }} className="rounded-r-lg p-5 mb-6">
+          <h2 style={{ color: '#a855f7' }} className="text-xs font-bold uppercase tracking-widest mb-3">
+            Bonus — Go Deeper
+          </h2>
+          <p style={{ color: '#d4d4d4' }} className="text-sm leading-relaxed">{lesson.bonusContent}</p>
+        </section>
+      )}
+
+      {/* Cross-references */}
+      {lesson.crossRefs && lesson.crossRefs.length > 0 && (
+        <section className="mb-6">
+          <h2 style={{ color: '#a3a3a3' }} className="text-xs font-bold uppercase tracking-widest mb-3">Connects To</h2>
+          <div className="flex flex-col gap-2">
+            {lesson.crossRefs.map((ref, i) => (
+              <a
+                key={i}
+                href={`/lesson/${ref.day}`}
+                style={{ backgroundColor: '#111111', border: '1px solid #1f1f1f', borderRadius: '0.5rem', padding: '0.625rem 0.875rem', display: 'flex', alignItems: 'flex-start', gap: '0.625rem', textDecoration: 'none' }}
+                className="hover:border-gray-600 transition-colors"
+              >
+                <span style={{ backgroundColor: '#1a0f00', color: '#f59e0b', borderRadius: '0.25rem', padding: '0.125rem 0.375rem', fontSize: '0.7rem', fontWeight: 700, flexShrink: 0, marginTop: 1 }}>
+                  Day {ref.day}
+                </span>
+                <span style={{ color: '#a3a3a3' }} className="text-xs leading-relaxed">{ref.description}</span>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Techniques */}
       <div className="flex flex-wrap gap-2 mb-8">
@@ -578,6 +767,24 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
           onBlur={(e) => { e.currentTarget.style.borderColor = '#262626' }}
         />
         <p style={{ color: '#404040' }} className="text-xs mt-2">Auto-saved as you type</p>
+      </section>
+
+      {/* Post-lesson Quiz — appears after completing the lesson */}
+      {showQuiz && lesson.quiz && lesson.quiz.length > 0 && !quizDone && (
+        <section className="mb-6">
+          <LessonQuiz quiz={lesson.quiz} onComplete={handleQuizComplete} />
+        </section>
+      )}
+
+      {quizDone && (
+        <div style={{ backgroundColor: '#052e16', border: '1px solid #166534', borderRadius: '0.5rem', padding: '0.75rem 1rem', marginBottom: '1.5rem' }} className="flex items-center gap-2">
+          <span style={{ color: '#86efac' }} className="text-xs font-bold">&#10003; Knowledge check complete</span>
+        </div>
+      )}
+
+      {/* Community Comments */}
+      <section className="mb-6">
+        <LessonComments day={lesson.day} userId={userId} />
       </section>
 
       {/* Bottom navigation */}

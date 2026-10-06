@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import AdminSidebar from '@/components/AdminSidebar'
 import Navbar from '@/components/Navbar'
 import Link from 'next/link'
-import AdminGrantButton from '@/components/AdminGrantButton'
+import BatchUsersTable from './BatchUsersTable'
 
 interface PageProps {
   searchParams: Promise<{ page?: string; q?: string; status?: string; sort?: string }>
@@ -63,6 +63,17 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     for (const p of prog) m.set(p.userId, (m.get(p.userId) ?? 0) + 1)
     return m
   })()
+
+  // Serialize for client component
+  const serializedUsers = users.map((u) => ({
+    ...u,
+    createdAt: u.createdAt.toISOString(),
+    profile: u.profile ? {
+      ...u.profile,
+      lastPracticeDate: u.profile.lastPracticeDate ? u.profile.lastPracticeDate.toISOString() : null,
+    } : null,
+    completedCount: completedMap.get(u.id) ?? 0,
+  }))
 
   const buildUrl = (overrides: Record<string, string | undefined>) => {
     const params = new URLSearchParams()
@@ -128,116 +139,25 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
             )}
           </form>
 
-          <div style={{ backgroundColor: '#111111', border: '1px solid #1f1f1f' }} className="rounded-xl overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr style={{ borderBottom: '1px solid #1f1f1f', backgroundColor: '#0d0d0d' }}>
-                    {['User', 'Status', 'Progress', 'XP', 'Streak', 'Last Active', 'Actions'].map((h) => (
-                      <th key={h} style={{ color: '#525252' }} className="text-left px-4 py-3 text-xs uppercase tracking-wider font-medium">
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map((user) => {
-                    const completedCount = completedMap.get(user.id) ?? 0
-                    const pct = Math.round((completedCount / 30) * 100)
-                    const daysSinceActive = user.profile?.lastPracticeDate
-                      ? Math.floor((Date.now() - new Date(user.profile.lastPracticeDate).getTime()) / 86400000)
-                      : null
-                    return (
-                      <tr key={user.id} style={{ borderBottom: '1px solid #161616' }} className="hover:bg-neutral-900 transition-colors">
-                        <td className="px-4 py-3">
-                          <Link href={`/admin/users/${user.id}`} className="hover:underline">
-                            <p className="text-white text-xs font-medium">{user.email}</p>
-                            <p style={{ color: '#525252' }} className="text-xs">{user.name ?? '—'} · {new Date(user.createdAt).toLocaleDateString()}</p>
-                            {user.role === 'ADMIN' && <span style={{ color: '#f59e0b' }} className="text-xs font-bold">ADMIN</span>}
-                          </Link>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span
-                            style={{
-                              backgroundColor: user.purchaseStatus === 'PAID' ? '#052e16' : '#1a1a1a',
-                              color: user.purchaseStatus === 'PAID' ? '#86efac' : '#525252',
-                              border: `1px solid ${user.purchaseStatus === 'PAID' ? '#166534' : '#262626'}`,
-                            }}
-                            className="text-xs px-2 py-0.5 rounded"
-                          >
-                            {user.purchaseStatus}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <div style={{ backgroundColor: '#1a1a1a', width: '60px', height: '4px', borderRadius: '9999px' }}>
-                              <div style={{ backgroundColor: '#f59e0b', width: `${pct}%`, height: '4px', borderRadius: '9999px' }} />
-                            </div>
-                            <span style={{ color: '#737373' }} className="text-xs">{completedCount}/30</span>
-                          </div>
-                          <p style={{ color: '#404040' }} className="text-xs mt-0.5">Day {user.profile?.currentDay ?? 1}</p>
-                        </td>
-                        <td style={{ color: '#f59e0b' }} className="px-4 py-3 text-xs font-bold">
-                          {user.profile?.totalXP ?? 0}
-                        </td>
-                        <td style={{ color: '#a3a3a3' }} className="px-4 py-3 text-xs">
-                          {user.profile?.streak ?? 0}d
-                          {(user.profile?.bestStreak ?? 0) > 0 && (
-                            <span style={{ color: '#525252' }} className="block text-xs">best: {user.profile?.bestStreak}d</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-xs">
-                          {daysSinceActive === null ? (
-                            <span style={{ color: '#404040' }}>Never</span>
-                          ) : daysSinceActive === 0 ? (
-                            <span style={{ color: '#86efac' }}>Today</span>
-                          ) : daysSinceActive === 1 ? (
-                            <span style={{ color: '#86efac' }}>Yesterday</span>
-                          ) : daysSinceActive <= 7 ? (
-                            <span style={{ color: '#fbbf24' }}>{daysSinceActive}d ago</span>
-                          ) : (
-                            <span style={{ color: '#ef4444' }}>{daysSinceActive}d ago</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-3">
-                            <Link
-                              href={`/admin/users/${user.id}`}
-                              style={{ color: '#f59e0b' }}
-                              className="text-xs hover:underline font-medium"
-                            >
-                              View →
-                            </Link>
-                            {user.purchaseStatus === 'UNPAID' && (
-                              <AdminGrantButton userId={user.id} />
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+          <BatchUsersTable users={serializedUsers} />
 
-            {totalPages > 1 && (
-              <div style={{ borderTop: '1px solid #1f1f1f' }} className="px-4 py-3 flex items-center justify-between">
-                <p style={{ color: '#525252' }} className="text-xs">Page {page} of {totalPages} · {total} users</p>
-                <div className="flex gap-2">
-                  {page > 1 && (
-                    <Link href={buildUrl({ page: String(page - 1) })} style={{ border: '1px solid #262626', color: '#737373' }} className="text-xs px-3 py-1 rounded hover:text-white transition-colors">
-                      ← Previous
-                    </Link>
-                  )}
-                  {page < totalPages && (
-                    <Link href={buildUrl({ page: String(page + 1) })} style={{ border: '1px solid #262626', color: '#737373' }} className="text-xs px-3 py-1 rounded hover:text-white transition-colors">
-                      Next →
-                    </Link>
-                  )}
-                </div>
+          {totalPages > 1 && (
+            <div style={{ borderTop: '1px solid #1f1f1f', marginTop: '0' }} className="px-4 py-3 flex items-center justify-between">
+              <p style={{ color: '#525252' }} className="text-xs">Page {page} of {totalPages} · {total} users</p>
+              <div className="flex gap-2">
+                {page > 1 && (
+                  <Link href={buildUrl({ page: String(page - 1) })} style={{ border: '1px solid #262626', color: '#737373' }} className="text-xs px-3 py-1 rounded hover:text-white transition-colors">
+                    ← Previous
+                  </Link>
+                )}
+                {page < totalPages && (
+                  <Link href={buildUrl({ page: String(page + 1) })} style={{ border: '1px solid #262626', color: '#737373' }} className="text-xs px-3 py-1 rounded hover:text-white transition-colors">
+                    Next →
+                  </Link>
+                )}
+              </div>
               </div>
             )}
-          </div>
         </main>
       </div>
     </div>

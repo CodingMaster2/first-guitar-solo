@@ -6,6 +6,7 @@ import AdminSidebar from '@/components/AdminSidebar'
 import Navbar from '@/components/Navbar'
 import Link from 'next/link'
 import AdminUserActions from './AdminUserActions'
+import AdminNotesPanel from './AdminNotesPanel'
 
 interface PageProps { params: Promise<{ id: string }> }
 
@@ -25,6 +26,7 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
       userAchievements: { include: { achievement: true }, orderBy: { unlockedAt: 'desc' } },
       coachMessages: { orderBy: { createdAt: 'desc' }, take: 30 },
       feedback: { orderBy: { createdAt: 'desc' } },
+      // adminNotes and tags are scalar fields included via full model
     },
   })
 
@@ -109,6 +111,15 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
                 isPaid={user.purchaseStatus === 'PAID'}
                 streakFreezes={user.profile?.streakFreezes ?? 0}
                 isSelf={user.id === session.user.id}
+              />
+            </div>
+
+            {/* Admin Notes & Tags */}
+            <div style={{ borderTop: '1px solid #1f1f1f' }} className="pt-4 mt-2">
+              <AdminNotesPanel
+                userId={user.id}
+                initialNotes={user.adminNotes ?? null}
+                initialTags={user.tags ?? null}
               />
             </div>
           </div>

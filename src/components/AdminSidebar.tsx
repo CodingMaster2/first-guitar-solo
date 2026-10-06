@@ -10,6 +10,11 @@ const navItems = [
   { href: '/admin/coach', label: 'Coach Messages', icon: '◎' },
   { href: '/admin/feedback', label: 'Feedback', icon: '★' },
   { href: '/admin/upload', label: 'Audio Assets', icon: '▷' },
+  { href: '/admin/announcements', label: 'Announcements', icon: '◬' },
+  { href: '/admin/coupons', label: 'Coupons', icon: '◇' },
+  { href: '/admin/support', label: 'Support', icon: '◻' },
+  { href: '/admin/logs', label: 'Action Log', icon: '≡' },
+  { href: '/admin/content', label: 'Content', icon: '✎' },
 ]
 
 export default function AdminSidebar() {

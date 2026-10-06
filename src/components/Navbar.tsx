@@ -16,6 +16,27 @@ export default function Navbar() {
 
   return (
     <>
+      {/* Skip to content */}
+      <a
+        href="#main-content"
+        style={{
+          position: 'absolute',
+          top: -999,
+          left: -999,
+          zIndex: 9999,
+          backgroundColor: '#f59e0b',
+          color: '#000',
+          padding: '8px 16px',
+          fontWeight: 900,
+          fontSize: '0.875rem',
+          borderRadius: '0 0 8px 0',
+        }}
+        className="focus:top-0 focus:left-0"
+        onFocus={(e) => { e.currentTarget.style.top = '0'; e.currentTarget.style.left = '0' }}
+        onBlur={(e) => { e.currentTarget.style.top = '-999px'; e.currentTarget.style.left = '-999px' }}
+      >
+        Skip to content
+      </a>
       <style>{`
         .nav-link { position: relative; }
         .nav-link::after { content: ''; position: absolute; bottom: -4px; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, #f59e0b, #fde68a); transform: scaleX(0); transform-origin: center; transition: transform 0.2s ease; border-radius: 1px; }
@@ -33,6 +54,7 @@ export default function Navbar() {
           borderBottom: '1px solid rgba(255,255,255,0.06)',
         }}
         className="sticky top-0 z-50"
+        aria-label="Main navigation"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -135,7 +157,10 @@ export default function Navbar() {
             <button
               className="md:hidden p-2"
               onClick={() => setMobileOpen(!mobileOpen)}
-              aria-label="Toggle menu"
+              aria-label="Toggle navigation menu"
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-nav-drawer"
+              role="button"
             >
               <div className="w-5 h-0.5 bg-white mb-1"></div>
               <div className="w-5 h-0.5 bg-white mb-1"></div>
@@ -162,6 +187,10 @@ export default function Navbar() {
 
       {/* Mobile drawer */}
       <div
+        id="mobile-nav-drawer"
+        role="navigation"
+        aria-label="Mobile navigation"
+        aria-hidden={!mobileOpen}
         style={{
           position: 'fixed',
           top: 0,

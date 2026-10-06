@@ -1,10 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import Footer from '@/components/Footer'
 import Navbar from '@/components/Navbar'
+import FAQChatbot from '@/components/FAQChatbot'
+import InstallPrompt from '@/components/InstallPrompt'
 
 const faqs = [
   {
@@ -72,11 +74,82 @@ const sectionDivider = (
   <div style={{ height: '1px', background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.25), transparent)', margin: '0' }} />
 )
 
+function useCountdown() {
+  const [timeLeft, setTimeLeft] = useState({ h: 0, m: 0, s: 0 })
+
+  useEffect(() => {
+    const DURATION = 48 * 60 * 60 * 1000 // 48 hours in ms
+
+    const getEndTime = () => {
+      try {
+        const stored = localStorage.getItem('ctaCountdownEnd')
+        if (stored) {
+          const end = parseInt(stored, 10)
+          if (!isNaN(end) && end > Date.now()) return end
+        }
+      } catch {}
+      const newEnd = Date.now() + DURATION
+      try { localStorage.setItem('ctaCountdownEnd', String(newEnd)) } catch {}
+      return newEnd
+    }
+
+    let endTime = getEndTime()
+
+    const tick = () => {
+      const diff = endTime - Date.now()
+      if (diff <= 0) {
+        // Reset
+        const newEnd = Date.now() + DURATION
+        try { localStorage.setItem('ctaCountdownEnd', String(newEnd)) } catch {}
+        endTime = newEnd
+        setTimeLeft({ h: 48, m: 0, s: 0 })
+        return
+      }
+      const totalSeconds = Math.floor(diff / 1000)
+      setTimeLeft({
+        h: Math.floor(totalSeconds / 3600),
+        m: Math.floor((totalSeconds % 3600) / 60),
+        s: totalSeconds % 60,
+      })
+    }
+
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  return timeLeft
+}
+
+const TESTIMONIALS = [
+  {
+    name: 'Marcus T.',
+    context: '8 months playing, never tried a solo',
+    quote: "I'd been stuck on chords for almost a year. Week 2 clicked something in my brain — the pentatonic scale makes sense now. By day 25 I was playing the whole thing. Slow, but it was there.",
+    day: 'Finished Day 30',
+  },
+  {
+    name: 'Sarah K.',
+    context: '14 months playing, mostly self-taught',
+    quote: "The AI Coach actually helped. When my bends were going flat I described the problem and it gave me exactly the right drill. That said — you have to put in the practice. The curriculum just makes sure it's the right practice.",
+    day: 'Finished Day 30',
+  },
+  {
+    name: 'Dani R.',
+    context: '6 months playing, first structured program',
+    quote: "I tried YouTube for a year. Every video says something slightly different. This just tells you exactly what to do each day. That's what I needed. The structure is the product.",
+    day: 'Day 28',
+  },
+]
+
 export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const { data: session } = useSession()
   const [showExitIntent, setShowExitIntent] = useState(false)
   const [tabPreviewPlaying, setTabPreviewPlaying] = useState(false)
+  const [testimonialIdx, setTestimonialIdx] = useState(0)
+  const testimonialTouchStartX = useRef<number | null>(null)
+  const countdown = useCountdown()
 
   // Exit intent — triggers once per session for non-logged-in users
   useEffect(() => {
@@ -148,6 +221,7 @@ export default function LandingPage() {
 
   return (
     <div style={{ backgroundColor: '#0a0a0a', color: '#ffffff' }} className="min-h-screen">
+      <InstallPrompt />
       <style>{`
         @keyframes meshMove {
           0%, 100% { background-position: 0% 50%; }
@@ -183,8 +257,11 @@ export default function LandingPage() {
 
       {/* HERO */}
       <section
+        id="main-content"
         className="hero-mesh relative min-h-screen flex flex-col justify-center px-4 sm:px-6 lg:px-8 pt-16"
         style={{ position: 'relative', overflow: 'hidden' }}
+        role="region"
+        aria-label="Hero — Play Your First Guitar Solo"
       >
         {/* Noise texture overlay */}
         <div style={{
@@ -246,6 +323,7 @@ export default function LandingPage() {
               href="/register"
               className="cta-pulse text-base font-black px-8 py-4 rounded uppercase tracking-wider hover:opacity-90 transition-opacity text-center"
               style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#000000' }}
+              aria-label="Start the First Guitar Solo program for $25"
             >
               Start Learning &mdash; $25
             </Link>
@@ -253,6 +331,7 @@ export default function LandingPage() {
               href="/lesson/preview/1"
               className="cta-pulse text-base font-bold px-8 py-4 rounded uppercase tracking-wider hover:opacity-80 transition-opacity text-center"
               style={{ border: '2px solid #f59e0b', color: '#f59e0b' }}
+              aria-label="Try Day 1 of the program for free — no account needed"
             >
               Try Day 1 Free
             </Link>
@@ -260,6 +339,7 @@ export default function LandingPage() {
               href="#how-it-works"
               style={{ border: '2px solid #262626', color: '#ffffff' }}
               className="text-base font-bold px-8 py-4 rounded uppercase tracking-wider hover:border-gray-400 transition-colors text-center"
+              aria-label="Scroll down to see how the program works"
             >
               See How It Works
             </a>
@@ -450,6 +530,8 @@ export default function LandingPage() {
       <section
         className="reveal"
         style={{ backgroundColor: '#0a0a0a', borderTop: '1px solid #1a1a1a' }}
+        role="region"
+        aria-label="Student testimonials"
       >
         <div className="py-24 px-4 sm:px-6 lg:px-8">
           <div className="max-w-5xl mx-auto">
@@ -458,30 +540,13 @@ export default function LandingPage() {
               Real guitarists.<br /><span style={{ color: '#a3a3a3' }} className="font-normal normal-case">Real progress.</span>
             </h2>
             <StudentCount />
-            <div className="grid sm:grid-cols-3 gap-6">
-              {[
-                {
-                  name: 'Marcus T.',
-                  context: '8 months playing, never tried a solo',
-                  quote: "I'd been stuck on chords for almost a year. Week 2 clicked something in my brain — the pentatonic scale makes sense now. By day 25 I was playing the whole thing. Slow, but it was there.",
-                  day: 'Finished Day 30',
-                },
-                {
-                  name: 'Sarah K.',
-                  context: '14 months playing, mostly self-taught',
-                  quote: "The AI Coach actually helped. When my bends were going flat I described the problem and it gave me exactly the right drill. That said — you have to put in the practice. The curriculum just makes sure it's the right practice.",
-                  day: 'Finished Day 30',
-                },
-                {
-                  name: 'Dani R.',
-                  context: '6 months playing, first structured program',
-                  quote: "I tried YouTube for a year. Every video says something slightly different. This just tells you exactly what to do each day. That's what I needed. The structure is the product.",
-                  day: 'Day 28',
-                },
-              ].map((t, i) => (
+
+            {/* Desktop grid / Mobile swipeable */}
+            <div className="hidden sm:grid sm:grid-cols-3 gap-6">
+              {TESTIMONIALS.map((t, i) => (
                 <div key={i} style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="tilt-card p-6 rounded-xl">
                   <div className="flex items-center gap-2 mb-4">
-                    <svg width="16" height="20" viewBox="0 0 60 72" fill="#f59e0b" style={{ flexShrink: 0 }}>
+                    <svg width="16" height="20" viewBox="0 0 60 72" fill="#f59e0b" style={{ flexShrink: 0 }} aria-hidden="true">
                       <path d="M30 0 C50 0 60 12 60 24 C60 48 30 72 30 72 C30 72 0 48 0 24 C0 12 10 0 30 0Z"/>
                     </svg>
                   </div>
@@ -493,6 +558,63 @@ export default function LandingPage() {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Mobile: single card with swipe */}
+            <div
+              className="sm:hidden"
+              onTouchStart={(e) => { testimonialTouchStartX.current = e.touches[0].clientX }}
+              onTouchEnd={(e) => {
+                if (testimonialTouchStartX.current === null) return
+                const dx = e.changedTouches[0].clientX - testimonialTouchStartX.current
+                testimonialTouchStartX.current = null
+                if (dx < -40) setTestimonialIdx((i) => Math.min(i + 1, TESTIMONIALS.length - 1))
+                else if (dx > 40) setTestimonialIdx((i) => Math.max(i - 1, 0))
+              }}
+            >
+              <div
+                style={{ backgroundColor: '#111111', border: '1px solid #262626' }}
+                className="p-6 rounded-xl"
+                role="region"
+                aria-live="polite"
+                aria-label={`Testimonial ${testimonialIdx + 1} of ${TESTIMONIALS.length}`}
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <svg width="16" height="20" viewBox="0 0 60 72" fill="#f59e0b" style={{ flexShrink: 0 }} aria-hidden="true">
+                    <path d="M30 0 C50 0 60 12 60 24 C60 48 30 72 30 72 C30 72 0 48 0 24 C0 12 10 0 30 0Z"/>
+                  </svg>
+                </div>
+                <p style={{ color: '#d4d4d4' }} className="text-sm leading-relaxed mb-6">
+                  {TESTIMONIALS[testimonialIdx].quote}
+                </p>
+                <div>
+                  <p className="text-white text-sm font-bold">{TESTIMONIALS[testimonialIdx].name}</p>
+                  <p style={{ color: '#525252' }} className="text-xs">{TESTIMONIALS[testimonialIdx].context}</p>
+                  <p style={{ color: '#f59e0b' }} className="text-xs mt-1">{TESTIMONIALS[testimonialIdx].day}</p>
+                </div>
+              </div>
+              {/* Swipe dots */}
+              <div className="flex justify-center gap-2 mt-4" role="tablist" aria-label="Testimonial navigation">
+                {TESTIMONIALS.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setTestimonialIdx(i)}
+                    role="tab"
+                    aria-selected={i === testimonialIdx}
+                    aria-label={`View testimonial ${i + 1}`}
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      backgroundColor: i === testimonialIdx ? '#f59e0b' : '#262626',
+                      border: 'none',
+                      cursor: 'pointer',
+                      transition: 'background 0.2s ease',
+                      padding: 0,
+                    }}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -624,23 +746,115 @@ G |--------------------------------------|`}</pre>
       {sectionDivider}
 
       {/* PRICING */}
-      <section id="pricing" className="reveal py-24 px-4 sm:px-6 lg:px-8">
+      <section id="pricing" className="reveal py-24 px-4 sm:px-6 lg:px-8" role="region" aria-label="Pricing">
         <div className="max-w-5xl mx-auto">
+          {/* Countdown timer */}
+          <div className="flex justify-center mb-6">
+            <div
+              style={{
+                backgroundColor: '#0d0a00',
+                border: '1px solid rgba(245,158,11,0.3)',
+                borderRadius: 9999,
+                padding: '8px 20px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 10,
+              }}
+              aria-label="Limited time offer countdown"
+            >
+              <span style={{ color: '#f59e0b', fontSize: '0.72rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                Offer ends in:
+              </span>
+              <span
+                style={{ color: '#f59e0b', fontWeight: 900, fontSize: '1rem', fontVariantNumeric: 'tabular-nums', letterSpacing: '0.05em' }}
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                {String(countdown.h).padStart(2, '0')}h{' '}
+                {String(countdown.m).padStart(2, '0')}m{' '}
+                {String(countdown.s).padStart(2, '0')}s
+              </span>
+            </div>
+          </div>
+
           <div className="max-w-md mx-auto">
+            {/* First 100 students badge */}
+            <div className="text-center mb-4">
+              <span
+                style={{
+                  backgroundColor: '#1a1000',
+                  color: '#f59e0b',
+                  border: '1px solid rgba(245,158,11,0.4)',
+                  borderRadius: 9999,
+                  fontSize: '0.72rem',
+                  fontWeight: 900,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                  padding: '4px 14px',
+                  display: 'inline-block',
+                }}
+              >
+                First 100 Students — Founding Price
+              </span>
+            </div>
+
             <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="pricing-tilt rounded-xl overflow-hidden">
               <div style={{ backgroundColor: '#f59e0b' }} className="px-8 py-6 text-center">
                 <p className="text-black text-xs font-bold uppercase tracking-widest mb-1">Sixth String Labs</p>
                 <h2 className="text-black text-2xl font-black uppercase tracking-wider">First Guitar Solo</h2>
               </div>
-              <div className="px-8 py-8 text-center">
-                <div className="mb-8">
-                  <span className="text-white text-6xl font-black">$25</span>
-                  <p style={{ color: '#a3a3a3' }} className="text-sm mt-1">One-time payment</p>
+              <div className="px-8 py-8">
+                {/* Price anchoring */}
+                <div className="text-center mb-6">
+                  <p style={{ color: '#525252', fontSize: '0.8rem', textDecoration: 'line-through', marginBottom: 4 }}>
+                    $197 (comparable to 2 private lessons)
+                  </p>
+                  <div>
+                    <span className="text-white text-6xl font-black">$25</span>
+                  </div>
+                  <p style={{ color: '#a3a3a3' }} className="text-sm mt-1">One-time payment · Lifetime access</p>
                 </div>
+
+                {/* Value stack */}
+                <div
+                  style={{
+                    backgroundColor: '#0a0a0a',
+                    border: '1px solid #1f1f1f',
+                    borderRadius: 10,
+                    padding: '16px 20px',
+                    marginBottom: 20,
+                  }}
+                >
+                  <p style={{ color: '#525252', fontSize: '0.7rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>
+                    What&apos;s included
+                  </p>
+                  {[
+                    { label: '30 structured lessons', value: '$297 value' },
+                    { label: 'AI Guitar Coach, unlimited', value: '$120 value' },
+                    { label: 'Lifetime access', value: '$∞' },
+                  ].map((row, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0', borderBottom: i < 2 ? '1px solid #1a1a1a' : 'none' }}>
+                      <span style={{ color: '#d4d4d4', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ color: '#f59e0b' }}>&#10003;</span>
+                        {row.label}
+                      </span>
+                      <span style={{ color: '#525252', fontSize: '0.75rem', fontStyle: 'italic' }}>{row.value}</span>
+                    </div>
+                  ))}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, paddingTop: 10, borderTop: '1px solid #262626' }}>
+                    <span style={{ color: '#a3a3a3', fontSize: '0.8rem', fontWeight: 700 }}>Total value</span>
+                    <span style={{ color: '#525252', fontSize: '0.8rem', textDecoration: 'line-through' }}>$417</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
+                    <span style={{ color: '#f59e0b', fontSize: '0.9rem', fontWeight: 900 }}>Today only</span>
+                    <span style={{ color: '#f59e0b', fontSize: '1.1rem', fontWeight: 900 }}>$25</span>
+                  </div>
+                </div>
+
                 <ul className="space-y-3 text-left mb-8">
                   {['30-day structured curriculum', 'AI Guitar Coach', 'Progress tracking', 'Original blues-rock solo + backing tracks', '30-day money-back guarantee'].map((item, i) => (
                     <li key={i} className="flex items-center gap-3">
-                      <span style={{ color: '#f59e0b' }}>&#10003;</span>
+                      <span style={{ color: '#f59e0b' }} aria-hidden="true">&#10003;</span>
                       <span style={{ color: '#a3a3a3' }} className="text-sm">{item}</span>
                     </li>
                   ))}
@@ -649,6 +863,7 @@ G |--------------------------------------|`}</pre>
                   href="/register"
                   className="cta-pulse w-full block text-center text-base font-black px-8 py-4 rounded uppercase tracking-wider hover:opacity-90 transition-opacity"
                   style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#000000' }}
+                  aria-label="Start the First Guitar Solo program — $25 one-time payment"
                 >
                   Start Learning &mdash; $25
                 </Link>
@@ -743,7 +958,7 @@ G |--------------------------------------|`}</pre>
       {sectionDivider}
 
       {/* FAQ */}
-      <section style={{ backgroundColor: '#111111', borderTop: '1px solid #1a1a1a' }} className="py-24 px-4 sm:px-6 lg:px-8">
+      <section id="faq" style={{ backgroundColor: '#111111', borderTop: '1px solid #1a1a1a' }} className="py-24 px-4 sm:px-6 lg:px-8" role="region" aria-label="Frequently asked questions">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-3xl font-black uppercase mb-12 text-center">Common Questions</h2>
           <div className="space-y-2">
@@ -792,6 +1007,7 @@ G |--------------------------------------|`}</pre>
         </div>
       </section>
 
+      <FAQChatbot />
       <Footer />
 
       {/* Sticky mobile CTA — only for non-logged-in users */}

@@ -10,6 +10,10 @@ import Footer from '@/components/Footer'
 import StreakFreezeButton from '@/components/StreakFreezeButton'
 import XPRing from '@/components/XPRing'
 import WeeklyActivityChart from '@/components/WeeklyActivityChart'
+import GuitarTip from '@/components/GuitarTip'
+import OnboardingTour from '@/components/OnboardingTour'
+import DailyChallenge from '@/components/DailyChallenge'
+import PomodoroTimer from '@/components/PomodoroTimer'
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions)
@@ -57,6 +61,8 @@ export default async function DashboardPage() {
     date.setDate(date.getDate() + daysFromNow)
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   })()
+
+  const isXpWeekend = [0, 5, 6].includes(new Date().getDay())
 
   const isComeback = (() => {
     if (!profile.lastPracticeDate) return false
@@ -154,6 +160,25 @@ export default async function DashboardPage() {
           )
         })()}
 
+        {/* XP Weekend Multiplier Banner */}
+        {isXpWeekend && (
+          <div
+            style={{ background: 'linear-gradient(135deg, #1a1000 0%, #0f0800 100%)', border: '1px solid #f59e0b' }}
+            className="rounded-xl p-4 mb-6 flex items-center gap-4"
+          >
+            <span style={{ fontSize: '1.5rem', lineHeight: 1 }}>&#9889;</span>
+            <div className="flex-1">
+              <p className="text-white font-black text-base">Weekend XP Multiplier Active</p>
+              <p style={{ color: '#a3a3a3' }} className="text-xs mt-0.5">
+                Earn 1.5&#215; XP on all lessons today!
+              </p>
+            </div>
+            <div style={{ color: '#f59e0b', fontWeight: 900, fontSize: '1.25rem' }} className="hidden sm:block">
+              1.5&#215;
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="mb-6 flex items-center gap-6">
           <div className="flex-1">
@@ -190,6 +215,17 @@ export default async function DashboardPage() {
               <p style={{ color: '#525252' }} className="text-xs">{stat.sub}</p>
             </div>
           ))}
+        </div>
+
+        {/* Guitar Tip of the Day */}
+        <GuitarTip />
+
+        {/* Daily Challenge */}
+        <DailyChallenge currentDay={profile.currentDay} xpReward={25} />
+
+        {/* Pomodoro Timer */}
+        <div className="mb-6">
+          <PomodoroTimer />
         </div>
 
         {/* 30-day journey grid */}
@@ -422,6 +458,12 @@ export default async function DashboardPage() {
       </main>
 
       <Footer />
+
+      {/* Onboarding Tour — shown to new users who haven't seen it yet */}
+      <OnboardingTour
+        show={profile.currentDay <= 1 && !profile.lastPracticeDate}
+        onDone={() => {}}
+      />
     </div>
   )
 }

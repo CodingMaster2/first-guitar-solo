@@ -12,6 +12,11 @@ export interface Lesson {
   techniques: string[]
   xpReward: number
   soloSection?: number
+  quiz?: Array<{ question: string; options: string[]; correct: number }>
+  commonMistakes?: string[]
+  bonusContent?: string
+  crossRefs?: Array<{ day: number; description: string }>
+  prerequisites?: string[]
 }
 
 export interface UserProfile {

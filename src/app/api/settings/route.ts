@@ -4,6 +4,25 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const profile = await prisma.profile.findUnique({
+      where: { userId: session.user.id },
+      select: { avatarUrl: true, leaderboardOptIn: true },
+    })
+    return NextResponse.json({
+      avatarUrl: profile?.avatarUrl ?? null,
+      leaderboardOptIn: profile?.leaderboardOptIn ?? false,
+    })
+  } catch (error) {
+    console.error('Settings GET error:', error)
+    return NextResponse.json({ error: 'Failed' }, { status: 500 })
+  }
+}
+
 export async function PATCH(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -15,9 +34,12 @@ export async function PATCH(req: NextRequest) {
       name?: string
       currentPassword?: string
       newPassword?: string
+      avatarUrl?: string | null
+      leaderboardOptIn?: boolean
     }
 
     const updateData: { name?: string; password?: string } = {}
+    const profileUpdateData: { avatarUrl?: string | null; leaderboardOptIn?: boolean } = {}
 
     if (typeof body.name === 'string') {
       const trimmed = body.name.trim()
@@ -25,6 +47,14 @@ export async function PATCH(req: NextRequest) {
         return NextResponse.json({ error: 'Name too long (max 50 chars)' }, { status: 400 })
       }
       updateData.name = trimmed || undefined
+    }
+
+    if (body.avatarUrl !== undefined) {
+      profileUpdateData.avatarUrl = typeof body.avatarUrl === 'string' ? (body.avatarUrl.trim() || null) : null
+    }
+
+    if (typeof body.leaderboardOptIn === 'boolean') {
+      profileUpdateData.leaderboardOptIn = body.leaderboardOptIn
     }
 
     if (body.currentPassword && body.newPassword) {
@@ -45,14 +75,26 @@ export async function PATCH(req: NextRequest) {
       updateData.password = await bcrypt.hash(body.newPassword, 12)
     }
 
-    if (Object.keys(updateData).length === 0) {
+    const hasUserUpdate = Object.keys(updateData).length > 0
+    const hasProfileUpdate = Object.keys(profileUpdateData).length > 0
+
+    if (!hasUserUpdate && !hasProfileUpdate) {
       return NextResponse.json({ error: 'Nothing to update' }, { status: 400 })
     }
 
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: updateData,
-    })
+    if (hasUserUpdate) {
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: updateData,
+      })
+    }
+
+    if (hasProfileUpdate) {
+      await prisma.profile.updateMany({
+        where: { userId: session.user.id },
+        data: profileUpdateData,
+      })
+    }
 
     return NextResponse.json({ ok: true })
   } catch (error) {

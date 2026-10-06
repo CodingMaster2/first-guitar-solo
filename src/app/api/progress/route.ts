@@ -79,9 +79,13 @@ export async function POST(req: NextRequest) {
 
     const { day, difficulty, difficultAreas, rating, notes } = body
 
-    // Get lesson XP reward
+    // Get lesson XP reward (with weekend multiplier)
     const lesson = LESSONS.find((l) => l.day === day)
-    const xpReward = lesson?.xpReward ?? 50
+    // Day 31 is the secret bonus lesson — awards 100 XP
+    const baseXP = day > 30 ? 100 : (lesson?.xpReward ?? 50)
+    const dayOfWeek = new Date().getDay() // 0=Sun, 5=Fri, 6=Sat
+    const weekendMultiplier = [0, 5, 6].includes(dayOfWeek) ? 1.5 : 1
+    const xpReward = Math.round(baseXP * weekendMultiplier)
 
     // Get existing progress
     const existingProgress = await prisma.progress.findUnique({
@@ -200,7 +204,7 @@ export async function POST(req: NextRequest) {
       await checkAchievement('solo_complete')
     if (completedDays.includes(30)) await checkAchievement('first_solo')
 
-    return NextResponse.json({ success: true, xpEarned: xpReward, newAchievements, totalXPBefore, totalXPAfter: newTotalXP })
+    return NextResponse.json({ success: true, xpEarned: xpReward, newAchievements, totalXPBefore, totalXPAfter: newTotalXP, weekendMultiplier })
   } catch (error) {
     console.error('Progress POST error:', error)
     return NextResponse.json({ error: 'Failed to update progress' }, { status: 500 })

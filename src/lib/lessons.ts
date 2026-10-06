@@ -35,6 +35,18 @@ E |--5--6--7--8-----|</pre>
     selfCheck: 'Each note should ring clearly for its full duration before the next note. If you hear any buzzing, adjust your finger placement — press right behind the fret, not on top of it. The goal is clarity, not speed.',
     techniques: ['single-note picking', 'finger placement', 'chromatic exercise'],
     xpReward: 50,
+    prerequisites: ['A guitar and a pick — that is all you need today.'],
+    quiz: [
+      { question: 'Which finger goes on fret 5 in the chromatic exercise?', options: ['Index', 'Middle', 'Ring', 'Pinky'], correct: 0 },
+      { question: 'What is the primary goal of clean technique?', options: ['Speed', 'String buzzing', 'Each note rings clearly', 'Playing quietly'], correct: 2 },
+      { question: 'How should you press the string relative to the fret wire?', options: ['On top of the fret', 'Right behind the fret', 'Far from the fret', "It doesn't matter"], correct: 1 },
+    ],
+    commonMistakes: [
+      'Placing the finger on top of the fret wire instead of just behind it — this causes buzzing.',
+      'Using the fingertip pad instead of the very tip of the finger — this muffles adjacent strings.',
+      'Pressing too hard and tensing the whole hand — use just enough pressure to get a clean note.',
+    ],
+    bonusContent: 'Try the same chromatic exercise on every string, not just the low E. The physical pattern is the same, but each string has a different tension. The high e string is the most challenging — start it last once your fingers are warmed up.',
   },
   {
     day: 2,
@@ -73,6 +85,19 @@ E |------------------------|</pre>
     selfCheck: 'Are you landing on the beat, or slightly after it? The goal is to be exactly with the click — not rushing ahead, not dragging behind. It will feel slightly uncomfortable at first. That discomfort is growth.',
     techniques: ['tab reading', 'timing', 'metronome practice'],
     xpReward: 50,
+    prerequisites: ['Day 1 chromatic exercise — you should be comfortable fretting single notes cleanly.'],
+    crossRefs: [{ day: 1, description: 'Chromatic fretting technique applies to every tab figure you will ever read.' }],
+    quiz: [
+      { question: 'In guitar tab, what does the number 0 on a string mean?', options: ['Play fret 0 (does not exist)', 'Open string — no fret pressed', 'Mute the string', 'Skip the string'], correct: 1 },
+      { question: 'Notes stacked vertically in a tab are played...', options: ['One at a time, ascending', 'Simultaneously', 'In any order you like', 'Only on one string'], correct: 1 },
+      { question: 'What is the main purpose of a metronome while practicing?', options: ['Make it sound louder', 'Keep consistent timing', 'Teach you new scales', 'Replace a backing track'], correct: 1 },
+    ],
+    commonMistakes: [
+      'Stopping and restarting when you miss a note — push through mistakes to train performance instincts.',
+      'Reading tab without internalising the timing — tab shows which notes, not how long to hold them.',
+      'Jumping to 120 BPM before you can play cleanly at 60 BPM.',
+    ],
+    bonusContent: 'Once you can read a single-line tab, try writing one yourself. Pick five notes you like, write them out in tab format, then play what you wrote. This reinforces both reading and writing simultaneously.',
   },
   {
     day: 3,
@@ -107,6 +132,22 @@ E |---5---6---7---8-----------|
     selfCheck: 'Record yourself playing 30 seconds of this exercise (voice memo on your phone is fine). Listen back. Can you hear a difference between your downstrokes and upstrokes? If yes, keep working on evening them out. If no, you\'re in great shape.',
     techniques: ['alternate picking', 'pick motion', 'downstroke', 'upstroke'],
     xpReward: 50,
+    prerequisites: ['Day 1: clean single-note fretting', 'Day 2: basic tab reading at 60 BPM'],
+    crossRefs: [
+      { day: 1, description: 'The chromatic exercise is the base pattern for alternate picking practice.' },
+      { day: 2, description: "Apply alternate picking to the 8-note tab figure from Day 2's exercise." },
+    ],
+    quiz: [
+      { question: 'What is the pick-stroke direction for alternate picking on the 3rd note?', options: ['Down', 'Up', 'Either — it does not matter', 'You do not pick it'], correct: 1 },
+      { question: 'Where should the picking motion originate?', options: ['The elbow', 'The shoulder', 'The wrist', 'The whole arm'], correct: 2 },
+      { question: 'Why is alternate picking more efficient than all-downstrokes at high speed?', options: ['It uses lighter strings', 'The pick travels in both directions', 'You skip some strings', 'It requires less finger pressure'], correct: 1 },
+    ],
+    commonMistakes: [
+      'Picking from the elbow — this wastes motion and causes fatigue. Keep it in the wrist.',
+      'Upstrokes that are quieter or thinner-sounding than downstrokes — they must be equal.',
+      'Accidentally anchoring the pick too deep into the string, causing it to catch on the wind-up.',
+    ],
+    bonusContent: 'Try "economy picking" as a mental contrast: only use downstrokes when crossing to a lower (thicker) string, and upstrokes when crossing to a higher string. You do not need to use this yet — but understanding that alternate picking is a choice will make you a more intentional player.',
   },
   {
     day: 4,
@@ -136,6 +177,22 @@ G |------------------------|</pre>
     selfCheck: 'The hammered note should be close to the same volume as the picked note. If it\'s much quieter, hammer harder. If it\'s buzzing, adjust your finger placement. The transition between picked note and hammered note should sound smooth — not like two separate events.',
     techniques: ['hammer-on', 'legato', 'fret-hand technique'],
     xpReward: 50,
+    prerequisites: ['Day 3: alternate picking — hammer-ons start with a picked note, so picking must be clean.'],
+    crossRefs: [
+      { day: 5, description: 'Hammer-ons pair directly with pull-offs on Day 5 to form the full legato vocabulary.' },
+      { day: 11, description: 'Used extensively in the legato phrasing lesson.' },
+    ],
+    quiz: [
+      { question: 'How do you create the sound of a hammer-on note?', options: ['Pick it harder', 'Slide into it', 'Bring a finger down hard onto the fret', 'Tap the guitar body'], correct: 2 },
+      { question: 'In tab, how is a hammer-on written between frets 5 and 7?', options: ['5s7', '5h7', '5/7', '5~7'], correct: 1 },
+      { question: 'How many pick strokes does a 4-note hammer-on phrase (5h7h8h10) require?', options: ['4', '3', '2', '1'], correct: 3 },
+    ],
+    commonMistakes: [
+      'Hammering too slowly — the motion must be quick and deliberate, like a nail hammer, not a slow press.',
+      'Landing the finger flat on the fret instead of right behind it, causing a dull thud instead of a note.',
+      'Losing the volume of the hammered notes — they should be nearly as loud as a picked note.',
+    ],
+    bonusContent: 'Hammer-ons are the core of tapping technique used by players like Eddie Van Halen. Once you have a reliable hammer-on, two-hand tapping becomes accessible. For now, practice the motion with your fretting hand only until it is second nature.',
   },
   {
     day: 5,
@@ -166,6 +223,22 @@ G |------------------------|</pre>
     selfCheck: 'The pulled-off note should be clearly audible, not barely a whisper. All three notes in the h/p combination (5, 7, 5) should be roughly equal volume. If the pull-off is weak, practice the pulling motion alone until the note rings clearly.',
     techniques: ['pull-off', 'legato', 'hammer-on/pull-off combination', 'trill'],
     xpReward: 50,
+    prerequisites: ['Day 4: hammer-ons — pull-offs are the reverse motion and rely on the same finger positioning.'],
+    crossRefs: [
+      { day: 4, description: 'Hammer-ons and pull-offs form mirror techniques — combine them for the trill in this lesson.' },
+      { day: 11, description: 'Pull-offs are central to the legato phrasing lesson in Week 2.' },
+    ],
+    quiz: [
+      { question: 'What is the key motion that creates the sound on a pull-off?', options: ['Lifting the finger straight up', 'Pulling the finger slightly downward as it leaves the string', 'Pressing harder on the lower fret', 'Picking the string again'], correct: 1 },
+      { question: 'Before you pick the upper fret for a pull-off, where must your lower finger be?', options: ['Lifted off the string', 'Already placed on the lower fret', 'On an adjacent string', 'Wherever feels comfortable'], correct: 1 },
+      { question: 'What does "h/p" notation like 5h7p5 describe?', options: ['Half-step then pull', 'Hammer onto 7 then pull back to 5', 'High note then pause', 'Hold position 7 for 5 beats'], correct: 1 },
+    ],
+    commonMistakes: [
+      'Lifting the finger straight up instead of pulling it — you will get silence instead of a note.',
+      'Not having the lower finger pre-placed before the pull, so there is nothing to pull off to.',
+      'Doing the pull-off motion too softly — commit to the pull to get full volume.',
+    ],
+    bonusContent: 'The hammer-on/pull-off trill (5h7p5h7p5...) is used in countless blues-rock solos. Try gradually speeding it up over 10-second intervals: start slow, increase tempo every 10 seconds, rest, repeat. This trains speed and endurance simultaneously.',
   },
   {
     day: 6,
@@ -200,6 +273,22 @@ D |------------------------|</pre>`,
     selfCheck: 'The note at your destination should sound in tune and clear. If the slide "dies" before you reach the destination, you\'re releasing pressure. If it sounds off-pitch, you may be landing on the wrong fret. Count the frets as you slide — feel the bumps of the frets under your finger.',
     techniques: ['slide', 'legato slide', 'ascending slide', 'descending slide'],
     xpReward: 50,
+    prerequisites: ['Days 4-5: hammer-ons and pull-offs — slides complete your legato toolkit.'],
+    crossRefs: [
+      { day: 11, description: 'Slides are used to approach pentatonic scale notes in the legato phrasing lesson.' },
+      { day: 16, description: 'The solo opening statement uses a B-string slide as its primary gesture.' },
+    ],
+    quiz: [
+      { question: 'What must you maintain throughout the entire slide to keep the note sounding?', options: ['Pick pressure', 'String pressure with your fretting finger', 'Wrist rotation', 'Finger angle'], correct: 1 },
+      { question: 'In tab, what symbol indicates a slide up?', options: ['b', 'h', '/', '\\\\'], correct: 2 },
+      { question: 'What is the difference between a legato slide and a shift slide?', options: ['Legato is faster', 'In a shift slide you pick both the start and end note; in legato only the start', 'Legato slides go down; shift slides go up', 'There is no difference'], correct: 1 },
+    ],
+    commonMistakes: [
+      'Releasing string pressure mid-slide — the string goes silent. Keep firm contact the whole way.',
+      'Sliding too fast so it sounds like a jump rather than a smooth glide.',
+      'Landing on the wrong fret — count the frets consciously until muscle memory takes over.',
+    ],
+    bonusContent: 'Slides can also be used as "pre-bends" where you slide into a note from far below without picking the starting pitch — just the arrival. Try sliding from fret 2 up to fret 7 in one smooth motion. The listener hears only the destination, not where you started.',
   },
   {
     day: 7,
@@ -239,6 +328,24 @@ D |----------------------------------|</pre>
     selfCheck: 'By the end of Week 1, you should be able to play each technique cleanly at 60 BPM and combine them in a short phrase. If you\'re not there on any technique, note it in your self-assessment — the curriculum will reinforce it in Week 2.',
     techniques: ['alternate picking', 'hammer-on', 'pull-off', 'slide', 'combination phrases'],
     xpReward: 100,
+    prerequisites: ['All of Days 1-6 — this is the consolidation lesson for the full Week 1 technique set.'],
+    crossRefs: [
+      { day: 1, description: 'Alternate picking chromatic exercise — revisited as warm-up.' },
+      { day: 4, description: 'Hammer-ons — tested in the five-technique sequence.' },
+      { day: 5, description: 'Pull-offs — tested in the five-technique sequence.' },
+      { day: 6, description: 'Slides — tested in the five-technique sequence.' },
+    ],
+    quiz: [
+      { question: 'In the five-technique challenge, which technique is performed first?', options: ['Hammer-ons', 'Alternate picking', 'Slides', 'Pull-offs'], correct: 1 },
+      { question: 'How many clean repetitions should you do at each technique before moving on?', options: ['1', '3', '5', '10'], correct: 2 },
+      { question: 'What should you do if you rate yourself 1 out of 3 on a technique?', options: ['Skip it and move forward', 'Spend extra time on that technique and flag it for the AI Coach', 'Practice a different technique instead', 'Restart the week from Day 1'], correct: 1 },
+    ],
+    commonMistakes: [
+      'Rushing through techniques you are comfortable with and skipping the hard ones — rate honestly.',
+      'Not recording yourself — audio playback reveals problems you cannot hear in real time.',
+      'Treating the review as a test rather than a diagnostic — the goal is information, not a grade.',
+    ],
+    bonusContent: 'The combination phrase at the end of this lesson is a micro-lick — a short, reusable musical idea. Great guitarists have dozens of micro-licks in their vocabulary. Save this one: it will appear in the solo later and will feel familiar when it does.',
   },
 
   // ===== WEEK 2: SOUNDING LIKE A LEAD GUITARIST =====
@@ -275,6 +382,22 @@ E |--5--8--|</pre>
     selfCheck: 'You should be able to hear the "bluesy" quality of the minor pentatonic. If you\'ve heard classic rock solos before, this should sound familiar. That familiarity means you\'re hearing it correctly.',
     techniques: ['pentatonic scale', 'scale theory', 'box patterns'],
     xpReward: 60,
+    prerequisites: ['Week 1 techniques (Days 1-7) — you will apply those techniques within the scale from Day 9 onward.'],
+    crossRefs: [
+      { day: 9, description: 'Full Box 1 pentatonic pattern is taught in detail the next day.' },
+      { day: 10, description: 'Box 1 becomes the source material for phrase creation.' },
+    ],
+    quiz: [
+      { question: 'How many notes does a pentatonic scale contain?', options: ['3', '4', '5', '7'], correct: 2 },
+      { question: 'What makes the minor pentatonic scale so useful over blues/rock chords?', options: ['It has no sharps', 'It contains no "avoid notes" — every note sounds good', 'It only uses open strings', 'It is easier to memorise than major scales'], correct: 1 },
+      { question: 'What is a "box pattern" in the context of guitar scales?', options: ['A chord shape', 'A compact fretboard shape that contains a complete scale in a small area', 'A rhythmic strumming box', 'A capo position'], correct: 1 },
+    ],
+    commonMistakes: [
+      'Trying to memorize the note names (A, C, D, E, G) before learning the shape — start with the shape, theory comes later.',
+      'Playing box patterns up and down robotically without adding rhythm or feel.',
+      'Assuming one box covers the whole neck — the five pentatonic positions connect across the entire fretboard.',
+    ],
+    bonusContent: 'The minor pentatonic scale is used in more recorded guitar solos than any other scale. Listen to "Comfortably Numb" by Pink Floyd, "Whole Lotta Love" by Led Zeppelin, or "Pride and Joy" by Stevie Ray Vaughan — all are rooted in this five-note scale.',
   },
   {
     day: 9,
@@ -308,6 +431,23 @@ On strings B, e (and low E): use index finger for fret 5, pinky for fret 8.</p>
     selfCheck: 'You should be able to play the full ascending and descending scale without pausing to think about the next note. It should feel like a connected shape, not 12 individual notes. If you\'re still looking at your hands for every note, keep going — repetition builds the map.',
     techniques: ['pentatonic box 1', 'scale fingering', 'ascending/descending'],
     xpReward: 60,
+    prerequisites: ['Day 8: pentatonic scale concept — you need to understand what a box pattern is before drilling it.'],
+    crossRefs: [
+      { day: 8, description: 'Box 1 was previewed conceptually — today you commit the full shape to memory.' },
+      { day: 10, description: 'Box 1 is the building block for all phrase creation in the next lesson.' },
+      { day: 12, description: 'Box 1 positions are the targets for string bending.' },
+    ],
+    quiz: [
+      { question: 'On the E, A, D, and G strings of Box 1, which fingers cover frets 5 and 7?', options: ['Index and middle', 'Index and ring', 'Middle and pinky', 'Index and pinky'], correct: 1 },
+      { question: 'If Box 1 at fret 5 is A minor, what key is it in at fret 7?', options: ['A minor', 'G minor', 'B minor', 'C minor'], correct: 2 },
+      { question: 'How many notes are in the full Box 1 pattern (6 strings × 2 notes)?', options: ['10', '11', '12', '14'], correct: 2 },
+    ],
+    commonMistakes: [
+      'Using index-middle instead of index-ring on E, A, D, G strings — the stretch is necessary for correct position.',
+      'Looking at your fretting hand instead of trusting feel — practice with eyes closed to build the internal map.',
+      'Only practicing ascending — descending (high e back down) is equally important and often neglected.',
+    ],
+    bonusContent: 'Once Box 1 is solid at fret 5 (A minor), move it to fret 3 (G minor) and fret 7 (B minor). The shape is identical — only the key changes. This is the power of the box pattern system: one shape, every key.',
   },
   {
     day: 10,
@@ -349,6 +489,23 @@ Phrase C:  G|---5---7---|  (mid register)
     selfCheck: 'Does your phrase feel like something you said, rather than something you ran through? If you played it to a friend, would they recognize it as a recurring idea? If yes, you\'re making music. Keep refining it.',
     techniques: ['phrasing', 'motif creation', 'rhythm', 'musical space'],
     xpReward: 60,
+    prerequisites: ['Day 9: Box 1 pentatonic shape — phrases are built from scale notes, so the shape must be memorised.'],
+    crossRefs: [
+      { day: 9, description: 'Box 1 provides all the notes you will use when creating phrases.' },
+      { day: 11, description: 'The phrases created today are enhanced with legato techniques in the next lesson.' },
+      { day: 15, description: 'Phrase creation skills are the foundation of improvising over the solo backing track.' },
+    ],
+    quiz: [
+      { question: 'What is the defining feature of a musical phrase compared to running a scale?', options: ['A phrase always uses more notes', 'A phrase has intentional rhythm, grouping, and space around it', 'A phrase is always 8 notes long', 'A phrase must include a bend'], correct: 1 },
+      { question: 'Which rhythmic shape is most common in blues phrasing?', options: ['Long — short — short', 'Short — short — long', 'Short — long — short', 'Equal duration on all notes'], correct: 1 },
+      { question: 'Why is space (silence) important in a phrase?', options: ['It gives your fingers a rest', 'It makes the phrase sound intentional, like a statement', 'It makes the solo easier to play', 'It hides mistakes'], correct: 1 },
+    ],
+    commonMistakes: [
+      'Playing every note at the same volume and duration — dynamics and rhythm are what make a phrase a phrase.',
+      'Not resting between repetitions of your motif — the space is half the music.',
+      'Choosing too many notes — great phrases are often just 2 or 3 notes with strong rhythm.',
+    ],
+    bonusContent: 'The call-and-response structure in blues comes from one phrase "asking" a question and a second phrase "answering" it. Try playing your 3-note motif, pausing, then playing a slightly different version as a response. This conversational approach is the heart of blues improvisation.',
   },
   {
     day: 11,

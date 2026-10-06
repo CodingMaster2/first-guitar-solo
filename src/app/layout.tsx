@@ -3,6 +3,7 @@ import './globals.css'
 import Providers from '@/components/Providers'
 import MobileBottomNav from '@/components/MobileBottomNav'
 import ToastContainer from '@/components/Toast'
+import AnnouncementBanner from '@/components/AnnouncementBanner'
 
 export const metadata: Metadata = {
   title: 'First Guitar Solo | Sixth String Labs',
@@ -45,6 +46,7 @@ export default function RootLayout({
     <html lang="en" className="h-full">
       <body className="min-h-full flex flex-col antialiased" style={{ backgroundColor: '#0a0a0a', color: '#ffffff' }}>
         <Providers>
+          <AnnouncementBanner />
           {children}
           <MobileBottomNav />
           <ToastContainer />

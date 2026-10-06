@@ -53,6 +53,7 @@ export default async function LessonPage({ params }: PageProps) {
         audioLabel={audioAsset?.label ?? null}
         currentDay={profile.currentDay}
         completionPct={completionPct}
+        userId={session.user.id}
       />
       <Footer />
     </div>

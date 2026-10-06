@@ -15,6 +15,10 @@ export default function SettingsPage() {
   const [nameStatus, setNameStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [nameError, setNameError] = useState('')
 
+  const [avatarUrl, setAvatarUrl] = useState('')
+  const [avatarStatus, setAvatarStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [avatarError, setAvatarError] = useState('')
+
   const [currentPw, setCurrentPw] = useState('')
   const [newPw, setNewPw] = useState('')
   const [confirmPw, setConfirmPw] = useState('')
@@ -25,9 +29,22 @@ export default function SettingsPage() {
   const [resetConfirm, setResetConfirm] = useState('')
   const [resetStatus, setResetStatus] = useState<'idle' | 'resetting' | 'done' | 'error'>('idle')
 
+  const [leaderboardOptIn, setLeaderboardOptIn] = useState(false)
+  const [leaderboardStatus, setLeaderboardStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+
   useEffect(() => {
     if (session?.user?.name) setName(session.user.name)
   }, [session])
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then((data: { avatarUrl?: string | null; leaderboardOptIn?: boolean }) => {
+        if (typeof data.avatarUrl === 'string') setAvatarUrl(data.avatarUrl)
+        if (typeof data.leaderboardOptIn === 'boolean') setLeaderboardOptIn(data.leaderboardOptIn)
+      })
+      .catch(() => { /* ignore */ })
+  }, [])
 
   useEffect(() => {
     if (status === 'unauthenticated') router.replace('/login')
@@ -54,6 +71,25 @@ export default function SettingsPage() {
     }
   }
 
+  const saveAvatar = async () => {
+    setAvatarStatus('saving')
+    setAvatarError('')
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ avatarUrl: avatarUrl.trim() }),
+      })
+      const data = await res.json() as { ok?: boolean; error?: string }
+      if (!res.ok) throw new Error(data.error ?? 'Failed')
+      setAvatarStatus('saved')
+      setTimeout(() => setAvatarStatus('idle'), 3000)
+    } catch (err) {
+      setAvatarError(err instanceof Error ? err.message : 'Failed to save')
+      setAvatarStatus('error')
+    }
+  }
+
   const savePassword = async () => {
     setPwError('')
     if (newPw !== confirmPw) { setPwError('Passwords do not match'); return }
@@ -73,6 +109,25 @@ export default function SettingsPage() {
     } catch (err) {
       setPwError(err instanceof Error ? err.message : 'Failed to update password')
       setPwStatus('error')
+    }
+  }
+
+  const saveLeaderboard = async (value: boolean) => {
+    setLeaderboardOptIn(value)
+    setLeaderboardStatus('saving')
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leaderboardOptIn: value }),
+      })
+      const data = await res.json() as { ok?: boolean; error?: string }
+      if (!res.ok) throw new Error(data.error ?? 'Failed')
+      setLeaderboardStatus('saved')
+      setTimeout(() => setLeaderboardStatus('idle'), 3000)
+    } catch {
+      setLeaderboardStatus('error')
+      setLeaderboardOptIn(!value) // revert
     }
   }
 
@@ -156,6 +211,55 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* Avatar URL */}
+        <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6 mb-6">
+          <h2 className="text-white font-bold text-sm uppercase tracking-wider mb-5">Avatar</h2>
+          <div className="space-y-4">
+            {avatarUrl && (
+              <div className="flex items-center gap-4 mb-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={avatarUrl}
+                  alt="Avatar preview"
+                  style={{ width: 56, height: 56, borderRadius: '50%', border: '2px solid #f59e0b', objectFit: 'cover' }}
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                />
+                <span style={{ color: '#a3a3a3' }} className="text-xs">Current avatar</span>
+              </div>
+            )}
+            <div>
+              <label style={{ color: '#a3a3a3' }} className="text-xs uppercase tracking-wider block mb-2">
+                Avatar Image URL
+              </label>
+              <input
+                type="url"
+                value={avatarUrl}
+                onChange={(e) => setAvatarUrl(e.target.value)}
+                placeholder="https://example.com/your-photo.jpg"
+                style={{ backgroundColor: '#1a1a1a', border: '1px solid #262626', color: '#ffffff' }}
+                className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 transition-colors"
+              />
+              <p style={{ color: '#404040' }} className="text-xs mt-1">Paste a direct image URL (JPEG, PNG, etc).</p>
+            </div>
+            {avatarError && (
+              <p style={{ color: '#ef4444', backgroundColor: '#1a0000', border: '1px solid #7f1d1d' }} className="text-xs px-3 py-2 rounded-lg">
+                {avatarError}
+              </p>
+            )}
+            <button
+              onClick={saveAvatar}
+              disabled={avatarStatus === 'saving'}
+              style={{
+                backgroundColor: avatarStatus === 'saved' ? '#14532d' : '#f59e0b',
+                color: avatarStatus === 'saved' ? '#86efac' : '#000000',
+              }}
+              className="px-6 py-2 rounded-lg text-sm font-bold uppercase tracking-wider hover:opacity-90 transition-all disabled:opacity-50"
+            >
+              {avatarStatus === 'saving' ? 'Saving...' : avatarStatus === 'saved' ? '✓ Saved' : 'Save Avatar'}
+            </button>
+          </div>
+        </div>
+
         {/* Password */}
         <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6 mb-6">
           <h2 className="text-white font-bold text-sm uppercase tracking-wider mb-5">Change Password</h2>
@@ -201,6 +305,55 @@ export default function SettingsPage() {
         {/* Practice Reminder */}
         <div className="mb-6">
           <PracticeReminder />
+        </div>
+
+        {/* Leaderboard */}
+        <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6 mb-6">
+          <h2 className="text-white font-bold text-sm uppercase tracking-wider mb-2">Leaderboard</h2>
+          <p style={{ color: '#a3a3a3' }} className="text-sm mb-5 leading-relaxed">
+            Opt in to appear on the{' '}
+            <a href="/leaderboard" style={{ color: '#f59e0b' }} className="hover:underline">student leaderboard</a>.
+            Your name, XP, streak, and days completed will be visible to other students. You can opt out at any time.
+          </p>
+          <div className="flex items-center gap-4">
+            <button
+              role="switch"
+              aria-checked={leaderboardOptIn}
+              onClick={() => saveLeaderboard(!leaderboardOptIn)}
+              disabled={leaderboardStatus === 'saving'}
+              style={{
+                backgroundColor: leaderboardOptIn ? '#f59e0b' : '#1a1a1a',
+                border: `1px solid ${leaderboardOptIn ? '#d97706' : '#262626'}`,
+                borderRadius: 20,
+                width: 44,
+                height: 24,
+                padding: 2,
+                transition: 'background-color 0.2s',
+                cursor: 'pointer',
+                flexShrink: 0,
+              }}
+            >
+              <div
+                style={{
+                  backgroundColor: leaderboardOptIn ? '#000' : '#525252',
+                  borderRadius: '50%',
+                  width: 18,
+                  height: 18,
+                  transform: leaderboardOptIn ? 'translateX(20px)' : 'translateX(0)',
+                  transition: 'transform 0.2s',
+                }}
+              />
+            </button>
+            <span style={{ color: leaderboardOptIn ? '#f59e0b' : '#a3a3a3' }} className="text-sm font-bold">
+              {leaderboardOptIn ? 'On leaderboard' : 'Not on leaderboard'}
+            </span>
+            {leaderboardStatus === 'saved' && (
+              <span style={{ color: '#86efac' }} className="text-xs">✓ Saved</span>
+            )}
+            {leaderboardStatus === 'error' && (
+              <span style={{ color: '#ef4444' }} className="text-xs">Failed to save</span>
+            )}
+          </div>
         </div>
 
         {/* Danger Zone */}

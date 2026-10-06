@@ -7,6 +7,7 @@ import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import ProgressBar from '@/components/ProgressBar'
+import AchievementShare from '@/components/AchievementShare'
 
 export default async function ProgressPage() {
   const session = await getServerSession(authOptions)
@@ -39,6 +40,8 @@ export default async function ProgressPage() {
   })()
 
   const earnedAchievementIds = new Set(userAchievements.map((ua) => ua.achievementId))
+  const isXpWeekend = [0, 5, 6].includes(new Date().getDay())
+  const userName = session.user.name ?? 'Guitar Student'
 
   // Week completion
   const weeks = [
@@ -64,6 +67,54 @@ export default async function ProgressPage() {
       <Navbar />
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-black text-white uppercase mb-8">Your Progress</h1>
+
+        {/* XP Weekend Multiplier Banner */}
+        {isXpWeekend && (
+          <div
+            style={{
+              background: 'linear-gradient(135deg, #1a1000 0%, #0f0800 100%)',
+              border: '1px solid #f59e0b',
+              borderRadius: 12,
+              padding: 16,
+              marginBottom: 24,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+            }}
+          >
+            <span style={{ fontSize: '1.5rem' }}>&#9889;</span>
+            <div>
+              <p style={{ color: '#f59e0b', fontWeight: 700, fontSize: '0.875rem' }}>
+                1.5&#215; XP Weekend Active
+              </p>
+              <p style={{ color: '#a3a3a3', fontSize: '0.75rem', marginTop: 2 }}>
+                Earn 50% bonus XP on all lessons today (Fri–Sun).
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* 100% Club Banner */}
+        {completedDays.size >= 30 && (
+          <div
+            style={{
+              background: 'linear-gradient(135deg, #1a1200 0%, #2d1f00 50%, #1a1200 100%)',
+              border: '2px solid #f59e0b',
+              borderRadius: 12,
+              padding: 20,
+              marginBottom: 24,
+              textAlign: 'center',
+            }}
+          >
+            <p style={{ fontSize: '2rem', marginBottom: 8 }}>&#127928;</p>
+            <p style={{ color: '#f59e0b', fontWeight: 900, fontSize: '1.25rem', marginBottom: 4 }}>
+              Welcome to the 100% Club!
+            </p>
+            <p style={{ color: '#a3a3a3', fontSize: '0.875rem' }}>
+              You&apos;ve completed all 30 lessons. You are a First Guitar Solo graduate.
+            </p>
+          </div>
+        )}
 
         {/* Overview */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
@@ -183,6 +234,12 @@ export default async function ProgressPage() {
                     <p style={{ color: '#a3a3a3' }} className="text-xs mt-1">
                       {new Date(userAch.unlockedAt).toLocaleDateString()}
                     </p>
+                  )}
+                  {earned && (
+                    <AchievementShare
+                      achievement={{ name: achievement.name, description: achievement.description, xpReward: achievement.xpReward }}
+                      userName={userName}
+                    />
                   )}
                 </div>
               )
