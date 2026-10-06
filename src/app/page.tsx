@@ -31,6 +31,7 @@ const faqs = [
 
 function StudentCount() {
   const [count, setCount] = useState<number | null>(null)
+  const [displayCount, setDisplayCount] = useState(0)
 
   useEffect(() => {
     fetch('/api/stats')
@@ -38,6 +39,19 @@ function StudentCount() {
       .then((d: { userCount: number }) => setCount(d.userCount))
       .catch(() => {})
   }, [])
+
+  useEffect(() => {
+    if (count === null) return
+    let start = 0
+    const duration = 2000
+    const step = (timestamp: number) => {
+      if (!start) start = timestamp
+      const progress = Math.min((timestamp - start) / duration, 1)
+      setDisplayCount(Math.floor(progress * count))
+      if (progress < 1) requestAnimationFrame(step)
+    }
+    requestAnimationFrame(step)
+  }, [count])
 
   if (count === null) {
     return (
@@ -49,10 +63,14 @@ function StudentCount() {
 
   return (
     <p style={{ color: '#a3a3a3' }} className="text-sm text-center mb-10">
-      Join <span className="text-white font-bold">{count.toLocaleString()}+</span> guitarists who started their first solo.
+      Join <span className="text-white font-bold">{displayCount.toLocaleString()}+</span> guitarists who started their first solo.
     </p>
   )
 }
+
+const sectionDivider = (
+  <div style={{ height: '1px', background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.25), transparent)', margin: '0' }} />
+)
 
 export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
@@ -75,6 +93,16 @@ export default function LandingPage() {
     document.addEventListener('mouseleave', handleMouseLeave)
     return () => document.removeEventListener('mouseleave', handleMouseLeave)
   }, [session])
+
+  // Scroll-triggered reveal animations
+  useEffect(() => {
+    const els = document.querySelectorAll('.reveal')
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible') })
+    }, { threshold: 0.1 })
+    els.forEach(el => obs.observe(el))
+    return () => obs.disconnect()
+  }, [])
 
   // Tab preview — play a simple pentatonic sequence via Web Audio API
   const playTabPreview = () => {
@@ -120,11 +148,75 @@ export default function LandingPage() {
 
   return (
     <div style={{ backgroundColor: '#0a0a0a', color: '#ffffff' }} className="min-h-screen">
+      <style>{`
+        @keyframes meshMove {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+        .hero-mesh {
+          background: radial-gradient(ellipse at 20% 50%, rgba(245,158,11,0.08) 0%, transparent 50%),
+                      radial-gradient(ellipse at 80% 20%, rgba(245,158,11,0.05) 0%, transparent 40%),
+                      radial-gradient(ellipse at 50% 80%, rgba(180,100,0,0.04) 0%, transparent 50%),
+                      #0a0a0a;
+          animation: meshMove 8s ease-in-out infinite;
+          background-size: 200% 200%;
+        }
+        @keyframes float1 { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-12px) rotate(5deg); } }
+        @keyframes float2 { 0%,100% { transform: translateY(0) rotate(15deg); } 50% { transform: translateY(-8px) rotate(20deg); } }
+        @keyframes float3 { 0%,100% { transform: translateY(0) rotate(-10deg); } 50% { transform: translateY(-15px) rotate(-5deg); } }
+        @keyframes ctaPulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.4), 0 4px 15px rgba(245,158,11,0.3); }
+          50% { box-shadow: 0 0 0 8px rgba(245,158,11,0), 0 4px 25px rgba(245,158,11,0.5); }
+        }
+        .cta-pulse { animation: ctaPulse 2.5s ease-in-out infinite; }
+        .reveal { opacity: 0; transform: translateY(30px); }
+        .reveal.visible { opacity: 1; transform: translateY(0); transition: opacity 0.7s ease, transform 0.7s ease; }
+        .tilt-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .tilt-card:hover { transform: perspective(800px) rotateY(-3deg) rotateX(1deg) translateY(-4px); box-shadow: 6px 8px 32px rgba(245,158,11,0.1); }
+        .pricing-tilt { transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: default; }
+        .pricing-tilt:hover { transform: perspective(1000px) rotateY(-5deg) rotateX(2deg) translateY(-6px); box-shadow: 12px 16px 48px rgba(245,158,11,0.15), 0 0 0 1px rgba(245,158,11,0.2); }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        .marquee-inner { animation: marquee 40s linear infinite; }
+      `}</style>
+
       <Navbar />
 
       {/* HERO */}
-      <section className="relative min-h-screen flex flex-col justify-center px-4 sm:px-6 lg:px-8 pt-16">
-        <div className="max-w-5xl mx-auto w-full">
+      <section
+        className="hero-mesh relative min-h-screen flex flex-col justify-center px-4 sm:px-6 lg:px-8 pt-16"
+        style={{ position: 'relative', overflow: 'hidden' }}
+      >
+        {/* Noise texture overlay */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E")`,
+          backgroundRepeat: 'repeat',
+          backgroundSize: '150px 150px',
+          pointerEvents: 'none',
+          opacity: 0.6,
+          mixBlendMode: 'overlay' as const,
+          zIndex: 1,
+        }} />
+
+        {/* Floating guitar pick SVGs */}
+        <div style={{ position: 'absolute', top: '15%', left: '8%', opacity: 0.06, animation: 'float1 6s ease-in-out infinite', pointerEvents: 'none', zIndex: 1 }}>
+          <svg width="60" height="72" viewBox="0 0 60 72" fill="#f59e0b">
+            <path d="M30 0 C50 0 60 12 60 24 C60 48 30 72 30 72 C30 72 0 48 0 24 C0 12 10 0 30 0Z"/>
+          </svg>
+        </div>
+        <div style={{ position: 'absolute', top: '60%', right: '5%', opacity: 0.04, animation: 'float2 8s ease-in-out infinite', pointerEvents: 'none', zIndex: 1 }}>
+          <svg width="80" height="96" viewBox="0 0 60 72" fill="#f59e0b">
+            <path d="M30 0 C50 0 60 12 60 24 C60 48 30 72 30 72 C30 72 0 48 0 24 C0 12 10 0 30 0Z"/>
+          </svg>
+        </div>
+        <div style={{ position: 'absolute', top: '30%', right: '15%', opacity: 0.05, animation: 'float3 7s ease-in-out infinite 1s', pointerEvents: 'none', zIndex: 1 }}>
+          <svg width="40" height="48" viewBox="0 0 60 72" fill="#f59e0b">
+            <path d="M30 0 C50 0 60 12 60 24 C60 48 30 72 30 72 C30 72 0 48 0 24 C0 12 10 0 30 0Z"/>
+          </svg>
+        </div>
+
+        <div className="max-w-5xl mx-auto w-full" style={{ position: 'relative', zIndex: 2 }}>
           <div className="mb-6">
             <span
               style={{ backgroundColor: '#1a1a1a', color: '#f59e0b', border: '1px solid #262626' }}
@@ -133,10 +225,17 @@ export default function LandingPage() {
               30-Day Guitar Program
             </span>
           </div>
-          <h1 className="text-6xl sm:text-7xl lg:text-8xl font-black uppercase leading-none tracking-tight mb-6">
+          <h1
+            className="text-6xl sm:text-7xl lg:text-8xl font-black uppercase leading-none tracking-tight mb-6"
+            style={{
+              background: 'linear-gradient(135deg, #ffffff 0%, #fde68a 40%, #f59e0b 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
+          >
             PLAY YOUR FIRST<br />
-            GUITAR{' '}
-            <span style={{ color: '#f59e0b' }}>SOLO.</span>
+            GUITAR SOLO.
           </h1>
           <p style={{ color: '#a3a3a3' }} className="text-lg sm:text-xl max-w-2xl mb-10 leading-relaxed">
             A structured 30-day program designed to take you from basic guitar skills to confidently
@@ -145,15 +244,15 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <Link
               href="/register"
-              style={{ backgroundColor: '#f59e0b', color: '#000000' }}
-              className="text-base font-black px-8 py-4 rounded uppercase tracking-wider hover:opacity-90 transition-opacity text-center"
+              className="cta-pulse text-base font-black px-8 py-4 rounded uppercase tracking-wider hover:opacity-90 transition-opacity text-center"
+              style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#000000' }}
             >
               Start Learning &mdash; $25
             </Link>
             <Link
               href="/lesson/preview/1"
+              className="cta-pulse text-base font-bold px-8 py-4 rounded uppercase tracking-wider hover:opacity-80 transition-opacity text-center"
               style={{ border: '2px solid #f59e0b', color: '#f59e0b' }}
-              className="text-base font-bold px-8 py-4 rounded uppercase tracking-wider hover:opacity-80 transition-opacity text-center"
             >
               Try Day 1 Free
             </Link>
@@ -169,10 +268,27 @@ export default function LandingPage() {
             One-time payment &middot; 30-day money-back guarantee
           </p>
         </div>
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2" style={{ zIndex: 2 }}>
           <div style={{ color: '#262626' }} className="text-2xl animate-bounce">&#8595;</div>
         </div>
       </section>
+
+      {/* SOCIAL PROOF MARQUEE TICKER */}
+      <div style={{ backgroundColor: '#050505', borderTop: '1px solid rgba(245,158,11,0.1)', borderBottom: '1px solid rgba(245,158,11,0.1)', overflow: 'hidden', padding: '10px 0' }}>
+        <div className="marquee-inner" style={{ display: 'flex', gap: '0', whiteSpace: 'nowrap', width: 'max-content' }}>
+          {[...Array(2)].map((_, i) => (
+            <div key={i} style={{ display: 'flex', gap: '0' }}>
+              {['🎸 Hammer-On Unlocked', '⭐ 5-Star Lesson', '🔥 7-Day Streak', '🎯 Day 14 Complete', '🏆 Solo Section 1 Done', '✨ Lead Guitarist Level', '🎸 Pull-Off Mastered', '⭐ Day 30 Graduate'].map((item, j) => (
+                <span key={j} style={{ color: '#525252', fontSize: '0.75rem', padding: '0 2rem' }}>
+                  {item}
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {sectionDivider}
 
       {/* THE PROBLEM */}
       <section style={{ backgroundColor: '#0a0a0a', borderTop: '1px solid #1a1a1a' }} className="py-24 px-4 sm:px-6 lg:px-8">
@@ -200,33 +316,42 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* THE SOLUTION */}
-      <section style={{ backgroundColor: '#111111', borderTop: '1px solid #1a1a1a', borderBottom: '1px solid #1a1a1a' }} className="py-24 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-black uppercase mb-4">
-            First Guitar Solo gives you a path,<br />
-            <span style={{ color: '#f59e0b' }}>not more information.</span>
-          </h2>
-          <p style={{ color: '#a3a3a3' }} className="text-base mb-16 max-w-xl">
-            Every lesson exists for a reason. Every day builds on the last. The program has one goal: you perform a complete guitar solo on Day 30.
-          </p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              { icon: '&#8594;', title: 'Structure', body: 'Know exactly what to learn next. Every day, every lesson, every technique in the right order.' },
-              { icon: '&#8593;', title: 'Progression', body: 'Each lesson builds toward the solo. Nothing is wasted. Everything connects.' },
-              { icon: '&#9670;', title: 'Personalization', body: 'The onboarding assessment adapts the program to your current skill level.' },
-              { icon: '&#9899;', title: 'AI Guitar Coach', body: 'Stuck on a technique? Get specific, actionable advice from an AI coach that knows exactly where you are.' },
-              { icon: '&#9733;', title: 'Application', body: 'Every technique you learn, you use. The program culminates in a real, complete solo performance.' },
-            ].map((item, i) => (
-              <div key={i} style={{ backgroundColor: '#0a0a0a', border: '1px solid #262626' }} className="p-6 rounded-lg">
-                <div style={{ color: '#f59e0b' }} className="text-3xl font-black mb-4" dangerouslySetInnerHTML={{ __html: item.icon }} />
-                <h3 className="text-white font-bold text-lg mb-2">{item.title}</h3>
-                <p style={{ color: '#a3a3a3' }} className="text-sm leading-relaxed">{item.body}</p>
-              </div>
-            ))}
+      {sectionDivider}
+
+      {/* THE SOLUTION / FEATURES */}
+      <section
+        className="reveal"
+        style={{ backgroundColor: '#111111', borderTop: '1px solid #1a1a1a', borderBottom: '1px solid #1a1a1a' }}
+      >
+        <div className="py-24 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-3xl sm:text-4xl font-black uppercase mb-4">
+              First Guitar Solo gives you a path,<br />
+              <span style={{ color: '#f59e0b' }}>not more information.</span>
+            </h2>
+            <p style={{ color: '#a3a3a3' }} className="text-base mb-16 max-w-xl">
+              Every lesson exists for a reason. Every day builds on the last. The program has one goal: you perform a complete guitar solo on Day 30.
+            </p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[
+                { icon: '&#8594;', title: 'Structure', body: 'Know exactly what to learn next. Every day, every lesson, every technique in the right order.' },
+                { icon: '&#8593;', title: 'Progression', body: 'Each lesson builds toward the solo. Nothing is wasted. Everything connects.' },
+                { icon: '&#9670;', title: 'Personalization', body: 'The onboarding assessment adapts the program to your current skill level.' },
+                { icon: '&#9899;', title: 'AI Guitar Coach', body: 'Stuck on a technique? Get specific, actionable advice from an AI coach that knows exactly where you are.' },
+                { icon: '&#9733;', title: 'Application', body: 'Every technique you learn, you use. The program culminates in a real, complete solo performance.' },
+              ].map((item, i) => (
+                <div key={i} style={{ backgroundColor: '#0a0a0a', border: '1px solid #262626' }} className="p-6 rounded-lg">
+                  <div style={{ color: '#f59e0b' }} className="text-3xl font-black mb-4" dangerouslySetInnerHTML={{ __html: item.icon }} />
+                  <h3 className="text-white font-bold text-lg mb-2">{item.title}</h3>
+                  <p style={{ color: '#a3a3a3' }} className="text-sm leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
+
+      {sectionDivider}
 
       {/* HOW IT WORKS */}
       <section id="how-it-works" className="py-24 px-4 sm:px-6 lg:px-8">
@@ -247,6 +372,8 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {sectionDivider}
 
       {/* 30-DAY ROADMAP */}
       <section style={{ backgroundColor: '#111111', borderTop: '1px solid #1a1a1a', borderBottom: '1px solid #1a1a1a' }} className="py-24 px-4 sm:px-6 lg:px-8">
@@ -277,6 +404,8 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {sectionDivider}
 
       {/* AI COACH */}
       <section className="py-24 px-4 sm:px-6 lg:px-8">
@@ -315,48 +444,61 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {sectionDivider}
+
       {/* TESTIMONIALS */}
-      <section style={{ backgroundColor: '#0a0a0a', borderTop: '1px solid #1a1a1a' }} className="py-24 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-5xl mx-auto">
-          <div style={{ color: '#f59e0b' }} className="text-xs font-bold uppercase tracking-widest mb-4 text-center">Student Outcomes</div>
-          <h2 className="text-3xl sm:text-4xl font-black uppercase mb-4 text-center">
-            Real guitarists.<br /><span style={{ color: '#a3a3a3' }} className="font-normal normal-case">Real progress.</span>
-          </h2>
-          <StudentCount />
-          <div className="grid sm:grid-cols-3 gap-6">
-            {[
-              {
-                name: 'Marcus T.',
-                context: '8 months playing, never tried a solo',
-                quote: "I'd been stuck on chords for almost a year. Week 2 clicked something in my brain — the pentatonic scale makes sense now. By day 25 I was playing the whole thing. Slow, but it was there.",
-                day: 'Finished Day 30',
-              },
-              {
-                name: 'Sarah K.',
-                context: '14 months playing, mostly self-taught',
-                quote: "The AI Coach actually helped. When my bends were going flat I described the problem and it gave me exactly the right drill. That said — you have to put in the practice. The curriculum just makes sure it's the right practice.",
-                day: 'Finished Day 30',
-              },
-              {
-                name: 'Dani R.',
-                context: '6 months playing, first structured program',
-                quote: "I tried YouTube for a year. Every video says something slightly different. This just tells you exactly what to do each day. That's what I needed. The structure is the product.",
-                day: 'Day 28',
-              },
-            ].map((t, i) => (
-              <div key={i} style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="p-6 rounded-xl">
-                <div style={{ color: '#f59e0b' }} className="text-lg mb-4">&ldquo;</div>
-                <p style={{ color: '#d4d4d4' }} className="text-sm leading-relaxed mb-6">{t.quote}</p>
-                <div>
-                  <p className="text-white text-sm font-bold">{t.name}</p>
-                  <p style={{ color: '#525252' }} className="text-xs">{t.context}</p>
-                  <p style={{ color: '#f59e0b' }} className="text-xs mt-1">{t.day}</p>
+      <section
+        className="reveal"
+        style={{ backgroundColor: '#0a0a0a', borderTop: '1px solid #1a1a1a' }}
+      >
+        <div className="py-24 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-5xl mx-auto">
+            <div style={{ color: '#f59e0b' }} className="text-xs font-bold uppercase tracking-widest mb-4 text-center">Student Outcomes</div>
+            <h2 className="text-3xl sm:text-4xl font-black uppercase mb-4 text-center">
+              Real guitarists.<br /><span style={{ color: '#a3a3a3' }} className="font-normal normal-case">Real progress.</span>
+            </h2>
+            <StudentCount />
+            <div className="grid sm:grid-cols-3 gap-6">
+              {[
+                {
+                  name: 'Marcus T.',
+                  context: '8 months playing, never tried a solo',
+                  quote: "I'd been stuck on chords for almost a year. Week 2 clicked something in my brain — the pentatonic scale makes sense now. By day 25 I was playing the whole thing. Slow, but it was there.",
+                  day: 'Finished Day 30',
+                },
+                {
+                  name: 'Sarah K.',
+                  context: '14 months playing, mostly self-taught',
+                  quote: "The AI Coach actually helped. When my bends were going flat I described the problem and it gave me exactly the right drill. That said — you have to put in the practice. The curriculum just makes sure it's the right practice.",
+                  day: 'Finished Day 30',
+                },
+                {
+                  name: 'Dani R.',
+                  context: '6 months playing, first structured program',
+                  quote: "I tried YouTube for a year. Every video says something slightly different. This just tells you exactly what to do each day. That's what I needed. The structure is the product.",
+                  day: 'Day 28',
+                },
+              ].map((t, i) => (
+                <div key={i} style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="tilt-card p-6 rounded-xl">
+                  <div className="flex items-center gap-2 mb-4">
+                    <svg width="16" height="20" viewBox="0 0 60 72" fill="#f59e0b" style={{ flexShrink: 0 }}>
+                      <path d="M30 0 C50 0 60 12 60 24 C60 48 30 72 30 72 C30 72 0 48 0 24 C0 12 10 0 30 0Z"/>
+                    </svg>
+                  </div>
+                  <p style={{ color: '#d4d4d4' }} className="text-sm leading-relaxed mb-6">{t.quote}</p>
+                  <div>
+                    <p className="text-white text-sm font-bold">{t.name}</p>
+                    <p style={{ color: '#525252' }} className="text-xs">{t.context}</p>
+                    <p style={{ color: '#f59e0b' }} className="text-xs mt-1">{t.day}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>
+
+      {sectionDivider}
 
       {/* THE SOLO */}
       <section
@@ -396,6 +538,8 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {sectionDivider}
 
       {/* TAB TEASER */}
       <section style={{ backgroundColor: '#0a0a0a', borderBottom: '1px solid #1a1a1a' }} className="py-24 px-4 sm:px-6 lg:px-8">
@@ -468,7 +612,7 @@ G |--------------------------------------|`}</pre>
             </Link>
             <Link
               href="/register"
-              style={{ backgroundColor: '#f59e0b', color: '#000' }}
+              style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#000' }}
               className="text-sm font-black px-6 py-3 rounded uppercase tracking-wider hover:opacity-90 transition-opacity text-center"
             >
               Start the Full Program &mdash; $25
@@ -477,11 +621,13 @@ G |--------------------------------------|`}</pre>
         </div>
       </section>
 
+      {sectionDivider}
+
       {/* PRICING */}
-      <section id="pricing" className="py-24 px-4 sm:px-6 lg:px-8">
+      <section id="pricing" className="reveal py-24 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
           <div className="max-w-md mx-auto">
-            <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl overflow-hidden">
+            <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="pricing-tilt rounded-xl overflow-hidden">
               <div style={{ backgroundColor: '#f59e0b' }} className="px-8 py-6 text-center">
                 <p className="text-black text-xs font-bold uppercase tracking-widest mb-1">Sixth String Labs</p>
                 <h2 className="text-black text-2xl font-black uppercase tracking-wider">First Guitar Solo</h2>
@@ -501,8 +647,8 @@ G |--------------------------------------|`}</pre>
                 </ul>
                 <Link
                   href="/register"
-                  style={{ backgroundColor: '#f59e0b', color: '#000000' }}
-                  className="w-full block text-center text-base font-black px-8 py-4 rounded uppercase tracking-wider hover:opacity-90 transition-opacity"
+                  className="cta-pulse w-full block text-center text-base font-black px-8 py-4 rounded uppercase tracking-wider hover:opacity-90 transition-opacity"
+                  style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#000000' }}
                 >
                   Start Learning &mdash; $25
                 </Link>
@@ -516,75 +662,85 @@ G |--------------------------------------|`}</pre>
         </div>
       </section>
 
+      {sectionDivider}
+
       {/* COMPARISON */}
-      <section style={{ backgroundColor: '#111111', borderTop: '1px solid #1a1a1a', borderBottom: '1px solid #1a1a1a' }} className="py-24 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-black uppercase mb-4">
-            Why not just use YouTube?
-          </h2>
-          <p style={{ color: '#a3a3a3' }} className="text-base mb-12 max-w-xl">
-            YouTube has great content. What it doesn&apos;t have is structure, progression, or a coach that knows where you are.
-          </p>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr style={{ borderBottom: '2px solid #262626' }}>
-                  <th className="text-left pb-4 text-white font-bold text-base"></th>
-                  {[
-                    { name: 'First Guitar Solo', highlight: true },
-                    { name: 'YouTube Tutorials', highlight: false },
-                    { name: 'Live Teacher', highlight: false },
-                  ].map((col) => (
-                    <th key={col.name} style={{ color: col.highlight ? '#f59e0b' : '#a3a3a3' }} className="text-center pb-4 font-bold px-4">
-                      {col.name}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  ['Structured 30-day path', true, false, false],
-                  ['One clear outcome', true, false, true],
-                  ['AI Coach always available', true, false, false],
-                  ['Progress tracking', true, false, false],
-                  ['Learn at your own pace', true, true, false],
-                  ['Original solo to perform', true, false, false],
-                  ['One-time cost', true, true, false],
-                  ['Personalized feedback', true, false, true],
-                ].map(([label, a, b, c], i) => (
-                  <tr key={i} style={{ borderBottom: '1px solid #1a1a1a' }}>
-                    <td style={{ color: '#a3a3a3' }} className="py-3 text-sm">{label as string}</td>
-                    {[a, b, c].map((val, j) => (
-                      <td key={j} className="text-center py-3 px-4">
-                        {val
-                          ? <span style={{ color: '#f59e0b' }} className="font-bold">&#10003;</span>
-                          : <span style={{ color: '#525252' }}>&#8212;</span>
-                        }
-                      </td>
+      <section className="reveal" style={{ backgroundColor: '#111111', borderTop: '1px solid #1a1a1a', borderBottom: '1px solid #1a1a1a' }}>
+        <div className="py-24 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-3xl sm:text-4xl font-black uppercase mb-4">
+              Why not just use YouTube?
+            </h2>
+            <p style={{ color: '#a3a3a3' }} className="text-base mb-12 max-w-xl">
+              YouTube has great content. What it doesn&apos;t have is structure, progression, or a coach that knows where you are.
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr style={{ borderBottom: '2px solid #262626' }}>
+                    <th className="text-left pb-4 text-white font-bold text-base"></th>
+                    {[
+                      { name: 'First Guitar Solo', highlight: true },
+                      { name: 'YouTube Tutorials', highlight: false },
+                      { name: 'Live Teacher', highlight: false },
+                    ].map((col) => (
+                      <th key={col.name} style={{ color: col.highlight ? '#f59e0b' : '#a3a3a3' }} className="text-center pb-4 font-bold px-4">
+                        {col.name}
+                      </th>
                     ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {[
+                    ['Structured 30-day path', true, false, false],
+                    ['One clear outcome', true, false, true],
+                    ['AI Coach always available', true, false, false],
+                    ['Progress tracking', true, false, false],
+                    ['Learn at your own pace', true, true, false],
+                    ['Original solo to perform', true, false, false],
+                    ['One-time cost', true, true, false],
+                    ['Personalized feedback', true, false, true],
+                  ].map(([label, a, b, c], i) => (
+                    <tr key={i} style={{ borderBottom: '1px solid #1a1a1a' }}>
+                      <td style={{ color: '#a3a3a3' }} className="py-3 text-sm">{label as string}</td>
+                      {[a, b, c].map((val, j) => (
+                        <td key={j} className="text-center py-3 px-4">
+                          {val
+                            ? <span style={{ color: '#f59e0b' }} className="font-bold">&#10003;</span>
+                            : <span style={{ color: '#525252' }}>&#8212;</span>
+                          }
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>
 
+      {sectionDivider}
+
       {/* GUARANTEE */}
-      <section style={{ backgroundColor: '#0a0a0a', borderBottom: '1px solid #1a1a1a' }} className="py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mx-auto text-center">
-          <div
-            style={{ border: '2px solid #262626', backgroundColor: '#111111', display: 'inline-block' }}
-            className="rounded-2xl px-8 py-8 w-full"
-          >
-            <div style={{ color: '#f59e0b' }} className="text-5xl mb-4">&#9672;</div>
-            <h3 className="text-white text-2xl font-black uppercase mb-3">30-Day Money-Back Guarantee</h3>
-            <p style={{ color: '#a3a3a3' }} className="text-sm leading-relaxed max-w-md mx-auto">
-              If you complete the first 7 days and don&apos;t think it&apos;s worth the $25, email us and we&apos;ll refund it. No questions, no process, no waiting.
-            </p>
+      <section className="reveal" style={{ backgroundColor: '#0a0a0a', borderBottom: '1px solid #1a1a1a' }}>
+        <div className="py-16 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-3xl mx-auto text-center">
+            <div
+              style={{ border: '2px solid #262626', backgroundColor: '#111111', display: 'inline-block' }}
+              className="rounded-2xl px-8 py-8 w-full"
+            >
+              <div style={{ color: '#f59e0b' }} className="text-5xl mb-4">&#9672;</div>
+              <h3 className="text-white text-2xl font-black uppercase mb-3">30-Day Money-Back Guarantee</h3>
+              <p style={{ color: '#a3a3a3' }} className="text-sm leading-relaxed max-w-md mx-auto">
+                If you complete the first 7 days and don&apos;t think it&apos;s worth the $25, email us and we&apos;ll refund it. No questions, no process, no waiting.
+              </p>
+            </div>
           </div>
         </div>
       </section>
+
+      {sectionDivider}
 
       {/* FAQ */}
       <section style={{ backgroundColor: '#111111', borderTop: '1px solid #1a1a1a' }} className="py-24 px-4 sm:px-6 lg:px-8">
@@ -611,6 +767,8 @@ G |--------------------------------------|`}</pre>
         </div>
       </section>
 
+      {sectionDivider}
+
       {/* FINAL CTA */}
       <section className="py-24 px-4 sm:px-6 lg:px-8 text-center">
         <div className="max-w-3xl mx-auto">
@@ -623,8 +781,8 @@ G |--------------------------------------|`}</pre>
           </p>
           <Link
             href="/register"
-            style={{ backgroundColor: '#f59e0b', color: '#000000' }}
-            className="inline-block text-lg font-black px-10 py-5 rounded uppercase tracking-wider hover:opacity-90 transition-opacity"
+            className="cta-pulse inline-block text-lg font-black px-10 py-5 rounded uppercase tracking-wider hover:opacity-90 transition-opacity"
+            style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#000000' }}
           >
             Start Learning &mdash; $25
           </Link>
@@ -644,8 +802,8 @@ G |--------------------------------------|`}</pre>
         >
           <Link
             href="/register"
-            style={{ backgroundColor: '#f59e0b', color: '#000000' }}
-            className="block w-full text-center text-sm font-black px-6 py-3 rounded uppercase tracking-wider hover:opacity-90 transition-opacity"
+            className="cta-pulse block w-full text-center text-sm font-black px-6 py-3 rounded uppercase tracking-wider hover:opacity-90 transition-opacity"
+            style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#000000' }}
           >
             Start Learning &mdash; $25
           </Link>

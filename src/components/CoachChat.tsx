@@ -142,6 +142,9 @@ export default function CoachChat({ initialMessages, currentDay, lessonTitle, la
 
   return (
     <div className="flex flex-col h-full">
+      <style>{`
+        @keyframes typingBounce { 0%,60%,100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-6px); opacity: 1; } }
+      `}</style>
       {/* Context bar */}
       <div style={{ backgroundColor: '#111111', borderBottom: '1px solid #262626' }} className="px-4 py-2 flex items-center justify-between">
         <p style={{ color: '#a3a3a3' }} className="text-xs">
@@ -189,7 +192,12 @@ export default function CoachChat({ initialMessages, currentDay, lessonTitle, la
             </div>
 
             <div style={{ color: '#f59e0b', fontSize: '2.5rem', lineHeight: 1 }} className="mb-4">&#9899;</div>
-            <p className="text-white font-bold text-base mb-1">AI Guitar Coach</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <svg width="14" height="17" viewBox="0 0 60 72" fill="#f59e0b" style={{ flexShrink: 0 }}>
+                <path d="M30 0 C50 0 60 12 60 24 C60 48 30 72 30 72 C30 72 0 48 0 24 C0 12 10 0 30 0Z"/>
+              </svg>
+              <p className="text-white font-bold text-base">AI Guitar Coach</p>
+            </div>
             <p style={{ color: '#a3a3a3' }} className="text-sm mb-6 text-center max-w-xs">
               Ask anything about your playing, techniques, or where to focus next.
             </p>
@@ -241,13 +249,22 @@ export default function CoachChat({ initialMessages, currentDay, lessonTitle, la
         {messages.map((msg, idx) => (
           <div key={msg.id} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
             <div
-              style={{
-                backgroundColor: msg.role === 'user' ? '#f59e0b' : '#1a1a1a',
-                color: msg.role === 'user' ? '#000000' : '#ffffff',
+              style={msg.role === 'user' ? {
+                background: 'linear-gradient(135deg, #1a1200, #120e00)',
+                color: '#ffffff',
                 maxWidth: '80%',
-                border: msg.role === 'assistant' ? '1px solid #262626' : 'none',
+                border: '1px solid rgba(245,158,11,0.2)',
+                borderRadius: '18px 18px 4px 18px',
+                padding: '10px 14px',
+              } : {
+                background: '#161616',
+                color: '#ffffff',
+                maxWidth: '80%',
+                border: '1px solid #262626',
+                borderRadius: '18px 18px 18px 4px',
+                padding: '10px 14px',
               }}
-              className="rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap"
+              className="text-sm leading-relaxed whitespace-pre-wrap"
             >
               {msg.content}
             </div>
@@ -273,13 +290,15 @@ export default function CoachChat({ initialMessages, currentDay, lessonTitle, la
         ))}
 
         {loading && (
-          <div className="flex justify-start">
-            <div style={{ backgroundColor: '#1a1a1a', border: '1px solid #262626' }} className="rounded-2xl px-4 py-3">
-              <div className="flex gap-1 items-center">
-                <div className="w-2 h-2 rounded-full bg-amber-500 animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                <div className="w-2 h-2 rounded-full bg-amber-500 animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                <div className="w-2 h-2 rounded-full bg-amber-500 animate-bounce" style={{ animationDelay: '300ms' }}></div>
-              </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '8px' }}>
+            <div style={{ backgroundColor: '#1a1a1a', border: '1px solid #262626', borderRadius: '18px 18px 18px 4px', padding: '12px 16px', display: 'flex', gap: '5px', alignItems: 'center' }}>
+              {[0, 1, 2].map(i => (
+                <span key={i} style={{
+                  width: 7, height: 7, borderRadius: '50%', backgroundColor: '#f59e0b', display: 'inline-block',
+                  animation: 'typingBounce 1.2s ease-in-out infinite',
+                  animationDelay: `${i * 0.2}s`,
+                }} />
+              ))}
             </div>
           </div>
         )}

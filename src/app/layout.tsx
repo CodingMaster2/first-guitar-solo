@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import Providers from '@/components/Providers'
 import MobileBottomNav from '@/components/MobileBottomNav'
+import ToastContainer from '@/components/Toast'
 
 export const metadata: Metadata = {
   title: 'First Guitar Solo | Sixth String Labs',
@@ -46,6 +47,7 @@ export default function RootLayout({
         <Providers>
           {children}
           <MobileBottomNav />
+          <ToastContainer />
         </Providers>
       </body>
     </html>

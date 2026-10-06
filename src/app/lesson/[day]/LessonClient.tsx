@@ -48,6 +48,8 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
   const [showMilestone, setShowMilestone] = useState(false)
   const [milestoneDay, setMilestoneDay] = useState(0)
   const [levelUp, setLevelUp] = useState<{ from: string; to: string } | null>(null)
+  const [readProgress, setReadProgress] = useState(0)
+  const [ripple, setRipple] = useState<{ x: number; y: number } | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const notesDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isFirstNotesRender = useRef(true)
@@ -98,6 +100,17 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
 
   useEffect(() => {
     const handleScroll = () => setShowBackToTop(window.scrollY > 400)
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const el = document.documentElement
+      const scrolled = el.scrollTop
+      const total = el.scrollHeight - el.clientHeight
+      setReadProgress(total > 0 ? (scrolled / total) * 100 : 0)
+    }
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
@@ -175,6 +188,13 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
     }
   }
 
+  const handleCompleteClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    setRipple({ x: e.clientX - rect.left, y: e.clientY - rect.top })
+    setTimeout(() => setRipple(null), 600)
+    completeLesson()
+  }
+
   const getXPLevel = (xp: number) => {
     if (xp >= 2000) return 'Solo Artist'
     if (xp >= 1000) return 'Lead Guitarist'
@@ -187,7 +207,11 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
   const weekColor = weekColors[(lesson.week - 1) % weekColors.length]
 
   return (
-    <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <>
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '3px', zIndex: 9999, backgroundColor: '#1a1a1a' }}>
+        <div style={{ width: `${readProgress}%`, height: '100%', background: 'linear-gradient(90deg, #f59e0b, #fde68a)', transition: 'width 0.1s ease', boxShadow: '0 0 8px rgba(245,158,11,0.6)' }} />
+      </div>
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* 30-day progress bar */}
       <div style={{ height: 4, backgroundColor: '#1a1a1a', borderRadius: 2, overflow: 'hidden', marginBottom: '1.5rem' }}>
         <div
@@ -241,14 +265,17 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
         )}
       </div>
 
-      {/* Title */}
-      <h1 className="text-4xl font-black text-white uppercase mb-2">{lesson.title}</h1>
-      <p style={{ color: '#a3a3a3' }} className="text-base mb-6">{lesson.subtitle}</p>
+      {/* Lesson header */}
+      <div style={{ background: 'linear-gradient(135deg, #111111 0%, #0f0e00 50%, #111111 100%)', borderTop: '3px solid #f59e0b', borderBottom: '1px solid rgba(245,158,11,0.1)', borderRadius: '0.75rem', padding: '1.25rem', marginBottom: '1.5rem' }}>
+        {/* Title */}
+        <h1 className="text-4xl font-black text-white uppercase mb-2">{lesson.title}</h1>
+        <p style={{ color: '#a3a3a3' }} className="text-base mb-4">{lesson.subtitle}</p>
 
-      {/* Why this matters */}
-      <div style={{ borderLeft: '3px solid #f59e0b', backgroundColor: '#111111' }} className="pl-4 py-3 pr-4 rounded-r-lg mb-6">
-        <p style={{ color: '#f59e0b' }} className="text-xs font-bold uppercase tracking-wider mb-1">Why This Matters</p>
-        <p style={{ color: '#a3a3a3' }} className="text-sm leading-relaxed">{lesson.why}</p>
+        {/* Why this matters */}
+        <div style={{ borderLeft: '3px solid #f59e0b', backgroundColor: 'rgba(0,0,0,0.25)' }} className="pl-4 py-3 pr-4 rounded-r-lg">
+          <p style={{ color: '#f59e0b' }} className="text-xs font-bold uppercase tracking-wider mb-1">Why This Matters</p>
+          <p style={{ color: '#a3a3a3' }} className="text-sm leading-relaxed">{lesson.why}</p>
+        </div>
       </div>
 
       {/* Duration badge */}
@@ -333,11 +360,9 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
         {audioUrl ? (
           <AudioPlayer url={audioUrl} label={audioLabel ?? `Day ${lesson.day} Audio`} />
         ) : (
-          <div
-            style={{ backgroundColor: '#111111', border: '1px dashed #262626' }}
-            className="rounded-lg p-4 text-center"
-          >
-            <p style={{ color: '#a3a3a3' }} className="text-sm">Audio coming soon</p>
+          <div style={{ textAlign: 'center', padding: '24px', opacity: 0.6 }}>
+            <div style={{ fontSize: '2rem', marginBottom: 8 }}>🎸</div>
+            <p style={{ color: '#a3a3a3', fontStyle: 'italic', fontSize: '0.875rem' }}>Audio coming soon — check back after the next update.</p>
           </div>
         )}
       </section>
@@ -503,12 +528,25 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
           </div>
         ) : (
           <button
-            onClick={completeLesson}
+            onClick={handleCompleteClick}
             disabled={completing}
-            style={{ backgroundColor: completing ? '#262626' : '#f59e0b', color: completing ? '#a3a3a3' : '#000' }}
+            style={{ backgroundColor: completing ? '#262626' : '#f59e0b', color: completing ? '#a3a3a3' : '#000', position: 'relative', overflow: 'hidden' }}
             className="w-full py-3 rounded-lg font-black text-sm uppercase tracking-wider transition-colors disabled:cursor-not-allowed"
           >
             {completing ? 'Saving...' : 'Complete Lesson'}
+            {ripple && (
+              <span style={{
+                position: 'absolute',
+                left: ripple.x,
+                top: ripple.y,
+                width: 10, height: 10,
+                transform: 'translate(-50%, -50%)',
+                backgroundColor: 'rgba(255,255,255,0.4)',
+                borderRadius: '50%',
+                animation: 'rippleEffect 0.6s ease-out forwards',
+                pointerEvents: 'none',
+              }} />
+            )}
           </button>
         )}
       </section>
@@ -614,7 +652,9 @@ export default function LessonClient({ lesson, existingProgress, audioUrl, audio
         .lesson-content li { margin-bottom: 0.25rem; line-height: 1.6; }
         .lesson-content pre { background-color: #1a1a1a; border: 1px solid #262626; padding: 1rem; border-radius: 0.5rem; font-size: 0.8rem; overflow-x: auto; margin-bottom: 1rem; color: #86efac; }
         .lesson-content strong { color: #f59e0b; font-weight: 600; }
+        @keyframes rippleEffect { 0% { transform: translate(-50%,-50%) scale(0); opacity: 0.6; } 100% { transform: translate(-50%,-50%) scale(20); opacity: 0; } }
       `}</style>
     </main>
+    </>
   )
 }

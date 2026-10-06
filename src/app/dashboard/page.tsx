@@ -8,6 +8,8 @@ import ProgressBar from '@/components/ProgressBar'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import StreakFreezeButton from '@/components/StreakFreezeButton'
+import XPRing from '@/components/XPRing'
+import WeeklyActivityChart from '@/components/WeeklyActivityChart'
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions)
@@ -17,7 +19,7 @@ export default async function DashboardPage() {
   const [profile, progress, practiceSessions] = await Promise.all([
     prisma.profile.findUnique({ where: { userId: session.user.id } }),
     prisma.progress.findMany({ where: { userId: session.user.id, completed: true }, orderBy: { day: 'asc' } }),
-    prisma.practiceSession.findMany({ where: { userId: session.user.id }, orderBy: { createdAt: 'desc' }, take: 5 }),
+    prisma.practiceSession.findMany({ where: { userId: session.user.id }, orderBy: { createdAt: 'desc' }, take: 14 }),
   ])
 
   if (!profile) redirect('/onboarding')
@@ -75,6 +77,21 @@ export default async function DashboardPage() {
 
   return (
     <div style={{ backgroundColor: '#0a0a0a', minHeight: '100vh' }}>
+      <style>{`
+        @keyframes flame { 0%,100% { transform: scaleY(1) rotate(-1deg); filter: brightness(1); } 25% { transform: scaleY(1.05) rotate(1deg); filter: brightness(1.15); } 75% { transform: scaleY(1.03) rotate(0.5deg); filter: brightness(1.1); } }
+        .flame-anim { animation: flame 1.5s ease-in-out infinite; display: inline-block; transform-origin: bottom center; }
+        .day-cell { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+        .day-cell:hover { transform: scale(1.15) !important; }
+        .day-done { position: relative; overflow: hidden; }
+        .day-done::after { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); animation: shimmerDay 2.5s ease-in-out infinite; }
+        @keyframes shimmerDay { 0% { left: -100%; } 100% { left: 100%; } }
+        .xp-bar { position: relative; overflow: hidden; }
+        .xp-bar::after { content: ''; position: absolute; top: 0; left: -100%; width: 60%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent); animation: shimmerXP 2s ease-in-out infinite 1s; }
+        @keyframes shimmerXP { 0% { left: -60%; } 100% { left: 110%; } }
+        .xp-badge { position: relative; overflow: hidden; }
+        .xp-badge::after { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); animation: shimmerXP 3s ease-in-out infinite; }
+      `}</style>
+
       <Navbar />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -89,7 +106,7 @@ export default async function DashboardPage() {
             <div className="flex-1">
               <p className="text-white font-black text-base">Welcome back — the guitar is still waiting.</p>
               <p style={{ color: '#a3a3a3' }} className="text-xs mt-0.5">
-                Missed days don't matter. Just pick up where you left off — today's lesson is ready.
+                Missed days don&apos;t matter. Just pick up where you left off — today&apos;s lesson is ready.
               </p>
             </div>
             <div style={{ color: '#0ea5e9' }} className="text-2xl font-black hidden sm:block">&#8594;</div>
@@ -102,7 +119,7 @@ export default async function DashboardPage() {
             style={{ background: 'linear-gradient(135deg, #1a0f00 0%, #0f0800 100%)', border: '1px solid #78350f' }}
             className="rounded-xl p-4 mb-6 flex items-center gap-4"
           >
-            <span style={{ fontSize: '2rem', lineHeight: 1 }}>&#128293;</span>
+            <span className="flame-anim" style={{ fontSize: '2rem', lineHeight: 1, display: 'inline-block' }}>🔥</span>
             <div className="flex-1">
               <p className="text-white font-black text-base">{profile.streak}-day streak — keep it going</p>
               <p style={{ color: '#a3a3a3' }} className="text-xs mt-0.5">
@@ -113,21 +130,47 @@ export default async function DashboardPage() {
           </div>
         )}
 
+        {/* Streak at risk warning */}
+        {(() => {
+          if (!profile.lastPracticeDate || profile.streak === 0) return null
+          const lastDate = new Date(profile.lastPracticeDate)
+          const todayStr = new Date().toDateString()
+          const lastStr = lastDate.toDateString()
+          if (lastStr === todayStr) return null
+          return (
+            <div
+              style={{ background: 'linear-gradient(135deg, #1a0800, #100500)', border: '1px solid rgba(245,158,11,0.3)', borderLeft: '3px solid #f59e0b' }}
+              className="rounded-xl p-4 mb-6 flex items-center gap-4"
+            >
+              <span style={{ fontSize: '1.5rem' }} className="flame-anim">🔥</span>
+              <div className="flex-1">
+                <p className="text-white font-bold text-sm">Your {profile.streak}-day streak is at risk</p>
+                <p style={{ color: '#a3a3a3' }} className="text-xs mt-0.5">Practice today to protect it.</p>
+              </div>
+              <Link href={`/lesson/${currentDay}`} style={{ backgroundColor: '#f59e0b', color: '#000' }} className="text-xs font-black px-4 py-2 rounded-lg hover:opacity-90 transition-opacity whitespace-nowrap">
+                Practice Now
+              </Link>
+            </div>
+          )
+        })()}
+
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-black uppercase">
-            <span style={{ color: '#f59e0b' }}>Day {currentDay}</span> of 30
-          </h1>
-          <p style={{ color: '#a3a3a3' }} className="text-sm mt-1">{motivationalMessage}</p>
+        <div className="mb-6 flex items-center gap-6">
+          <div className="flex-1">
+            <h1 className="text-3xl font-black uppercase">
+              <span style={{ color: '#f59e0b' }}>Day {currentDay}</span> of 30
+            </h1>
+            <p style={{ color: '#a3a3a3' }} className="text-sm mt-1">{motivationalMessage}</p>
+          </div>
+          <XPRing value={xpLevel.progress} max={100} label={xpLevel.title} xp={profile.totalXP} />
         </div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
           {[
             { label: 'Progress', value: `${completionPct}%`, sub: `${completedDays.size} of 30 days`, color: '#ffffff' },
             { label: 'Streak', value: `${profile.streak}d`, sub: 'current', color: '#f59e0b' },
             { label: 'Best Streak', value: `${profile.bestStreak}d`, sub: 'all time', color: '#f59e0b' },
-            { label: 'Total XP', value: profile.totalXP.toLocaleString(), sub: xpLevel.title, color: '#f59e0b' },
           ].map((stat) => (
             <div
               key={stat.label}
@@ -135,7 +178,15 @@ export default async function DashboardPage() {
               className="rounded-lg p-4 hover:border-amber-800 transition-colors"
             >
               <p style={{ color: '#a3a3a3' }} className="text-xs uppercase tracking-wider mb-1">{stat.label}</p>
-              <p style={{ color: stat.color }} className="text-2xl font-black">{stat.value}</p>
+              <p
+                style={{
+                  color: stat.color,
+                  textShadow: stat.color === '#f59e0b' ? '0 0 20px rgba(245,158,11,0.4)' : undefined,
+                }}
+                className="text-2xl font-black"
+              >
+                {stat.value}
+              </p>
               <p style={{ color: '#525252' }} className="text-xs">{stat.sub}</p>
             </div>
           ))}
@@ -161,7 +212,7 @@ export default async function DashboardPage() {
                       aspectRatio: '1',
                       opacity: isPast ? 0.5 : 1,
                     }}
-                    className="rounded flex items-center justify-center transition-all hover:scale-110 hover:z-10 relative"
+                    className={`rounded flex items-center justify-center relative hover:z-10 day-cell${isDone ? ' day-done' : ''}`}
                   >
                     <span style={{ color: isDone ? '#000' : isCurrent ? '#f59e0b' : '#404040', fontSize: '0.6rem' }} className="font-black">
                       {isDone ? '✓' : day}
@@ -204,7 +255,7 @@ export default async function DashboardPage() {
                 <span style={{ backgroundColor: '#1a1a1a', color: '#a3a3a3', border: '1px solid #262626' }} className="text-xs px-3 py-1 rounded">
                   {currentLesson.duration} min
                 </span>
-                <span style={{ backgroundColor: '#1a0f00', color: '#f59e0b', border: '1px solid #78350f' }} className="text-xs px-3 py-1 rounded font-bold">
+                <span style={{ backgroundColor: '#1a0f00', color: '#f59e0b', border: '1px solid #78350f' }} className="text-xs px-3 py-1 rounded font-bold xp-badge">
                   +{currentLesson.xpReward} XP
                 </span>
                 {currentLesson.week && (
@@ -246,6 +297,9 @@ export default async function DashboardPage() {
             {/* Recent activity */}
             <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6">
               <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-4">Recent Activity</h3>
+              <div className="mb-4">
+                <WeeklyActivityChart sessions={practiceSessions} />
+              </div>
               {practiceSessions.length === 0 ? (
                 <div className="text-center py-6">
                   <p style={{ color: '#f59e0b' }} className="text-2xl mb-2">&#9654;</p>
@@ -327,7 +381,7 @@ export default async function DashboardPage() {
             {/* Weekly goal */}
             {(() => {
               const now = new Date()
-              const dayOfWeek = now.getDay() // 0 = Sunday
+              const dayOfWeek = now.getDay()
               const startOfWeek = new Date(now)
               startOfWeek.setDate(now.getDate() - dayOfWeek)
               startOfWeek.setHours(0, 0, 0, 0)
@@ -347,8 +401,8 @@ export default async function DashboardPage() {
                   </div>
                   <div style={{ backgroundColor: '#1a1a1a', height: 6 }} className="rounded-full overflow-hidden mb-1">
                     <div
-                      style={{ backgroundColor: '#f59e0b', width: `${pct}%`, height: '100%', transition: 'width 0.3s' }}
-                      className="rounded-full"
+                      style={{ background: 'linear-gradient(90deg, #f59e0b, #fde68a)', width: `${pct}%`, height: '100%', transition: 'width 0.3s' }}
+                      className="rounded-full xp-bar"
                     />
                   </div>
                   <p style={{ color: '#525252' }} className="text-xs">

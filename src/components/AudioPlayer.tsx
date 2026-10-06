@@ -83,6 +83,33 @@ export default function AudioPlayer({ url, label }: AudioPlayerProps) {
             style={{ visibility: loading ? 'hidden' : 'visible' }}
           />
         </div>
+        {playing && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 2, height: 20, flexShrink: 0 }}>
+            <style>{`
+              @keyframes wave1 { 0%,100% { height: 4px; } 50% { height: 16px; } }
+              @keyframes wave2 { 0%,100% { height: 8px; } 50% { height: 4px; } }
+              @keyframes wave3 { 0%,100% { height: 12px; } 50% { height: 20px; } }
+              @keyframes wave4 { 0%,100% { height: 6px; } 50% { height: 14px; } }
+              @keyframes wave5 { 0%,100% { height: 10px; } 50% { height: 6px; } }
+            `}</style>
+            {[
+              { anim: 'wave1', delay: '0s' },
+              { anim: 'wave2', delay: '0.1s' },
+              { anim: 'wave3', delay: '0.2s' },
+              { anim: 'wave4', delay: '0.3s' },
+              { anim: 'wave5', delay: '0.4s' },
+              { anim: 'wave1', delay: '0.5s' },
+              { anim: 'wave2', delay: '0.15s' },
+            ].map((w, i) => (
+              <div key={i} style={{
+                width: 3, backgroundColor: '#f59e0b', borderRadius: 2,
+                animation: `${w.anim} 0.8s ease-in-out infinite`,
+                animationDelay: w.delay,
+                height: 8,
+              }} />
+            ))}
+          </div>
+        )}
         <span style={{ color: '#525252', flexShrink: 0 }} className="text-xs tabular-nums">
           {fmt(currentTime)}/{fmt(duration)}
         </span>
