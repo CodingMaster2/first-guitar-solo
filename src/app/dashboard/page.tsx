@@ -28,6 +28,9 @@ export default async function DashboardPage() {
     prisma.practiceSession.findMany({ where: { userId: session.user.id }, orderBy: { createdAt: 'desc' }, take: 14 }),
   ])
 
+  // Technique unlock thresholds for the solo card progress bar
+  const SOLO_TECHNIQUE_DAYS = [1, 5, 6, 7, 8, 12]
+
   if (!profile) redirect('/onboarding')
 
   const currentDay = profile.currentDay
@@ -472,6 +475,69 @@ export default async function DashboardPage() {
                 </Link>
               </div>
             </div>
+
+            {/* Target Solo Card */}
+            {profile.customSolo ? (
+              <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-white font-bold text-sm uppercase tracking-wider">Your Target Solo</h3>
+                  <span style={{ backgroundColor: '#1a1000', border: '1px solid #78350f', color: '#f59e0b' }} className="text-xs font-bold px-2 py-0.5 rounded">
+                    {profile.soloStyle ? profile.soloStyle.charAt(0).toUpperCase() + profile.soloStyle.slice(1) : 'Custom'}
+                    {profile.guitarHero ? ` · ${profile.guitarHero}` : ''}
+                  </span>
+                </div>
+                {/* Tab preview — first 2 lines */}
+                <div
+                  style={{ backgroundColor: '#0d0d0d', borderLeft: '3px solid #f59e0b' }}
+                  className="rounded px-3 py-2 mb-3 overflow-x-auto"
+                >
+                  <pre style={{ fontFamily: '"Courier New", Courier, monospace', fontSize: '10px', color: '#d4d4d4', lineHeight: 1.5 }}>
+                    {profile.customSolo.split('\n').filter((l) => /^[eBGDAE]\|/.test(l)).slice(0, 2).join('\n')}
+                  </pre>
+                </div>
+                {/* Techniques progress bar */}
+                {(() => {
+                  const unlocked = SOLO_TECHNIQUE_DAYS.filter((d) => currentDay >= d).length
+                  const pct = Math.round((unlocked / SOLO_TECHNIQUE_DAYS.length) * 100)
+                  return (
+                    <div className="mb-3">
+                      <div style={{ backgroundColor: '#1a1a1a', height: 4 }} className="rounded-full overflow-hidden mb-1">
+                        <div
+                          style={{ background: 'linear-gradient(90deg, #f59e0b, #fde68a)', width: `${pct}%`, height: '100%', transition: 'width 0.3s' }}
+                          className="rounded-full"
+                        />
+                      </div>
+                      <p style={{ color: '#525252' }} className="text-xs">{unlocked}/{SOLO_TECHNIQUE_DAYS.length} techniques unlocked</p>
+                    </div>
+                  )
+                })()}
+                <Link
+                  href="/my-solo"
+                  style={{ color: '#f59e0b', border: '1px solid #78350f' }}
+                  className="text-xs font-bold flex items-center gap-1 hover:opacity-80 transition-opacity px-3 py-1.5 rounded justify-center"
+                >
+                  View Full Solo &#8594;
+                </Link>
+              </div>
+            ) : (
+              <div
+                style={{ background: 'linear-gradient(135deg, #1a1000 0%, #0f0800 100%)', border: '1px solid #78350f' }}
+                className="rounded-xl p-5"
+              >
+                <div style={{ fontSize: '1.5rem', lineHeight: 1, marginBottom: '0.5rem' }}>🎸</div>
+                <h3 className="text-white font-bold text-sm mb-1">Your Solo Awaits</h3>
+                <p style={{ color: '#a3a3a3' }} className="text-xs mb-4 leading-snug">
+                  Generate your personalized guitar solo — the goal this entire course is building toward.
+                </p>
+                <Link
+                  href="/my-solo"
+                  style={{ backgroundColor: '#f59e0b', color: '#000' }}
+                  className="text-xs font-black px-4 py-2 rounded-lg hover:opacity-90 transition-opacity inline-block"
+                >
+                  Create My Solo &#8594;
+                </Link>
+              </div>
+            )}
 
             {/* Weekly goal */}
             {(() => {

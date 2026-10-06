@@ -32,6 +32,14 @@ export default function SettingsPage() {
   const [leaderboardOptIn, setLeaderboardOptIn] = useState(false)
   const [leaderboardStatus, setLeaderboardStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
 
+  const [soloData, setSoloData] = useState<{
+    soloStyle: string | null
+    guitarHero: string | null
+    soloVibe: string | null
+    customSolo: string | null
+    soloCompleted: boolean
+  } | null>(null)
+
   useEffect(() => {
     if (session?.user?.name) setName(session.user.name)
   }, [session])
@@ -42,6 +50,23 @@ export default function SettingsPage() {
       .then((data: { avatarUrl?: string | null; leaderboardOptIn?: boolean }) => {
         if (typeof data.avatarUrl === 'string') setAvatarUrl(data.avatarUrl)
         if (typeof data.leaderboardOptIn === 'boolean') setLeaderboardOptIn(data.leaderboardOptIn)
+      })
+      .catch(() => { /* ignore */ })
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/my-solo')
+      .then((r) => r.ok ? r.json() : null)
+      .then((data: { soloStyle?: string | null; guitarHero?: string | null; soloVibe?: string | null; customSolo?: string | null; soloCompleted?: boolean } | null) => {
+        if (data) {
+          setSoloData({
+            soloStyle: data.soloStyle ?? null,
+            guitarHero: data.guitarHero ?? null,
+            soloVibe: data.soloVibe ?? null,
+            customSolo: data.customSolo ?? null,
+            soloCompleted: data.soloCompleted ?? false,
+          })
+        }
       })
       .catch(() => { /* ignore */ })
   }, [])
@@ -369,6 +394,77 @@ export default function SettingsPage() {
           >
             Manage Partner
           </a>
+        </div>
+
+        {/* Your Solo */}
+        <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6 mb-6">
+          <h2 className="text-white font-bold text-sm uppercase tracking-wider mb-2">Your Solo</h2>
+          {soloData?.customSolo ? (
+            <div>
+              <p style={{ color: '#a3a3a3' }} className="text-sm mb-4 leading-relaxed">
+                Your personalized guitar solo has been generated.
+              </p>
+              <div className="space-y-1 mb-5">
+                {soloData.soloStyle && (
+                  <div className="flex gap-2 text-sm">
+                    <span style={{ color: '#525252' }} className="w-20 shrink-0">Style</span>
+                    <span style={{ color: '#f59e0b' }} className="font-bold capitalize">{soloData.soloStyle}</span>
+                  </div>
+                )}
+                {soloData.guitarHero && (
+                  <div className="flex gap-2 text-sm">
+                    <span style={{ color: '#525252' }} className="w-20 shrink-0">Inspired by</span>
+                    <span className="text-white">{soloData.guitarHero}</span>
+                  </div>
+                )}
+                {soloData.soloVibe && (
+                  <div className="flex gap-2 text-sm">
+                    <span style={{ color: '#525252' }} className="w-20 shrink-0">Vibe</span>
+                    <span className="text-white">
+                      {soloData.soloVibe === 'slow_melodic' ? 'Slow & Expressive'
+                        : soloData.soloVibe === 'fast_shreddy' ? 'Fast & Shreddy'
+                        : 'Balanced'}
+                    </span>
+                  </div>
+                )}
+                {soloData.soloCompleted && (
+                  <div className="flex gap-2 text-sm">
+                    <span style={{ color: '#525252' }} className="w-20 shrink-0">Status</span>
+                    <span style={{ color: '#22c55e' }} className="font-bold">Completed</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-3 flex-wrap">
+                <a
+                  href="/my-solo"
+                  style={{ backgroundColor: '#f59e0b', color: '#000' }}
+                  className="inline-block px-5 py-2 rounded-lg text-sm font-bold uppercase tracking-wider hover:opacity-90 transition-all"
+                >
+                  View My Solo
+                </a>
+                <a
+                  href="/my-solo?regen=1"
+                  style={{ border: '1px solid #262626', color: '#a3a3a3' }}
+                  className="inline-block px-5 py-2 rounded-lg text-sm font-bold hover:text-white hover:border-gray-400 transition-all"
+                >
+                  Edit Preferences
+                </a>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <p style={{ color: '#a3a3a3' }} className="text-sm mb-4 leading-relaxed">
+                You haven&apos;t generated your personalized guitar solo yet. It&apos;s the goal the entire 30-day course builds toward.
+              </p>
+              <a
+                href="/my-solo"
+                style={{ backgroundColor: '#f59e0b', color: '#000' }}
+                className="inline-block px-5 py-2 rounded-lg text-sm font-bold uppercase tracking-wider hover:opacity-90 transition-all"
+              >
+                Create My Solo &#8594;
+              </a>
+            </div>
+          )}
         </div>
 
         {/* Danger Zone */}

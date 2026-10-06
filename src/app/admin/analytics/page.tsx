@@ -4,6 +4,8 @@ import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import AdminSidebar from '@/components/AdminSidebar'
 import Navbar from '@/components/Navbar'
+import RemoveFromWallButton from '@/components/RemoveFromWallButton'
+import Link from 'next/link'
 
 export default async function AdminAnalyticsPage() {
   const session = await getServerSession(authOptions)
@@ -54,9 +56,11 @@ export default async function AdminAnalyticsPage() {
       orderBy: { day: 'asc' },
     }),
     prisma.coachMessage.count(),
-    prisma.user.findMany({
-      where: { purchaseStatus: 'PAID', profile: { currentDay: { gte: 30 } } },
-      select: { id: true, name: true },
+    prisma.profile.findMany({
+      where: { soloCompleted: true },
+      include: { user: { select: { id: true, name: true } } },
+      orderBy: { soloCompletedAt: 'desc' },
+      take: 30,
     }),
   ])
 
@@ -206,18 +210,18 @@ export default async function AdminAnalyticsPage() {
   const avgCostPerUser = paidUsers > 0 ? estimatedCostUsd / paidUsers : 0
 
   // === Graduation Wall ===
-  const day30CompletedAt: Record<string, Date> = {}
-  for (const p of allCompleted) {
-    if (p.day === 30 && p.completedAt) {
-      day30CompletedAt[p.userId] = p.completedAt
-    }
-  }
-  const graduatedCount = Object.keys(day30CompletedAt).length
+  // graduatedUsersRaw is now prisma.profile[] with user included
+  const graduatedCount = graduatedUsersRaw.length
   const graduatedDetails = graduatedUsersRaw
-    .filter(u => !!day30CompletedAt[u.id])
-    .map(u => ({ name: u.name, completedAt: day30CompletedAt[u.id]! }))
-    .sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime())
-    .slice(0, 20)
+    .map(p => ({
+      id: p.id,
+      userId: p.userId,
+      name: p.user?.name ?? null,
+      soloStyle: p.soloStyle,
+      guitarHero: p.guitarHero,
+      graduateNote: p.graduateNote,
+      completedAt: p.soloCompletedAt ?? new Date(),
+    }))
 
   return (
     <div style={{ backgroundColor: '#0a0a0a', minHeight: '100vh' }}>
@@ -509,29 +513,67 @@ export default async function AdminAnalyticsPage() {
 
           {/* Graduation Wall */}
           <div style={{ backgroundColor: '#111111', border: '1px solid #1f1f1f' }} className="rounded-xl p-5 mb-5">
-            <div className="flex items-center gap-3 mb-4">
-              <div style={{ color: '#f59e0b', fontSize: '1.75rem', lineHeight: 1 }}>&#127942;</div>
-              <div>
-                <h2 className="text-white font-bold text-xs uppercase tracking-wider">Graduation Wall</h2>
-                <p style={{ color: '#f59e0b' }} className="text-xl font-black mt-0.5">
-                  {graduatedCount} student{graduatedCount !== 1 ? 's' : ''} graduated
-                </p>
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-3">
+                <div style={{ color: '#f59e0b', fontSize: '1.75rem', lineHeight: 1 }}>&#127942;</div>
+                <div>
+                  <h2 className="text-white font-bold text-xs uppercase tracking-wider">Graduation Wall</h2>
+                  <p style={{ color: '#f59e0b' }} className="text-xl font-black mt-0.5">
+                    {graduatedCount} student{graduatedCount !== 1 ? 's' : ''} graduated
+                  </p>
+                </div>
               </div>
+              <Link
+                href="/graduates"
+                target="_blank"
+                style={{ color: '#f59e0b', border: '1px solid #f59e0b40', borderRadius: 6, padding: '4px 12px', fontSize: '0.75rem', fontWeight: 700 }}
+                className="hover:opacity-80 transition-opacity"
+              >
+                View public wall ↗
+              </Link>
             </div>
             {graduatedDetails.length === 0 ? (
               <p style={{ color: '#525252' }} className="text-sm">No graduates yet — they&apos;re on their way!</p>
             ) : (
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-                {graduatedDetails.map((g, i) => (
+              <div className="space-y-2">
+                {graduatedDetails.map((g) => (
                   <div
-                    key={i}
-                    style={{ backgroundColor: '#0d0d0d', border: '1px solid #2a1f00' }}
-                    className="rounded-lg p-3 flex items-center gap-2"
+                    key={g.id}
+                    style={{ backgroundColor: '#0d0d0d', border: '1px solid #1f1f1f', borderRadius: 8, padding: '10px 14px' }}
+                    className="flex items-start justify-between gap-3"
                   >
-                    <span style={{ color: '#f59e0b' }} className="text-base">&#9733;</span>
-                    <div>
-                      <p className="text-white text-xs font-bold">{g.name ?? 'Anonymous'}</p>
-                      <p style={{ color: '#525252' }} className="text-xs">{g.completedAt.toLocaleDateString()}</p>
+                    <div className="flex items-start gap-2 min-w-0">
+                      <span style={{ color: '#f59e0b' }} className="text-sm flex-shrink-0 mt-0.5">&#9733;</span>
+                      <div className="min-w-0">
+                        <p className="text-white text-xs font-bold">{g.name ?? 'Anonymous'}</p>
+                        <div className="flex flex-wrap gap-2 mt-0.5">
+                          {g.soloStyle && (
+                            <span style={{ color: '#737373', fontSize: '0.65rem' }}>{g.soloStyle}</span>
+                          )}
+                          {g.guitarHero && (
+                            <span style={{ color: '#525252', fontSize: '0.65rem' }}>{g.guitarHero}</span>
+                          )}
+                          <span style={{ color: '#404040', fontSize: '0.65rem' }}>
+                            {g.completedAt.toLocaleDateString()}
+                          </span>
+                        </div>
+                        {g.graduateNote && (
+                          <p style={{ color: '#525252', fontSize: '0.65rem', fontStyle: 'italic', marginTop: 2 }} className="truncate max-w-xs">
+                            &ldquo;{g.graduateNote}&rdquo;
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <Link
+                        href={`/solo/${g.userId}`}
+                        target="_blank"
+                        style={{ color: '#f59e0b', fontSize: '0.7rem', fontWeight: 600 }}
+                        className="hover:underline"
+                      >
+                        View solo ↗
+                      </Link>
+                      <RemoveFromWallButton profileId={g.id} />
                     </div>
                   </div>
                 ))}

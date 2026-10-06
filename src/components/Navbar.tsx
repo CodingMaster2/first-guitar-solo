@@ -84,6 +84,9 @@ export default function Navbar() {
                   <Link href="/faq" style={{ color: '#a3a3a3' }} className="text-sm hover:text-white transition-colors">
                     FAQ
                   </Link>
+                  <Link href="/graduates" style={{ color: '#a3a3a3' }} className="text-sm hover:text-white transition-colors">
+                    Graduates
+                  </Link>
                   <Link href="/login" style={{ color: '#a3a3a3' }} className="text-sm hover:text-white transition-colors">
                     Log In
                   </Link>
@@ -229,6 +232,7 @@ export default function Navbar() {
               <Link href="/#the-solo" style={{ color: '#a3a3a3' }} className="text-sm mobile-nav-link" onClick={() => setMobileOpen(false)}>The Solo</Link>
               <Link href="/#pricing" style={{ color: '#a3a3a3' }} className="text-sm mobile-nav-link" onClick={() => setMobileOpen(false)}>Pricing</Link>
               <Link href="/faq" style={{ color: '#a3a3a3' }} className="text-sm mobile-nav-link" onClick={() => setMobileOpen(false)}>FAQ</Link>
+              <Link href="/graduates" style={{ color: '#a3a3a3' }} className="text-sm mobile-nav-link" onClick={() => setMobileOpen(false)}>Graduates</Link>
               <Link href="/login" style={{ color: '#a3a3a3' }} className="text-sm mobile-nav-link" onClick={() => setMobileOpen(false)}>Log In</Link>
               <Link
                 href="/register"

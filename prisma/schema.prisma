@@ -68,6 +68,14 @@ model Profile {
   adaptivePath                String?
   weeklyPlan                  String?
   weeklyPlanGeneratedAt       DateTime?
+  soloStyle                   String?
+  guitarHero                  String?
+  soloVibe                    String?
+  customSolo                  String?
+  soloGeneratedAt             DateTime?
+  soloCompleted               Boolean   @default(false)
+  soloCompletedAt             DateTime?
+  graduateNote                String?
 }
 
 model Progress {
