@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /lesson/
+Disallow: /settings
+Disallow: /my-solo
+Disallow: /journey
+Disallow: /progress
+Disallow: /coach
+Sitemap: https://first-guitar-solo.vercel.app/sitemap.xml

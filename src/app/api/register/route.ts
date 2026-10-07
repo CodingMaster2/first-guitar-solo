@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
+import { sendWelcomeEmail } from '@/lib/email'
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,6 +30,12 @@ export async function POST(req: NextRequest) {
         name: name ?? null,
       },
     })
+
+    try {
+      await sendWelcomeEmail(email, name ?? '')
+    } catch (emailErr) {
+      console.error('[register] welcome email failed:', emailErr)
+    }
 
     return NextResponse.json({ success: true, userId: user.id })
   } catch (error) {

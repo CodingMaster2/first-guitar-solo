@@ -24,6 +24,7 @@
     "prisma": "^6.19.3",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "resend": "^6.32.1",
     "stripe": "^23.0.0",
     "wavesurfer.js": "^8.0.1"
   },
@@ -39,5 +40,8 @@
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
     "typescript": "^5"
+  },
+  "allowScripts": {
+    "resend@6.32.1": true
   }
 }

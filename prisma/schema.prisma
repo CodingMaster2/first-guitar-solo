@@ -31,8 +31,19 @@ model User {
   lessonComments   LessonComment[]
   couponRedemptions CouponRedemption[]
   adminLogs        AdminLog[]
-  partnersAsUser    AccountabilityPartner[] @relation("partnerUser")
-  partnersAsPartner AccountabilityPartner[] @relation("partnerMatch")
+  partnersAsUser      AccountabilityPartner[]  @relation("partnerUser")
+  partnersAsPartner   AccountabilityPartner[]  @relation("partnerMatch")
+  passwordResetTokens PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
 
 model Profile {

@@ -5,6 +5,32 @@ import { prisma } from '@/lib/prisma'
 import { LESSONS } from '@/lib/lessons'
 import Groq from 'groq-sdk'
 
+interface CoachRateLimitEntry {
+  count: number
+  resetAt: number
+}
+
+const coachRateLimitMap = new Map<string, CoachRateLimitEntry>()
+const COACH_MAX_MESSAGES = 20
+const COACH_WINDOW_MS = 60 * 60 * 1000 // 1 hour
+
+function checkCoachRateLimit(userId: string): boolean {
+  const now = Date.now()
+  const entry = coachRateLimitMap.get(userId)
+
+  if (!entry || now > entry.resetAt) {
+    coachRateLimitMap.set(userId, { count: 1, resetAt: now + COACH_WINDOW_MS })
+    return true
+  }
+
+  if (entry.count >= COACH_MAX_MESSAGES) {
+    return false
+  }
+
+  entry.count++
+  return true
+}
+
 
 export async function GET() {
   try {
@@ -34,6 +60,10 @@ export async function POST(req: NextRequest) {
     }
     if (session.user.purchaseStatus !== 'PAID') {
       return NextResponse.json({ error: 'Payment required' }, { status: 403 })
+    }
+
+    if (!checkCoachRateLimit(session.user.id)) {
+      return NextResponse.json({ error: 'Rate limit exceeded. Try again in an hour.' }, { status: 429 })
     }
 
     if (!process.env.GROQ_API_KEY) {

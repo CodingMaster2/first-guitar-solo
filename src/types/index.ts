@@ -17,6 +17,8 @@ export interface Lesson {
   bonusContent?: string
   crossRefs?: Array<{ day: number; description: string }>
   prerequisites?: string[]
+  successCriteria?: string
+  bpmTarget?: number
 }
 
 export interface UserProfile {

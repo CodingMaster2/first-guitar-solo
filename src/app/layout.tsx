@@ -37,6 +37,29 @@ export const viewport: Viewport = {
   themeColor: '#f59e0b',
 }
 
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Course',
+  name: 'First Guitar Solo',
+  description:
+    'A structured 30-day program to take you from basic guitar skills to confidently performing your first complete guitar solo.',
+  provider: {
+    '@type': 'Organization',
+    name: 'Sixth String Labs',
+  },
+  offers: {
+    '@type': 'Offer',
+    price: '25',
+    priceCurrency: 'USD',
+    availability: 'https://schema.org/InStock',
+  },
+  hasCourseInstance: {
+    '@type': 'CourseInstance',
+    courseMode: 'online',
+    duration: 'P30D',
+  },
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -47,6 +70,10 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col antialiased" style={{ backgroundColor: '#0a0a0a', color: '#ffffff' }}>
         <Providers>
           <AnnouncementBanner />
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          />
           {children}
           <MobileBottomNav />
           <ToastContainer />

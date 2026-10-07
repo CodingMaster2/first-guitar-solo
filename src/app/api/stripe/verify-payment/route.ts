@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { stripe } from '@/lib/stripe'
 import { prisma } from '@/lib/prisma'
 import { ACHIEVEMENTS } from '@/lib/achievements'
+import { sendPurchaseConfirmationEmail } from '@/lib/email'
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,6 +39,16 @@ export async function POST(req: NextRequest) {
         stripeCustomerId: typeof checkoutSession.customer === 'string' ? checkoutSession.customer : undefined,
       },
     })
+
+    // Send purchase confirmation email
+    try {
+      const user = await prisma.user.findUnique({ where: { id: session.user.id } })
+      if (user) {
+        await sendPurchaseConfirmationEmail(user.email, user.name ?? '')
+      }
+    } catch (emailErr) {
+      console.error('[verify-payment] confirmation email failed:', emailErr)
+    }
 
     // Seed achievements if empty
     const achievementCount = await prisma.achievement.count()

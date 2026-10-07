@@ -9,8 +9,18 @@ export const LESSONS: Lesson[] = [
     subtitle: 'Start thinking like a lead guitarist',
     why: 'Lead guitar is about single notes played with intention. Rhythm guitar fills space — lead guitar says something. Today you shift your mindset from strumming chords to speaking with individual notes. Every great solo starts here.',
     duration: 15,
-    warmup: 'Pick up your guitar and play each string open, one at a time. Listen to how each string rings and sustains. Pay attention to the tone — is it clear? Buzzy? This is your ear training starting right now.',
-    mainContent: `<h3>Thinking Like a Lead Guitarist</h3>
+    warmup: 'Pick up your guitar and play each string open, one at a time, from the thickest (low E) to the thinnest (high e). Let each string ring until it stops naturally. This is your first ear training: learn what a clean, open string sounds like.',
+    mainContent: `<h3>Physical Setup — Do This First</h3>
+<p>Before playing a single note, get your body right. Poor posture makes everything harder and can cause pain that ends your practice sessions early.</p>
+<p><strong>Sitting position:</strong> Sit upright on the front half of a chair. Rest the guitar's waist (the indent in the body) on your right thigh. The guitar neck tilts slightly upward — not horizontal, not pointing at the floor.</p>
+<p><strong>Fretting hand:</strong> Your thumb sits behind the neck, roughly opposite your middle finger. Don't wrap your thumb over the top of the neck. Your wrist stays low — the palm of your hand should not press against the bottom of the neck.</p>
+<p><strong>Picking hand:</strong> Rest your forearm lightly on the top edge of the guitar body. Your wrist hangs near the strings. Relax your shoulder completely — no hunching.</p>
+
+<h3>How to Hold the Pick</h3>
+<p>Pinch the pick between your index finger and thumb. The pointed tip should stick out about 5–8mm past your finger. Hold it at roughly a 15–20 degree angle to the string — not perfectly flat, slightly tilted toward the headstock. This reduces string resistance and improves tone.</p>
+<p>Grip it firmly enough that it won't fly out of your hand, but not so tight that your hand cramps. If your hand gets tired holding the pick, you're gripping too hard.</p>
+
+<h3>Thinking Like a Lead Guitarist</h3>
 <p>Rhythm guitarists think in shapes — chord shapes, strum patterns, progressions. Lead guitarists think in notes — individual pitches, the spaces between them, the feeling of each one.</p>
 <p>When you play lead, every note is a decision. You decide:</p>
 <ul>
@@ -30,9 +40,10 @@ G |-----------------|
 D |-----------------|
 A |-----------------|
 E |--5--6--7--8-----|</pre>
-<p>Index finger on 5, middle on 6, ring on 7, pinky on 8. Every note on its own beat. Every note clean.</p>`,
-    exercise: 'Play the chromatic exercise on the low E string: frets 5-6-7-8, one finger per fret, down-pick each note. Start at whatever tempo feels comfortable — there is no rush. Do 5 full repetitions. Then try it on the A string (same frets). Rest, then do 5 more on the low E. Total practice time: 5-10 minutes.',
-    selfCheck: 'Each note should ring clearly for its full duration before the next note. If you hear any buzzing, adjust your finger placement — press right behind the fret, not on top of it. The goal is clarity, not speed.',
+<p>Index finger on fret 5, middle finger on fret 6, ring finger on fret 7, pinky on fret 8. Every note on its own beat. Every note clean.</p>
+<p>Press each string directly behind the fret wire — not on top of it, not far from it. Use just enough pressure to get a clean note. Pressing harder than necessary causes hand fatigue.</p>`,
+    exercise: 'Play the chromatic exercise on the low E string: frets 5-6-7-8, one finger per fret, down-pick each note. Set a metronome to 50 BPM if you have one — one note per click. Do 10 full repetitions. Then try it on the A string (same frets, same fingering). Rest 60 seconds, then do 10 more on the low E. Total practice time: 10 minutes. Stop immediately if you feel sharp pain — mild finger soreness is normal, but sharp joint pain is a signal to stop.',
+    selfCheck: 'Each note should ring clearly for its full duration before the next note. If you hear any buzzing, adjust your finger placement — press right behind the fret, not on top of it. After 10 repetitions you should notice your finger placement becoming more automatic. You are ready to move on when you can play the chromatic exercise on both the E and A strings with clean notes at least 8 out of 10 times.',
     techniques: ['single-note picking', 'finger placement', 'chromatic exercise'],
     xpReward: 50,
     prerequisites: ['A guitar and a pick — that is all you need today.'],
@@ -45,8 +56,10 @@ E |--5--6--7--8-----|</pre>
       'Placing the finger on top of the fret wire instead of just behind it — this causes buzzing.',
       'Using the fingertip pad instead of the very tip of the finger — this muffles adjacent strings.',
       'Pressing too hard and tensing the whole hand — use just enough pressure to get a clean note.',
+      'Finger soreness and pain: your fingertips WILL hurt on the first few days. This is completely normal — you are building calluses. The soreness typically peaks around Day 3-4 and fades by the end of Week 1. Practice for 15 minutes, take a break. Do not push through sharp pain. Do not soak your fingers in water (this softens the skin and delays callus formation). The discomfort is temporary and leads to permanent toughened fingertips.',
     ],
     bonusContent: 'Try the same chromatic exercise on every string, not just the low E. The physical pattern is the same, but each string has a different tension. The high e string is the most challenging — start it last once your fingers are warmed up.',
+    successCriteria: 'You are ready for Day 2 when you can play the chromatic exercise on the low E and A strings (frets 5-6-7-8) with every note ringing cleanly, at a steady pace, for 10 consecutive repetitions. Buzzing is expected in your first session — by the end of this session, you should be getting at least 7 clean notes out of 8.',
   },
   {
     day: 2,
@@ -55,7 +68,7 @@ E |--5--6--7--8-----|</pre>
     subtitle: 'The language of guitar music',
     why: 'Guitar tabs let you read and write music without knowing traditional notation. Every guitarist uses them. You need to be fluent. Today you learn to read tabs and — critically — you learn to play them in time.',
     duration: 20,
-    warmup: 'Chromatic exercise from Day 1 on the low E string, 3 repetitions. Try to keep each note equally loud.',
+    warmup: 'Chromatic exercise from Day 1 on the low E string at 50 BPM, 5 repetitions. Try to keep each note equally loud. Then do 5 repetitions on the A string. Note: finger soreness from Day 1 is normal — work through it.',
     mainContent: `<h3>How to Read Guitar Tabs</h3>
 <p>A guitar tab has 6 lines. Each line represents a string:</p>
 <pre>e |-------|  ← thinnest string (highest pitch)
@@ -98,6 +111,7 @@ E |------------------------|</pre>
       'Jumping to 120 BPM before you can play cleanly at 60 BPM.',
     ],
     bonusContent: 'Once you can read a single-line tab, try writing one yourself. Pick five notes you like, write them out in tab format, then play what you wrote. This reinforces both reading and writing simultaneously.',
+    successCriteria: 'You are ready for Day 3 when you can play the 8-note tab figure at 60 BPM, landing on the beat (not after it), for 5 consecutive repetitions without stopping. Missing one note is fine — stopping the time is not.',
   },
   {
     day: 3,
@@ -106,13 +120,16 @@ E |------------------------|</pre>
     subtitle: 'The engine of every fast, clean guitar phrase',
     why: 'Alternate picking — down, up, down, up — is the most efficient way to move your pick through strings. It\'s the foundation of speed, and more importantly, it creates even, consistent tone. Without it, you have a ceiling. With it, you have no ceiling.',
     duration: 20,
-    warmup: 'Chromatic exercise (Day 1), 3 repetitions with all downstrokes. Notice the effort required to reset your pick after each note.',
+    warmup: 'Chromatic exercise (Day 1) on low E and A strings at 55 BPM, 5 repetitions each string, all downstrokes. Then play the 8-note figure from Day 2, all downstrokes, at 60 BPM, 3 repetitions. Notice how much energy it takes to reset your pick after every note.',
     mainContent: `<h3>Why Alternate Picking?</h3>
 <p>All-downstrokes work fine at slow tempos. But as speed increases, constantly lifting the pick back up for another downstroke becomes inefficient and tiring. Alternate picking (down-up-down-up) is twice as efficient because you're using the motion in both directions.</p>
 <p>More importantly: alternate picking forces your upstrokes to be as clean as your downstrokes. Most guitarists have weak, sloppy upstrokes. Fixing that makes every phrase cleaner immediately.</p>
 
-<h3>The Motion</h3>
+<h3>The Motion — Three Critical Details</h3>
 <p>Your pick should move from the wrist, not the elbow. Small, controlled motion. The pick travels through the string and rests slightly past it — then comes back up through the string on the upstroke.</p>
+<p><strong>1. Pick depth:</strong> The tip of the pick should travel through the string by about 3–5mm. Any deeper and the pick "digs in" and creates drag. Too shallow and you get thin, weak tone. Imagine barely grazing the string rather than plowing through it.</p>
+<p><strong>2. Pick angle:</strong> Tilt the pick 15–20 degrees so the downstroke edge leads slightly. This lets the pick glide off the string cleanly instead of catching it. Dead straight (90 degrees to the string) causes a "thwack" sound and slows down your speed.</p>
+<p><strong>3. Wrist anchor:</strong> Lightly rest the heel of your picking hand (the pinky-side edge) on the bridge saddles. This gives your wrist a pivot point. Do not anchor your elbow or forearm — only the heel of the hand, gently.</p>
 <p>Direction indicator:</p>
 <ul>
   <li>↓ = downstroke (pick moves toward the floor)</li>
@@ -128,7 +145,7 @@ A |---------------------------|
 E |---5---6---7---8-----------|
     ↓   ↑   ↓   ↑</pre>
 <p>Fret 5 = downstroke. Fret 6 = upstroke. Fret 7 = downstroke. Fret 8 = upstroke.</p>`,
-    exercise: 'Take the chromatic exercise from Day 1 (low E string, frets 5-6-7-8). Apply alternate picking: D-U-D-U. Start at 60 BPM — one note per click. Do 10 repetitions. Focus on making the upstrokes sound exactly as clear and loud as the downstrokes. Then try the 8-note figure from Day 2 with alternate picking.',
+    exercise: 'Take the chromatic exercise from Day 1 (low E string, frets 5-6-7-8). Apply alternate picking: D-U-D-U. Start at 55 BPM — one note per click. Do 20 repetitions, pausing for 30 seconds after every 5. Focus on making the upstrokes sound exactly as clear and loud as the downstrokes. Then try the 8-note figure from Day 2 with alternate picking: 20 repetitions at 60 BPM. Finally, try the chromatic exercise on the A string with alternate picking: 10 repetitions.',
     selfCheck: 'Record yourself playing 30 seconds of this exercise (voice memo on your phone is fine). Listen back. Can you hear a difference between your downstrokes and upstrokes? If yes, keep working on evening them out. If no, you\'re in great shape.',
     techniques: ['alternate picking', 'pick motion', 'downstroke', 'upstroke'],
     xpReward: 50,
@@ -148,6 +165,8 @@ E |---5---6---7---8-----------|
       'Accidentally anchoring the pick too deep into the string, causing it to catch on the wind-up.',
     ],
     bonusContent: 'Try "economy picking" as a mental contrast: only use downstrokes when crossing to a lower (thicker) string, and upstrokes when crossing to a higher string. You do not need to use this yet — but understanding that alternate picking is a choice will make you a more intentional player.',
+    successCriteria: 'You are ready for Day 4 when your alternate-picked chromatic exercise on the low E string sounds even — no obvious volume difference between downstrokes and upstrokes — at 60 BPM for 10 consecutive repetitions.',
+    bpmTarget: 60,
   },
   {
     day: 4,
@@ -173,7 +192,7 @@ G |-------------|</pre>
 B |---5h7h8h10------------|
 G |------------------------|</pre>
 <p>Pick fret 5. Hammer 7. Hammer 8. Hammer 10. Four notes, one pick stroke.</p>`,
-    exercise: 'On the B string: pick fret 5, hammer onto fret 7 without picking again. Listen — is the hammered note as loud as the picked note? Repeat 10 times. Then try the 4-note hammer-on phrase (5h7h8h10). Finally, alternate the phrases: pick fret 5-hammer 7 (2 notes), then pick fret 5-hammer 7-hammer 8-hammer 10 (4 notes). Rest 30 seconds, repeat.',
+    exercise: 'On the B string: pick fret 5, hammer onto fret 7 without picking again. Listen — is the hammered note as loud as the picked note? Repeat 25 times, resting 30 seconds after every 10. Then try the 4-note hammer-on phrase (5h7h8h10) — 20 repetitions. Finally, alternate the phrases: pick fret 5-hammer 7 (2 notes), then pick fret 5-hammer 7-hammer 8-hammer 10 (4 notes). Do 10 cycles of alternating. Total practice: 10-12 minutes on hammer-ons only. Finger tip soreness is expected and normal this week.',
     selfCheck: 'The hammered note should be close to the same volume as the picked note. If it\'s much quieter, hammer harder. If it\'s buzzing, adjust your finger placement. The transition between picked note and hammered note should sound smooth — not like two separate events.',
     techniques: ['hammer-on', 'legato', 'fret-hand technique'],
     xpReward: 50,
@@ -191,8 +210,10 @@ G |------------------------|</pre>
       'Hammering too slowly — the motion must be quick and deliberate, like a nail hammer, not a slow press.',
       'Landing the finger flat on the fret instead of right behind it, causing a dull thud instead of a note.',
       'Losing the volume of the hammered notes — they should be nearly as loud as a picked note.',
+      'Week 1 callus checkpoint: if your finger tips are sore but not painful (a dull ache, tender to the touch), this is normal and means you are building calluses. If you feel sharp pain in the joints of your fingers or wrist, stop and rest for the day. Callus soreness resolves within 7-10 days of consistent practice.',
     ],
     bonusContent: 'Hammer-ons are the core of tapping technique used by players like Eddie Van Halen. Once you have a reliable hammer-on, two-hand tapping becomes accessible. For now, practice the motion with your fretting hand only until it is second nature.',
+    successCriteria: 'You are ready for Day 5 when you can execute 10 consecutive 2-note hammer-ons (fret 5 to fret 7 on the B string) where the hammered note is clearly audible and roughly equal in volume to the picked note.',
   },
   {
     day: 5,
@@ -219,7 +240,7 @@ G |-------------|</pre>
 B |---5h7p5h7p5h7p5-------|
 G |------------------------|</pre>
 <p>This is a classic blues-rock trill pattern. Once you have it, it becomes automatic.</p>`,
-    exercise: 'Step 1: Place index finger on B string fret 5, ring finger on fret 7. Pick fret 7, pull off to fret 5. Repeat 10 times. Step 2: Combine with hammer-on: from fret 5, hammer to 7, pull back to 5. This is one complete cycle. Repeat 10 times. Step 3: Try doing this continuously — 5h7p5h7p5 — as a flowing motion for 30 seconds.',
+    exercise: 'Step 1: Place index finger on B string fret 5, ring finger on fret 7. Pick fret 7, pull off to fret 5. Repeat 25 times, resting 30 seconds after every 10. Step 2: Combine with hammer-on: from fret 5, hammer to 7, pull back to 5. This is one complete cycle. Repeat 25 times. Step 3: Try doing this continuously — 5h7p5h7p5 — as a flowing motion for 60 seconds straight. Rest, then do another 60 seconds. This continuous motion builds the muscle memory that matters for Week 2 legato phrases.',
     selfCheck: 'The pulled-off note should be clearly audible, not barely a whisper. All three notes in the h/p combination (5, 7, 5) should be roughly equal volume. If the pull-off is weak, practice the pulling motion alone until the note rings clearly.',
     techniques: ['pull-off', 'legato', 'hammer-on/pull-off combination', 'trill'],
     xpReward: 50,
@@ -239,6 +260,7 @@ G |------------------------|</pre>
       'Doing the pull-off motion too softly — commit to the pull to get full volume.',
     ],
     bonusContent: 'The hammer-on/pull-off trill (5h7p5h7p5...) is used in countless blues-rock solos. Try gradually speeding it up over 10-second intervals: start slow, increase tempo every 10 seconds, rest, repeat. This trains speed and endurance simultaneously.',
+    successCriteria: 'You are ready for Day 6 when the three notes of a hammer-on/pull-off cycle (fret 5, hammer to 7, pull to 5) are all roughly the same volume and you can sustain the cycle for 30 seconds without stopping.',
   },
   {
     day: 6,
@@ -289,6 +311,7 @@ D |------------------------|</pre>`,
       'Landing on the wrong fret — count the frets consciously until muscle memory takes over.',
     ],
     bonusContent: 'Slides can also be used as "pre-bends" where you slide into a note from far below without picking the starting pitch — just the arrival. Try sliding from fret 2 up to fret 7 in one smooth motion. The listener hears only the destination, not where you started.',
+    successCriteria: 'You are ready for Day 7 when you can slide from fret 5 to fret 7 on the G string (and back) with the destination note ringing clearly and in tune — no dead spots mid-slide — for 10 consecutive repetitions.',
   },
   {
     day: 7,
@@ -297,34 +320,38 @@ D |------------------------|</pre>`,
     subtitle: 'Consolidate everything before moving forward',
     why: 'You\'ve learned five techniques in six days. Before you move to Week 2, you need to make sure each technique is actually working — not just theoretically understood, but physically playable. This review session locks in Week 1.',
     duration: 30,
-    warmup: 'Chromatic exercise on all 6 strings (frets 5-8), alternate picking, 60 BPM. One rep per string, top to bottom and back.',
+    warmup: 'Chromatic exercise on low E and A strings (frets 5-8), alternate picking, 60 BPM — 5 repetitions per string. Then the Day 5 h/p trill (5h7p5 on B string) for 30 seconds. Then one legato slide phrase from Day 6 (5/7, hold, 7\\5 on G string) — 5 repetitions.',
     mainContent: `<h3>The Week 1 Five-Technique Challenge</h3>
-<p>Today you\'ll run through all five techniques in a structured sequence. For each technique, play it cleanly 5 times before moving on. "Cleanly" means every note rings clearly, at consistent volume, with no buzzing.</p>
+<p>Today you\'ll run through all five techniques in a structured sequence. For each technique, play it cleanly 10 times before moving on. "Cleanly" means every note rings clearly, at consistent volume, with no buzzing or dead strings.</p>
+<p>This session takes about 25 minutes. Work through each technique completely before moving to the next.</p>
 
 <h3>The Sequence</h3>
-<p><strong>1. Alternate Picking</strong><br/>
-Chromatic exercise on low E, frets 5-6-7-8, alternate picking, 60 BPM. 5 repetitions.</p>
+<p><strong>1. Alternate Picking — 10 minutes</strong><br/>
+Chromatic exercise on low E, frets 5-6-7-8, alternate picking, 60 BPM. 10 repetitions. Then on the A string, 10 repetitions. Focus: are your upstrokes equal to your downstrokes?</p>
 
-<p><strong>2. Hammer-ons</strong><br/>
-B string: 5h7h8h10. 5 repetitions. The hammered notes should be full volume.</p>
+<p><strong>2. Hammer-ons — 5 minutes</strong><br/>
+B string: 5h7. 15 repetitions. Then 5h7h8h10. 10 repetitions. The hammered notes should be nearly as loud as the picked note.</p>
 
-<p><strong>3. Pull-offs</strong><br/>
-B string: 10p8p7p5. 5 repetitions. This is the reverse of #2 — pull off from 10 down to 5.</p>
+<p><strong>3. Pull-offs — 5 minutes</strong><br/>
+B string: 7p5. 15 repetitions. Remember: pre-place the lower finger before pulling. Then 10p8p7p5 (reverse of the hammer phrase). 10 repetitions.</p>
 
-<p><strong>4. Slides</strong><br/>
-G string: 5/7, hold, 7\\5. 5 repetitions. Smooth, continuous motion.</p>
+<p><strong>4. Slides — 5 minutes</strong><br/>
+G string: 5/7, hold, 7\\5. 10 repetitions. Maintain string pressure the entire way.</p>
 
-<p><strong>5. Combination Phrase</strong><br/>
+<p><strong>5. Combination Phrase — 5 minutes</strong><br/>
 This combines multiple techniques:</p>
 <pre>e |----------------------------------|
 B |---5h7p5---5h7--------------------|
 G |----------5/7\\5-----------------|
 D |----------------------------------|</pre>
-<p>This is a mini-lick. Play it 5 times.</p>
+<p>This is a mini-lick. Learn it note by note first, then play it as one connected phrase. Aim for 10 clean repetitions.</p>
+
+<h3>Spaced Retrieval Moment</h3>
+<p>Before rating yourself, try this: close your eyes and play the chromatic exercise from memory (Day 1). Then play the h/p trill from memory (Day 5). Retrieval from memory reinforces the neural pathway more powerfully than just repeating while reading.</p>
 
 <h3>Self-Assessment</h3>
 <p>Rate yourself on each technique: 1 (needs work) / 2 (developing) / 3 (solid). Be honest. The AI Coach can help you target weak areas in Week 2.</p>`,
-    exercise: 'Complete the full five-technique challenge sequence above. After finishing, answer: Which technique felt weakest? Spend an extra 5 minutes on that one technique before completing the lesson. If all felt equally strong, spend the extra time on the combination phrase — play it until it flows naturally.',
+    exercise: 'Complete the full five-technique challenge sequence above with the specified rep counts. After finishing, answer: Which technique felt weakest? Spend an extra 5 minutes on that one technique. If all felt equally strong, spend the extra time on the combination phrase — play it 15 more times until it flows as one phrase, not 5 separate moves.',
     selfCheck: 'By the end of Week 1, you should be able to play each technique cleanly at 60 BPM and combine them in a short phrase. If you\'re not there on any technique, note it in your self-assessment — the curriculum will reinforce it in Week 2.',
     techniques: ['alternate picking', 'hammer-on', 'pull-off', 'slide', 'combination phrases'],
     xpReward: 100,
@@ -346,6 +373,7 @@ D |----------------------------------|</pre>
       'Treating the review as a test rather than a diagnostic — the goal is information, not a grade.',
     ],
     bonusContent: 'The combination phrase at the end of this lesson is a micro-lick — a short, reusable musical idea. Great guitarists have dozens of micro-licks in their vocabulary. Save this one: it will appear in the solo later and will feel familiar when it does.',
+    successCriteria: 'You are ready for Week 2 when: (1) alternate picking chromatic exercise is clean at 60 BPM on both E and A strings, (2) hammer-ons and pull-offs produce clearly audible notes, (3) slides arrive at the target fret with string ringing, (4) you can play the combination phrase as a single connected phrase at least once without stopping.',
   },
 
   // ===== WEEK 2: SOUNDING LIKE A LEAD GUITARIST =====
@@ -378,7 +406,7 @@ D |--5--7--|
 A |--5--7--|
 E |--5--8--|</pre>
 <p>Tomorrow you\'ll learn this in detail. Today, just absorb the concept and listen to it. Play through this pattern slowly, top to bottom, to hear the sound of the minor pentatonic.</p>`,
-    exercise: 'Slowly play through the Box 1 preview above, from low E to high e, then back down. Just listen to the sound — the minor pentatonic sound. Then pick any two adjacent notes from the pattern and play them back and forth 20 times. Notice how even two notes from this scale have musical character.',
+    exercise: 'Step 1: Slowly trace through the Box 1 preview tab above with your finger on the page — find each fret position before playing. This is "mental mapping." Step 2: Play through the pattern from low E to high e, very slowly, one note at a time. Listen only — do not try to memorize it yet. Step 3: Pick any two notes on adjacent strings from the pattern and play them back and forth 25 times. Step 4: Pick three notes from the same pair of strings and play them as a mini-loop for 2 minutes. Even with three notes, the pentatonic sound is unmistakable.',
     selfCheck: 'You should be able to hear the "bluesy" quality of the minor pentatonic. If you\'ve heard classic rock solos before, this should sound familiar. That familiarity means you\'re hearing it correctly.',
     techniques: ['pentatonic scale', 'scale theory', 'box patterns'],
     xpReward: 60,
@@ -406,7 +434,7 @@ E |--5--8--|</pre>
     subtitle: 'Your first complete scale shape',
     why: 'Box 1 of the A minor pentatonic scale is the most-used scale pattern in rock guitar history. Hendrix, Clapton, Page, SRV — they all started here. Learning it completely changes how you relate to the fretboard.',
     duration: 25,
-    warmup: 'Day 7 combination phrase, 5 times. Focus on clean transitions between techniques.',
+    warmup: 'Day 7 combination phrase, 10 times. Then alternate picking chromatic exercise on the A string at 60 BPM, 5 reps (spaced retrieval from Day 3 — locking in the motion before it is overshadowed by scale work).',
     mainContent: `<h3>The Complete Box 1 Pattern</h3>
 <p>Here is the full A minor pentatonic Box 1, rooted at the 5th fret:</p>
 <pre>e |--5--8--|
@@ -427,7 +455,7 @@ On strings B, e (and low E): use index finger for fret 5, pinky for fret 8.</p>
 
 <h3>Changing Keys</h3>
 <p>The same shape moved to a different position plays a different key. Box 1 at fret 5 = A minor. At fret 7 = B minor. At fret 3 = G minor. The shape is the same — only the position changes.</p>`,
-    exercise: 'Play Box 1 ascending (low E to high e) and descending (high e back to low E) with alternate picking at 60 BPM, 10 complete runs. Then: play it ascending-only 5 times at 70 BPM. Then: play only the top two strings (B and e) back and forth. This top portion of Box 1 is where most solos live.',
+    exercise: 'Step 1: Play Box 1 ascending (low E to high e) without a metronome — just get the notes right. 5 runs. Step 2: Add a metronome at 50 BPM. 5 ascending runs, 5 descending runs. Step 3: Increase to 60 BPM. 10 complete ascending-and-descending runs. Step 4: Play only the top two strings (B and e) back and forth at 70 BPM. This upper portion of Box 1 is where most blues-rock phrases live and deserves extra attention.',
     selfCheck: 'You should be able to play the full ascending and descending scale without pausing to think about the next note. It should feel like a connected shape, not 12 individual notes. If you\'re still looking at your hands for every note, keep going — repetition builds the map.',
     techniques: ['pentatonic box 1', 'scale fingering', 'ascending/descending'],
     xpReward: 60,
@@ -448,6 +476,8 @@ On strings B, e (and low E): use index finger for fret 5, pinky for fret 8.</p>
       'Only practicing ascending — descending (high e back down) is equally important and often neglected.',
     ],
     bonusContent: 'Once Box 1 is solid at fret 5 (A minor), move it to fret 3 (G minor) and fret 7 (B minor). The shape is identical — only the key changes. This is the power of the box pattern system: one shape, every key.',
+    successCriteria: 'You are ready for Day 10 when you can play Box 1 ascending and descending at 60 BPM without pausing between strings or looking at the tab. If you are still stopping to think about the next note, spend another session at 50 BPM until the shape is automatic.',
+    bpmTarget: 60,
   },
   {
     day: 10,
@@ -456,36 +486,50 @@ On strings B, e (and low E): use index finger for fret 5, pinky for fret 8.</p>
     subtitle: 'Running a scale is not music',
     why: 'Running up and down the pentatonic scale is an exercise, not a solo. The difference between exercise and music is phrasing — grouping notes into short, meaningful ideas with space between them. Today you learn how to take 3-4 notes and make them say something.',
     duration: 25,
-    warmup: 'Box 1 pentatonic, full ascending and descending, 3 repetitions at 60 BPM. Focus on clean notes, not speed.',
+    warmup: 'Box 1 pentatonic, full ascending and descending, 5 repetitions at 60 BPM. Then play only the top two strings (B and e) back and forth at 70 BPM for 2 minutes — this is your phrase territory.',
     mainContent: `<h3>What Makes a Phrase?</h3>
 <p>A musical phrase has a beginning, some kind of motion, and an end. Think about how you speak: you don\'t talk in one endless stream — you say something, pause, say something else. Guitar phrases work the same way.</p>
+<p>Running Box 1 up and down is an exercise. A phrase is 2-5 notes with intentional rhythm and space around it. The difference between exercise and music is entirely in the rhythm and the silence.</p>
 
-<h3>The 3-4 Note Motif</h3>
-<p>Pick any 3 adjacent notes from Box 1. For example, from the top of the box:</p>
-<pre>e |---5--8--|
-B |---5-----|
-G |---------|</pre>
-<p>Three notes: B string fret 5, high e fret 5, high e fret 8. That\'s a phrase.</p>
-<p>Now add rhythm. Don\'t play them all on equal beats — let some be longer, some shorter. Try:</p>
+<h3>Start by Borrowing — 5 Proven Phrases</h3>
+<p>Before creating your own phrases, play these five. Each is a complete, musical idea taken from Box 1. Play each one 10 times before moving to the next.</p>
+
+<p><strong>Phrase 1 — The Basic Call (most common blues move):</strong></p>
+<pre>e |---5---8-------8---5---|
+B |-------------------|
+   short short  rest  short short</pre>
+
+<p><strong>Phrase 2 — The Descent (resolved, landing feeling):</strong></p>
+<pre>e |---8---5---|
+B |---5-------|
+   long  short short</pre>
+
+<p><strong>Phrase 3 — The Rock Turnaround:</strong></p>
+<pre>B |---8---5---7---5---|
+G |-------------------|
+   equal beats, no rush</pre>
+
+<p><strong>Phrase 4 — The Low Statement:</strong></p>
+<pre>D |---7---5---|
+A |---7-------|
+   low register, punchy</pre>
+
+<p><strong>Phrase 5 — The Question (ascending, leaves tension unresolved):</strong></p>
+<pre>G |---5---7---|
+B |---5---8---|
+   builds energy upward</pre>
+
+<h3>The Space Between Phrases</h3>
+<p>After you play any phrase: stop. Count 2 full beats of silence. Then play it again. That space makes the phrase sound intentional — like a statement, not just running. Beginners instinctively fill every silence with more notes. Resist this. Space is music.</p>
+
+<h3>Rhythm Is the Key Variable</h3>
+<p>The same 3 notes played with different rhythm become completely different phrases. Try Phrase 1 with these rhythms:</p>
 <ul>
-  <li>Long — short — short</li>
-  <li>Short — short — long (this is most common in blues)</li>
-  <li>Short — long — short</li>
-</ul>
-
-<h3>Space Is Part of the Phrase</h3>
-<p>After you play your 3-note motif, stop. Let it breathe. Count 2 beats of silence. Then play it again. That space makes the phrase sound intentional — like a statement, not just running.</p>
-
-<h3>Example Phrases to Try</h3>
-<pre>Phrase A: e|---5---8---|  (high notes, ascending)
-           B|---5-------|
-
-Phrase B:  B|---8---5---| (coming down)
-           G|-------5---|
-
-Phrase C:  G|---5---7---|  (mid register)
-           D|---7-------|</pre>`,
-    exercise: 'Pick your favorite 3 notes from Box 1 and create a short rhythmic motif. Play it. Then add a 2-beat rest. Play it again. Repeat this 5 times. Then modify the motif slightly — change the last note, or change the rhythm — and repeat. Goal: 10 minutes of creating small phrases from Box 1 notes. Focus entirely on rhythm and feel, not on technical execution.',
+  <li>Long — short — short (blues shuffle feel)</li>
+  <li>Short — short — long (building toward resolution)</li>
+  <li>Short — long — short (accent on the middle note)</li>
+</ul>`,
+    exercise: 'Step 1: Play each of the 5 proven phrases above, 10 times each. Step 2: Take Phrase 1 and play it in all 3 rhythmic versions (long-short-short, short-short-long, short-long-short), 5 times each. Step 3: Now create your own phrase. Pick 3 notes from Box 1 — any 3. Give them a rhythm. Play it 10 times with a 2-beat silence between each repetition. Step 4: Modify your phrase (change one note, or change the rhythm). Play the modified version 10 times. Goal: end the session with one self-created phrase you can play from memory.',
     selfCheck: 'Does your phrase feel like something you said, rather than something you ran through? If you played it to a friend, would they recognize it as a recurring idea? If yes, you\'re making music. Keep refining it.',
     techniques: ['phrasing', 'motif creation', 'rhythm', 'musical space'],
     xpReward: 60,
@@ -506,6 +550,7 @@ Phrase C:  G|---5---7---|  (mid register)
       'Choosing too many notes — great phrases are often just 2 or 3 notes with strong rhythm.',
     ],
     bonusContent: 'The call-and-response structure in blues comes from one phrase "asking" a question and a second phrase "answering" it. Try playing your 3-note motif, pausing, then playing a slightly different version as a response. This conversational approach is the heart of blues improvisation.',
+    successCriteria: 'You are ready for Day 11 when you can play any of the 5 proven phrases above from memory with consistent rhythm, and you have created at least one original phrase you can play 10 times in a row. "Consistent rhythm" means the timing does not speed up or slow down between repetitions.',
   },
   {
     day: 11,
@@ -514,7 +559,7 @@ Phrase C:  G|---5---7---|  (mid register)
     subtitle: 'From scale to actual blues-rock sound',
     why: 'Legato means "connected" — smooth, flowing phrases where notes blend into each other rather than being individually attacked. Adding hammer-ons, pull-offs, and slides to your pentatonic phrases transforms them from exercises into real blues-rock licks.',
     duration: 25,
-    warmup: 'Day 10: play your favorite phrase from yesterday 5 times. Then Box 1 ascending/descending 2 times at 60 BPM.',
+    warmup: 'Play your favorite phrase from Day 10, 10 times with 2-beat rests between each. Then alternate picking chromatic exercise on the D string at 60 BPM, 5 reps (spaced retrieval from Week 1 — keeping the picking technique sharp while scale work dominates this week).',
     mainContent: `<h3>Adding Hammer-ons to Box 1 Phrases</h3>
 <p>Take any pair of notes on the same string within Box 1 and connect them with a hammer-on instead of picking both:</p>
 <pre>Before: e |--5---8--|  (two pick strokes)
@@ -540,6 +585,7 @@ G |------------------------|</pre>
     selfCheck: 'The legato elements should be adding smoothness, not introducing stumbles. If the phrase feels harder with legato than without, slow down and isolate the legato element alone (just the h or p or slide) before putting it back in context.',
     techniques: ['legato phrasing', 'hammer-on in context', 'pull-off in context', 'slide approach'],
     xpReward: 60,
+    successCriteria: 'You are ready for Day 12 when you can play the complete legato phrase (with h, p, and slide) from the tab above 5 consecutive times without stumbling on the technique transitions. Stumbling means hesitating or stopping — missing one note while continuing counts as passing.',
   },
   {
     day: 12,
@@ -557,10 +603,18 @@ G |------------------------|</pre>
 <ul>
   <li>Fret the note with your ring finger (fret 7 on G string is our target)</li>
   <li>Place your middle finger on fret 6 and index finger on fret 5 — all three fingers reinforce the push</li>
-  <li>Push the string toward the ceiling (if your guitar is positioned normally)</li>
+  <li>Push the string toward the ceiling (upward, away from the floor)</li>
   <li>The pitch rises as you push</li>
 </ul>
 <p>Never bend with one finger alone — you\'ll hurt yourself and the bend won\'t be in tune.</p>
+
+<h3>Bend Direction by String</h3>
+<p>The direction you bend depends on which string you are on:</p>
+<ul>
+  <li><strong>G, B, high e strings:</strong> Push upward (toward the ceiling). These strings have room to move up without falling off the fretboard edge.</li>
+  <li><strong>Low E, A, D strings:</strong> Pull downward (toward the floor). Pushing these thick strings upward is awkward and risks slipping. Pull them down toward you instead.</li>
+</ul>
+<p>Today we focus on G string bends (push upward). B string bends also push upward. This is the most common bend in rock solos.</p>
 
 <h3>How Far to Bend</h3>
 <p>A <strong>half-step bend</strong> raises the pitch by one fret\'s worth. A <strong>whole step bend</strong> raises it by two frets. In tab:</p>
@@ -573,6 +627,8 @@ G |---7b8---|  ← bend fret 7 up to match the pitch of fret 8 (half step)</pre>
     selfCheck: 'Your bend should arrive at a pitch that sounds "resolved" — like it landed somewhere intentional, not somewhere random. If it sounds like it stops in an uncertain place, you\'re not bending far enough (or too far). The pitch of fret 9 is your target.',
     techniques: ['string bending', 'whole step bend', 'half step bend', 'bending technique'],
     xpReward: 70,
+    successCriteria: 'You are ready for Day 13 when you can bend G string fret 7 to the pitch of fret 9 and land within a semi-tone of the target at least 15 out of 20 attempts. Use fret 9 as your pitch reference each time — pick it, memorize it, then bend fret 7 to match it.',
+    bpmTarget: 60,
   },
   {
     day: 13,
@@ -593,12 +649,15 @@ G |---7b8---|  ← bend fret 7 up to match the pitch of fret 8 (half step)</pre>
 <p><strong>Width:</strong> How much you bend. Narrow vibrato = subtle, gentle. Wide vibrato = dramatic, expressive. Blues uses wide vibrato. Classical uses narrow. Blues-rock uses both at different moments.</p>
 <p><strong>Speed:</strong> How fast you oscillate. Slow vibrato feels melancholy. Fast vibrato feels urgent. Great guitarists vary both width and speed within a single note.</p>
 
-<h3>Starting Slow</h3>
-<p>When learning vibrato, go slower than feels natural. Fast, uncontrolled vibrato sounds shaky and nervous. Slow, controlled vibrato sounds authoritative. Start at a speed you can control, then gradually increase.</p>`,
+<h3>Starting Slow — With a Target</h3>
+<p>When learning vibrato, go slower than feels natural. Fast, uncontrolled vibrato sounds shaky and nervous. Slow, controlled vibrato sounds authoritative. Start at a speed you can control, then gradually increase.</p>
+<p><strong>Target oscillation rate:</strong> Aim for 2-3 oscillations per second — about the pace of saying "one-and-two-and" aloud, where each "and" is one oscillation. Slower than this sounds like a slow wobble; faster becomes an uncontrolled tremor. 2-3 per second is the range of every great blues-rock guitarist.</p>
+<p><strong>A note on progress:</strong> Vibrato is a skill that improves dramatically overnight. Your brain and muscles consolidate motor skills during sleep — so if your vibrato session feels difficult today, do your best, sleep on it, and return tomorrow. The improvement between Day 13 and Day 14 will be measurable.</p>`,
     exercise: 'Fret any note — G string fret 7 is good. Pick it. After the note sounds, start the vibrato motion: bend the string slightly toward the ceiling, then release back to pitch. Repeat that motion evenly — like a clock ticking. Do this for 30 seconds without stopping. Then try the same on B string fret 8. Then B string fret 5. Finally: play a simple 3-note phrase and end the last note with vibrato, holding it for 4 full beats.',
     selfCheck: 'Vibrato should be even — each oscillation the same width and speed as the last. If it sounds random or shaky, slow down the oscillation until you can control it. Vibrato is a physical skill that takes weeks to develop fully — what you\'re building today is the foundation.',
     techniques: ['vibrato', 'wrist technique', 'note sustain'],
     xpReward: 70,
+    successCriteria: 'You are ready for Day 14 when you can hold a note for 4 beats and produce even vibrato at roughly 2-3 oscillations per second for the full duration without the pitch wandering sharply or the motion stopping. Even if it sounds a little uneven, attempt it with full commitment — do not omit the motion.',
   },
   {
     day: 14,
@@ -607,12 +666,12 @@ G |---7b8---|  ← bend fret 7 up to match the pitch of fret 8 (half step)</pre>
     subtitle: 'Assess your skills before the solo begins',
     why: 'Week 3 is where you start learning the actual solo. But the solo requires confident use of everything you\'ve learned in Weeks 1 and 2. Today you do an honest self-assessment, reinforce your weakest areas, and get ready for the most exciting part of the program.',
     duration: 30,
-    warmup: 'Full Box 1 pentatonic ascending/descending, 5 times. Each rep a little faster than the last.',
+    warmup: 'Box 1 pentatonic ascending/descending, 5 times starting at 55 BPM, each rep 5 BPM faster. Then play the Day 10 combination phrase (h/p + slide) from memory, 5 times — spaced retrieval from 4 days ago.',
     mainContent: `<h3>Week 2 Review Sequence</h3>
-<p>Work through each skill below. Rate yourself 1-3 honestly (1=struggling, 2=developing, 3=solid).</p>
+<p>Work through each skill below. Rate yourself 1-3 honestly (1=struggling, 2=developing, 3=solid). The benchmarks below are achievable with 13 days of practice at 15-20 minutes/day. If you are below a benchmark, that is useful information — not a failure.</p>
 
 <p><strong>1. Box 1 Pentatonic</strong><br/>
-Play it ascending and descending at 80 BPM. Can you do it without stopping to think? Rating: __</p>
+Play it ascending and descending at 70 BPM. Can you do it without stopping to think? Rating: __</p>
 
 <p><strong>2. Creating Phrases</strong><br/>
 Without thinking about it, improvise a 4-note phrase from Box 1. Does it feel natural? Rating: __</p>
@@ -635,6 +694,8 @@ Hold a note for 4 beats with controlled vibrato. Even? Not shaky? Rating: __</p>
     selfCheck: 'By the end of Week 2, you should feel like Box 1 is a comfortable place to play — a home base you can always return to. Bends and vibrato will still feel new. That\'s expected. The solo section will develop them further.',
     techniques: ['pentatonic', 'phrasing', 'legato', 'bends', 'vibrato', 'self-assessment'],
     xpReward: 100,
+    successCriteria: 'You are ready for Week 3 when: (1) Box 1 is playable at 70 BPM without pauses, (2) you can improvise a 4-note phrase from memory, (3) bends land in the right pitch range 12/20 attempts, (4) vibrato lasts 4 beats with at least some control. Bends and vibrato will continue developing in Week 3 — they do not need to be perfect today.',
+    bpmTarget: 70,
   },
 
   // ===== WEEK 3: LEARN THE SOLO =====
@@ -645,7 +706,7 @@ Hold a note for 4 beats with controlled vibrato. Even? Not shaky? Rating: __</p>
     subtitle: 'This is what all the work has been for',
     why: 'You\'ve spent two weeks building technique. Today you encounter the music you\'re going to play. Don\'t pick up your guitar yet — just listen. Getting the sound of the solo into your ear before you play a single note will make every subsequent lesson faster and more musical.',
     duration: 20,
-    warmup: 'Day 7 combination phrase (hammer-on + pull-off + slide) 5 times. Then a 3-minute improvisation over Box 1.',
+    warmup: 'Day 7 combination phrase (hammer-on + pull-off + slide) 10 times. Then a 3-minute free improvisation over Box 1 — no goals, just play and listen. Then 10 bends on G string fret 7 checking each against fret 9.',
     mainContent: `<h3>About This Solo</h3>
 <p>The "First Guitar Solo" is an original blues-rock piece in A minor. It uses the A minor pentatonic scale throughout — the scale you already know. The solo is designed to be challenging but achievable within 30 days of structured practice.</p>
 <p>It has 4 sections:</p>
@@ -685,6 +746,7 @@ G |--------------------------------------|</pre>
     techniques: ['ear training', 'tab reading', 'musical analysis'],
     xpReward: 60,
     soloSection: undefined,
+    successCriteria: 'You are ready for Day 16 when you can hum or sing the main melody of Section 1 from memory (the opening slide motif). You should also be able to point to, in the tab, where each section begins and ends.',
   },
   {
     day: 16,
@@ -703,19 +765,28 @@ A |-------------------------------------|
 E |-------------------------------------|
      1   +   2   +   3   +   4   +</pre>
 
-<h3>Breaking It Down</h3>
-<p><strong>Beat 1:</strong> B string — slide from fret 10 up to fret 12. Hold the arrival note.</p>
-<p><strong>Beat 2:</strong> B string fret 12 — pick cleanly. Then fret 10 — pick cleanly.</p>
-<p><strong>Beat 3:</strong> B string fret 12 — pick. Hammer onto fret 10 (wait — that\'s a hammer DOWN, which means we need fret 10 fretted below fret 12... this is a pull-off: 12p10). Correction: pick 12, pull off to 10.</p>
-<p><strong>Beat 4:</strong> High e string fret 12. Then high e fret 10 — let it ring.</p>
+<h3>Breaking It Down — Note by Note</h3>
+<p><strong>Beat 1:</strong> B string — slide from fret 10 up to fret 12. Maintain string pressure throughout. Hold the arrived note for a full beat.</p>
+<p><strong>Beat 2:</strong> B string fret 12 — pick cleanly. Then pick B string fret 10 cleanly. Two separate, picked notes.</p>
+<p><strong>Beat 3:</strong> B string fret 12 — pick. Then pull off down to fret 10 (12p10). Your index finger should already be on fret 10 when you pick fret 12. The pull motion sounds the lower note without picking again.</p>
+<p><strong>Beat 4:</strong> High e string fret 12 — pick cleanly. Then high e fret 10 — pick and let it ring for the full beat.</p>
+<p>Practice this tab one beat at a time before attempting to connect them:</p>
+<ol>
+  <li>Beat 1 alone: just the slide (10/12). 10 repetitions.</li>
+  <li>Beats 1-2: slide plus the two picked notes. 10 repetitions.</li>
+  <li>Beats 1-3: add the pull-off. 10 repetitions.</li>
+  <li>Complete bar: all four beats. 10 repetitions.</li>
+</ol>
 
 <h3>The Character</h3>
-<p>Section 1 is a question — it states a melodic idea and leaves it open. Play it with space. Don\'t rush. Each note has room to breathe.</p>`,
-    exercise: 'Learn just the first two beats of Section 1 (the slide up to 12 and the 12-10 on B string). Play them slowly — no tempo yet, just get the notes right. Once each note rings clearly, add beat 3 (pull-off 12p10 on B). Then add beat 4 (high e 12 and 10). Finally: play the complete Section 1 bar 5 times at a very slow tempo. Every note clean.',
-    selfCheck: 'Each note in Section 1 should ring for its full value. The slide should arrive at fret 12 clearly in tune. The pull-off should be clearly audible. The final high-e notes should sustain cleanly. If anything is unclear, isolate that element and fix it before moving on.',
+<p>Section 1 is a question — it states a melodic idea and leaves it open. Play it with space. Do not rush. Each note has room to breathe. The overall feeling should be calm and intentional, like the opening line of a sentence.</p>`,
+    exercise: 'Use the 4-step progressive build described above. Spend at minimum 5 repetitions at each step before combining. Once you can play the complete bar, run it 15 times at a slow, comfortable tempo (approximately 50-55 BPM). Focus exclusively on clean note production — every note must ring for its full beat.',
+    selfCheck: 'Each note in Section 1 should ring for its full value. The slide should arrive at fret 12 clearly in tune. The pull-off (12p10) should be clearly audible — not a whisper. The final high-e notes should sustain cleanly without touching adjacent strings. If anything is unclear, isolate that beat and do 20 reps of that beat alone.',
     techniques: ['slide', 'pull-off', 'clean picking', 'phrasing'],
     xpReward: 70,
     soloSection: 1,
+    successCriteria: 'You are ready for Day 17 when you can play the complete Section 1 bar at 50 BPM with every note ringing cleanly — slide arrives in pitch, pull-off is audible, final high-e notes sustain. Aim for 12 out of 15 repetitions meeting this standard.',
+    bpmTarget: 50,
   },
   {
     day: 17,
@@ -729,28 +800,32 @@ E |-------------------------------------|
 <p>When you practice slowly and correctly, your nervous system is building a physical memory of the correct movement. Each repetition reinforces the pathway. Speed comes naturally once the pathway is solid — you can\'t rush it.</p>
 <p>50% tempo means: if the performance tempo is 120 BPM, practice at 60 BPM.</p>
 
-<h3>Section 1 at 50% Tempo</h3>
-<p>Focus areas for today:</p>
+<h3>The Specific Tempo Protocol for Today</h3>
+<p>Deep practice is not the same as slow practice. Deep practice means working at the exact tempo where you are successful most (but not all) of the time — roughly 70-80% success rate. Too easy (100% success) and you are not building new capacity. Too hard (under 50% success) and you are reinforcing mistakes.</p>
+<p>Here is today\'s protocol with specific BPM targets. Adjust up or down by 5 BPM if needed:</p>
 <ol>
-  <li><strong>The slide:</strong> Does it arrive at fret 12 in tune? Hold pressure throughout.</li>
-  <li><strong>The pull-off (12p10):</strong> Is the pulled note clearly audible? Same volume as the picked note?</li>
-  <li><strong>The high-e notes (12, 10):</strong> Are they ringing clean? No accidental touching of adjacent strings?</li>
-  <li><strong>The overall shape:</strong> Does the phrase flow, or does it feel like separate disconnected notes?</li>
+  <li><strong>50 BPM:</strong> Section 1, 5 reps. This should feel almost too slow. Good — you are building the motor program precisely.</li>
+  <li><strong>55 BPM:</strong> 5 reps. Slightly harder. Notice if the slide starts to feel rushed.</li>
+  <li><strong>55 BPM, isolation:</strong> Just the pull-off (12p10), 20 reps. Ensure it stays audible at this tempo before building further.</li>
+  <li><strong>60 BPM:</strong> 5 complete Section 1 reps. This is today\'s target tempo.</li>
+  <li><strong>Back to 50 BPM:</strong> 5 more reps to cement the pattern. Ending on a slower tempo after a harder one reinforces accuracy.</li>
 </ol>
+<p>Total: 25 reps across the tempo range plus 20 isolation reps. This is a complete deep-practice session.</p>
 
-<h3>Isolation Technique</h3>
-<p>If any part of Section 1 isn\'t working, isolate it:</p>
-<ul>
-  <li>Just the slide: 10/12, 20 reps</li>
-  <li>Just the pull-off: 12p10, 20 reps</li>
-  <li>Just the transition between slide and the following notes</li>
-</ul>
-<p>Isolation, then reintegration. Fix the part, then put it back in context.</p>`,
-    exercise: 'Set a metronome to 60 BPM (or whatever feels comfortably slow for Section 1). Play Section 1 10 times at this tempo without stopping between reps. After each rep, mentally note what felt good and what didn\'t. If one element is consistently failing, stop and do 20 isolation reps of that element, then go back to the full section.',
-    selfCheck: 'After 10 slow reps, every note should ring correctly every time. "Correctly" means: right pitch, right timing, right volume, no buzzing. If you\'re still hitting wrong notes occasionally, the tempo is too fast. Slow down more.',
-    techniques: ['slow practice', 'isolation technique', 'memory building'],
+<h3>Focus Areas</h3>
+<ol>
+  <li><strong>The slide (10/12):</strong> Does it arrive at fret 12 in tune? Maintain pressure throughout — no dead spots.</li>
+  <li><strong>The pull-off (12p10):</strong> Is the pulled note clearly audible? Pre-place your index finger on fret 10 before picking fret 12.</li>
+  <li><strong>The high-e notes (12, 10):</strong> Are they ringing clean? Check that your fretting fingers are not accidentally touching the B string below.</li>
+  <li><strong>The overall shape:</strong> Does the phrase flow as one connected idea, or does it feel like 4 separate notes?</li>
+</ol>`,
+    exercise: 'Execute the full tempo protocol described above: 50 BPM (5 reps) → 55 BPM (5 reps) → 55 BPM isolation pull-offs (20 reps) → 60 BPM (5 reps) → back to 50 BPM (5 reps). Record yourself at 60 BPM if possible. Do not skip the final return to 50 BPM — this is not regression, it is consolidation.',
+    selfCheck: 'After the full protocol, you should notice the phrase feels more automatic than when you started the session. If it still feels effortful and uncertain at 60 BPM, that is fine — motor skills consolidate overnight. Return tomorrow expecting it to feel easier. That is not wishful thinking — it is how the brain works.',
+    techniques: ['slow practice', 'isolation technique', 'memory building', 'tempo protocol'],
     xpReward: 70,
     soloSection: 1,
+    successCriteria: 'You are ready for Day 18 when Section 1 at 60 BPM produces clean notes at least 4 out of 5 repetitions. If you are at 3/5, spend one more session on the tempo protocol before advancing.',
+    bpmTarget: 60,
   },
   {
     day: 18,
@@ -786,6 +861,8 @@ E |-------------------------------------|
     techniques: ['tempo building', 'speed development', 'backing track practice'],
     xpReward: 70,
     soloSection: 1,
+    successCriteria: 'You are ready for Day 19 when Section 1 plays cleanly at 70 BPM (5 consecutive clean reps) and the phrase feels musical — not just technically executed, but flowing like a statement. If it sounds mechanical at 70 BPM, spend more time at 65 BPM before pushing further.',
+    bpmTarget: 70,
   },
   {
     day: 19,
@@ -802,20 +879,32 @@ G |--9/10---10p9---10h12p10----------------------|
 D |------------------------------------------------|
      1    +    2    +    3    +    4    +</pre>
 
-<h3>Breaking It Down</h3>
-<p><strong>G string (first half of bar):</strong> Slide from fret 9 to 10. Then pull off from 10 to 9. Then hammer-on from 10 to 12, pull off back to 10. This is a fast legato run on the G string.</p>
-<p><strong>B string:</strong> Fret 10 (picked). Then 12h10h12 (pick 12, hammer 10, hammer 12 — wait, this goes down then up: it\'s 12h10 is wrong direction. Correction: the phrase is 10, then 12h10 (pick 10, pick 12, hammer back... no. Let\'s be precise):</p>
-<p>Reading: B|--10---12h10h12--- means: pick 10, pick 12, hammer off 12 back to 10... that\'s a pull-off. The notation is: 12p10h12 = pick 12, pull to 10, hammer back to 12. This creates a 3-note ornament.</p>
-<p>Then: 10h12p10 = pick 10, hammer to 12, pull back to 10.</p>
-<p>Final: 12p10 = pick 12, pull to 10, let ring.</p>
+<h3>Breaking It Down — Note by Note</h3>
+<p><strong>G string run (beats 1-2):</strong></p>
+<ul>
+  <li>Slide from fret 9 up to fret 10 (9/10) — one smooth motion</li>
+  <li>Pull off from fret 10 back to fret 9 (10p9) — pre-place index finger on 9 before sliding</li>
+  <li>Hammer from fret 10 to fret 12 (10h12), then immediately pull back to fret 10 (12p10)</li>
+</ul>
+
+<p><strong>B string run (beats 2-4):</strong></p>
+<ul>
+  <li>Pick fret 10 cleanly</li>
+  <li>Pick fret 12, then pull off to fret 10, then hammer back to fret 12 — this is a 3-note ornament (12p10h12). Your ring finger picks fret 12, index pre-placed on 10, pull off, then ring finger hammers back. One fluid motion.</li>
+  <li>Pick fret 10, hammer to fret 12, pull back to fret 10 (10h12p10) — another ornament, this time starting from below</li>
+  <li>Pick fret 12, pull off to fret 10, let it ring (12p10)</li>
+</ul>
+
+<p><strong>The 3-note ornament in detail:</strong> The hardest element of Section 2 is the 12p10h12 pattern. Here is how to practice it: place ring finger on fret 12, index on fret 10. Pick the ring finger note (12). Immediately pull off toward the floor to sound fret 10. Immediately hammer the ring finger back down to fret 12. That three-note cycle should sound like one fluid gesture. Practice it alone: 30 repetitions, slowly.</p>
 
 <h3>The Character</h3>
-<p>Section 2 is busier than Section 1. More notes, faster motion. It should feel like the energy is building — like something is coming.</p>`,
+<p>Section 2 is busier than Section 1. More notes, faster motion, legato everywhere. It should feel like energy building — like something big is coming. The contrast with Section 1\'s spaciousness is intentional.</p>`,
     exercise: 'Learn Section 2 in two halves. First half: just the G string phrase (9/10, 10p9, 10h12p10). Practice this 15 times until it flows. Second half: the B string phrase. Practice this 15 times. Then put both halves together, slowly. Goal: play the complete Section 2 5 times at a slow, comfortable tempo where every note is clear.',
     selfCheck: 'The G string runs and B string runs should sound like connected sentences, not stumbled note sequences. The legato should make it feel liquid. If it\'s choppy, slow down and practice the individual legato elements (h and p) in isolation.',
     techniques: ['legato runs', 'hammer-on', 'pull-off', 'slide', 'fast phrases'],
     xpReward: 70,
     soloSection: 2,
+    successCriteria: 'You are ready for Day 20 when the G string run and B string run each play cleanly 5 times in isolation, and you can attempt (with some stumbles) the complete Section 2 from beginning to end without stopping. Perfection is not the goal today — completion is.',
   },
   {
     day: 20,
@@ -824,7 +913,7 @@ D |------------------------------------------------|
     subtitle: 'Locking in the legato runs',
     why: 'Section 2 is technically the hardest part of the solo because it has the most consecutive legato notes. Deep practice on this section now prevents stumbling later when you connect all four sections.',
     duration: 25,
-    warmup: 'Section 1 and beginning of Section 2 (G string phrase only), 5 times each.',
+    warmup: 'Alternate picking chromatic exercise on low E and A strings at 65 BPM, 5 reps each (technique maintenance). Then Section 1, 5 times. Then G string phrase from Section 2, 5 times.',
     mainContent: `<h3>The Challenge of Fast Legato</h3>
 <p>When you string together multiple hammer-ons and pull-offs, each one depends on the previous one being in the right position. If fret 10 isn\'t cleanly fretted when you hammer from 10 to 12, the hammer-on note will buzz or die.</p>
 <p>This requires <strong>anticipatory fretting</strong> — your fingers need to be in position slightly before each note, not at the same time.</p>
@@ -847,6 +936,8 @@ D |------------------------------------------------|
     techniques: ['anticipatory fretting', 'legato runs', '3-note ornaments', 'deep practice'],
     xpReward: 70,
     soloSection: 2,
+    successCriteria: 'You are ready for Day 21 when the 3-note ornament (12p10h12) can be played 20 consecutive times without stopping and the G string run plays cleanly at 65 BPM. Section 2 as a whole does not need to be clean yet — that comes in Day 21.',
+    bpmTarget: 65,
   },
   {
     day: 21,
@@ -855,7 +946,7 @@ D |------------------------------------------------|
     subtitle: 'The hardest part is the transition',
     why: 'You can play Section 1 well. You can play Section 2 well. But playing them one into the other without stopping is a completely different challenge. The transition between sections is where most guitarists stumble. Today you make it seamless.',
     duration: 30,
-    warmup: 'Section 1 alone, 5 times. Section 2 alone, 5 times. Then rest 30 seconds.',
+    warmup: '10 bends on G string fret 7 checking pitch against fret 9 (technique maintenance — bends need daily repetition to improve). Then Section 1, 5 times. Then Section 2, 5 times. Rest 30 seconds.',
     mainContent: `<h3>Why Transitions Are Hard</h3>
 <p>Each section lives in its own mental space. When you finish Section 1, your brain wants to pause and reset. But music doesn\'t pause — it flows. The moment you mentally "switch sections," there will be a micro-hesitation that the listener hears as a stumble.</p>
 <p>The solution: don\'t think of them as two sections. Think of them as one longer phrase with two parts.</p>
@@ -876,6 +967,7 @@ G |-------| → |--9/10---10p9-----------|</pre>
     techniques: ['section transitions', 'musical continuity', 'loop practice'],
     xpReward: 80,
     soloSection: 2,
+    successCriteria: 'You are ready for Day 22 when you can play S1+S2 as a continuous musical statement without stopping at the transition point, at a tempo where every note in both sections rings clearly. The transition should be invisible — no hesitation, no gap.',
   },
 
   // ===== WEEK 4: PERFORMANCE =====
@@ -886,7 +978,7 @@ G |-------| → |--9/10---10p9-----------|</pre>
     subtitle: 'One note, played with conviction',
     why: 'Section 3 is the climax of the solo. It\'s built around a single, big bend — one note held with vibrato. This is where everything comes down to feeling. Technical accuracy matters less here than emotional conviction. The bend needs to mean something.',
     duration: 25,
-    warmup: 'S1+S2 connected, 3 times. Bending warm-up: 10 bends on G string fret 7 (to fret 9 pitch). Then 10 bends on B string fret 12 (to fret 14 pitch).',
+    warmup: 'Alternate picking chromatic on all 4 inner strings (A, D, G, B) at 65 BPM, 3 reps each (maintaining Week 1 fundamentals). Then S1+S2 connected, 3 times. Then bending warm-up: 10 bends on G string fret 7 (to fret 9 pitch). Then 10 bends on B string fret 12 (to fret 14 pitch) — this is the main bend of Section 3.',
     mainContent: `<h3>Section 3 Tab</h3>
 <pre>e |--------------------------------------------------|
 B |--12b14~~---12---10h12---10----------------------|
@@ -915,6 +1007,7 @@ D |--------------------------------------------------|
     techniques: ['wide bend', 'bend + vibrato', 'climax phrasing', 'whole step bend'],
     xpReward: 80,
     soloSection: 3,
+    successCriteria: 'You are ready for Day 23 when the B string fret 12 bend reaches the fret 14 pitch at least 12 out of 20 attempts, and you can hold the bent note with vibrato for 2 full beats without releasing or losing pitch. The combination of bend + vibrato is the hardest moment in the solo — do not rush past it.',
   },
   {
     day: 23,
@@ -923,7 +1016,7 @@ D |--------------------------------------------------|
     subtitle: 'The bend has to be right every time',
     why: 'An out-of-tune bend is worse than no bend at all. It\'s the musical equivalent of singing sharp — everyone hears it. Today is dedicated to making this bend reliable. It needs to land in tune on command, every single time.',
     duration: 25,
-    warmup: 'S1+S2, 3 complete runs. Then 10 bends on B string fret 12 — checking each one against fret 14.',
+    warmup: 'H/p trill from Day 5 (5h7p5) on B string for 60 seconds (spaced retrieval — this motion is in the solo\'s Section 2 ornaments). Then S1+S2, 3 complete runs. Then 10 bends on B string fret 12 — checking each one against fret 14.',
     mainContent: `<h3>Building Bend Consistency</h3>
 <p>A reliable bend requires two things: muscle memory for how far to push, and ear training to recognize when you\'ve arrived.</p>
 <p>You need both. Muscle memory alone can drift. Ear training alone is too slow. Together, they create a bend that lands correctly automatically.</p>
@@ -949,6 +1042,7 @@ D |--------------------------------------------------|
     techniques: ['bend precision', 'pitch accuracy', 'muscle memory', 'ear training'],
     xpReward: 80,
     soloSection: 3,
+    successCriteria: 'You are ready for Day 24 when 16 out of 20 bends land within a semi-tone of the fret 14 pitch and you can play S1+S2+S3 as a connected performance (with some technical imperfections) without stopping.',
   },
   {
     day: 24,
@@ -957,7 +1051,7 @@ D |--------------------------------------------------|
     subtitle: 'The arc is taking shape',
     why: 'For the first time, you\'re playing three-quarters of the solo from beginning to end. This is a significant milestone. Today is about finding the emotional arc — feeling how Sections 1, 2, and 3 tell a complete musical story even without the resolution.',
     duration: 30,
-    warmup: 'Each section individually, once. Section 1, pause. Section 2, pause. Section 3, pause. Get all three fresh in your fingers.',
+    warmup: '10 bends on B string fret 12 checking pitch against fret 14. Then vibrato exercise: hold any note for 4 beats with 2-3 oscillations per second, 5 repetitions. Then each section individually, once: Section 1, pause. Section 2, pause. Section 3, pause.',
     mainContent: `<h3>The Three-Section Arc</h3>
 <p>Musical phrases have arcs — they go somewhere, they build tension, they reach a peak. The first three sections of this solo form an arc:</p>
 <ul>
@@ -980,6 +1074,7 @@ S3 begins with: B string fret 12 (pick), bend to 14</p>
     techniques: ['musical arc', 'performance mindset', 'transition practice', 'emotional phrasing'],
     xpReward: 80,
     soloSection: 3,
+    successCriteria: 'You are ready for Day 25 when S1+S2+S3 plays continuously from beginning to end — bend landing somewhere near the target pitch, vibrato present even if imperfect — and the S2→S3 transition feels smooth rather than like a gear-shift.',
   },
   {
     day: 25,
@@ -988,7 +1083,7 @@ S3 begins with: B string fret 12 (pick), bend to 14</p>
     subtitle: 'Bringing the solo home',
     why: 'Every story needs an ending, and every solo needs a resolution. Section 4 brings the musical tension built across Sections 1-3 to a peaceful landing. It\'s vibrato-heavy and final-feeling. The last note should sound like something has been completed.',
     duration: 25,
-    warmup: 'S1+S2+S3, two complete runs. Section 3 bend drill: 10 bends on B string fret 12. Make sure they\'re all in tune.',
+    warmup: 'Alternate picking on high e string at 70 BPM, 5 reps (the e string is used heavily in Section 4 — warm it up specifically). Then 10 bends on B string fret 12. Then S1+S2+S3, two complete runs.',
     mainContent: `<h3>Section 4 Tab</h3>
 <pre>e |--12---10---12~~-----------------------------|
 B |--10---12---10---12p10---10~~---------------|
@@ -1012,6 +1107,7 @@ D |---------------------------------------------|
     techniques: ['resolution phrases', 'sustained notes', 'vibrato on final notes', 'musical endings'],
     xpReward: 80,
     soloSection: 4,
+    successCriteria: 'You are ready for Day 26 when you can play Section 4 with the final note sustained for at least 4 beats with controlled vibrato — even if the vibrato is still developing, it must be present and intentional, not omitted.',
   },
   {
     day: 26,
@@ -1020,7 +1116,7 @@ D |---------------------------------------------|
     subtitle: 'The ending has to feel like an ending',
     why: 'A weak ending undercuts everything that came before it. The last note of the solo is the last thing your listener hears. It needs to be held with confidence, in tune, with a vibrato that says "this is where the story ends."',
     duration: 25,
-    warmup: 'Section 4 alone, 5 times. Focus specifically on the final note\'s vibrato quality.',
+    warmup: 'Vibrato exercise: hold B string fret 10 for 8 beats with steady vibrato, 5 repetitions (the final note of the solo — make it perfect). Then Section 4 alone, 5 times.',
     mainContent: `<h3>Section 4 Refinement Points</h3>
 <p><strong>1. The opening descent (e string 12-10):</strong><br/>
 These notes are the continuation from S3\'s peak. They should feel like coming down from a great height — still musical, not just technically executing notes. Lean into the descending movement.</p>
@@ -1041,6 +1137,7 @@ This is where everything lands. Hold it. Feel it. Add your best vibrato. Let it 
     techniques: ['phrasing refinement', 'sustained vibrato', 'musical endings', 'performance feel'],
     xpReward: 80,
     soloSection: 4,
+    successCriteria: 'You are ready for Day 27 when you can play the complete solo (S1+S2+S3+S4) from beginning to end without stopping, even if slowly and even if imperfect. Completion matters more than perfection at this stage.',
   },
   {
     day: 27,
@@ -1070,6 +1167,7 @@ By this point, the notes are in your muscle memory. Trust them. Your job today i
     techniques: ['full performance', 'musical continuity', 'performance mindset'],
     xpReward: 100,
     soloSection: undefined,
+    successCriteria: 'You are ready for Day 28 when you have completed 3 full-solo run-throughs without stopping, identified your one weakest moment, and spent focused work on that specific moment.',
   },
   {
     day: 28,
@@ -1104,6 +1202,7 @@ By this point, the notes are in your muscle memory. Trust them. Your job today i
     techniques: ['dynamics', 'phrasing', 'timing', 'musical expression'],
     xpReward: 80,
     soloSection: undefined,
+    successCriteria: 'You are ready for Day 29 when a listener (real or imagined) would be able to hear where the solo peaks (S3) and where it resolves (S4). If the whole solo sounds like one flat, even dynamic level, the expression work is not done yet.',
   },
   {
     day: 29,
@@ -1136,6 +1235,7 @@ By this point, the notes are in your muscle memory. Trust them. Your job today i
     techniques: ['performance tempo', 'backing track', 'self-recording', 'performance preparation'],
     xpReward: 100,
     soloSection: undefined,
+    successCriteria: 'You are ready for Day 30 when you have a recording you are willing to listen to — not perfect, but honest. If you cannot bring yourself to record yourself, that is a sign to do one more run with full commitment before the final day.',
   },
   {
     day: 30,
@@ -1165,6 +1265,33 @@ By this point, the notes are in your muscle memory. Trust them. Your job today i
 <h3>What Comes Next</h3>
 <p>Finishing this program means you can learn any solo. The skills you\'ve built are permanent and transferable. You know how to practice technique, how to learn new material section by section, how to build tempo, how to perform.</p>
 <p>The next solo will be faster to learn. And the one after that even faster. You are a lead guitarist.</p>
+
+<h3>Your Foundation — What You Actually Built</h3>
+<ul>
+  <li><strong>Alternate picking</strong> — the engine of all fast, clean phrases</li>
+  <li><strong>Hammer-ons and pull-offs</strong> — the legato vocabulary every blues-rock player uses</li>
+  <li><strong>Slides</strong> — the most vocal approach note in the language</li>
+  <li><strong>A minor pentatonic Box 1</strong> — the scale behind thousands of classic solos</li>
+  <li><strong>String bending</strong> — the technique that makes guitar sound like a voice</li>
+  <li><strong>Vibrato</strong> — your personal signature on every held note</li>
+  <li><strong>Phrasing and space</strong> — the understanding that silence is as important as notes</li>
+</ul>
+
+<h3>Where to Go From Here</h3>
+<p><strong>Next solos to learn (in order of difficulty):</strong></p>
+<ol>
+  <li><em>Sunshine of Your Love</em> — Cream (Clapton). Pentatonic-based riff and solo. Directly applies everything you know.</li>
+  <li><em>Comfortably Numb</em> solo 1 — Pink Floyd (Gilmour). Slow, expressive bends and vibrato. Perfect for your current level.</li>
+  <li><em>Pride and Joy</em> intro — Stevie Ray Vaughan. Slightly harder — introduces double stops and more aggressive bends.</li>
+</ol>
+<p><strong>Next techniques to explore:</strong></p>
+<ol>
+  <li><strong>Box 2 of the pentatonic</strong> — extend your fretboard range. Same scale, new position.</li>
+  <li><strong>Pre-bends</strong> — bend before picking so the listener hears only the bent pitch, not the approach.</li>
+  <li><strong>Pentatonic Box 5</strong> — connects to Box 1 and gives you access to the full neck.</li>
+  <li><strong>Double stops</strong> — playing two strings at once for a thicker sound.</li>
+</ol>
+<p><strong>Keep playing daily, even for 10 minutes.</strong> Motor skills built through guitar practice decay faster than other memories if not maintained. 10 minutes a day, 5 days a week preserves everything you built this month.</p>
 
 <h3>Share It</h3>
 <p>Record your performance. Share it if you want. But more importantly — remember this moment. The first time you played your first guitar solo all the way through. You earned this.</p>`,
