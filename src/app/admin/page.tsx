@@ -6,6 +6,16 @@ import AdminSidebar from '@/components/AdminSidebar'
 import Navbar from '@/components/Navbar'
 import Link from 'next/link'
 
+function SparkLine({ data, color = '#f59e0b' }: { data: number[]; color?: string }) {
+  const max = Math.max(...data, 1)
+  const points = data.map((v, i) => `${(i / (data.length - 1)) * 60},${24 - (v / max) * 20}`).join(' ')
+  return (
+    <svg width="60" height="24" style={{ opacity: 0.7 }}>
+      <polyline fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" points={points} />
+    </svg>
+  )
+}
+
 export default async function AdminPage() {
   const session = await getServerSession(authOptions)
   if (!session?.user) redirect('/login')
@@ -33,6 +43,9 @@ export default async function AdminPage() {
     hardDays,
     practiceAgg,
     churnRisk,
+    sevenDayPaidData,
+    sevenDayActive,
+    sevenDayChurn,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { purchaseStatus: 'PAID' } }),
@@ -71,10 +84,49 @@ export default async function AdminPage() {
         OR: [{ lastPracticeDate: null }, { lastPracticeDate: { lt: sevenDaysAgo } }],
       },
     }),
+    // 7-day paid user data (new paid signups per day)
+    Promise.all(
+      Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(now)
+        d.setDate(now.getDate() - (6 - i))
+        const start = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+        const end = new Date(start); end.setDate(end.getDate() + 1)
+        return prisma.user.count({ where: { purchaseStatus: 'PAID', updatedAt: { gte: start, lt: end } } })
+      })
+    ),
+    // 7-day active users per day
+    Promise.all(
+      Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(now)
+        d.setDate(now.getDate() - (6 - i))
+        const start = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+        const end = new Date(start); end.setDate(end.getDate() + 1)
+        return prisma.practiceSession.groupBy({ by: ['userId'], where: { createdAt: { gte: start, lt: end } } })
+          .then((r) => r.length)
+      })
+    ),
+    // 7-day churn risk count (static for now, use last 7 days of no-practice paid users)
+    Promise.all(
+      Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(now)
+        d.setDate(now.getDate() - (6 - i))
+        const cutoff = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+        cutoff.setDate(cutoff.getDate() - 7)
+        return prisma.profile.count({
+          where: {
+            user: { purchaseStatus: 'PAID' },
+            OR: [{ lastPracticeDate: null }, { lastPracticeDate: { lt: cutoff } }],
+          },
+        })
+      })
+    ),
   ])
 
   const revenue = paidUsers * 25
   const conversion = totalUsers > 0 ? Math.round((paidUsers / totalUsers) * 100) : 0
+
+  // Revenue sparkline: cumulative revenue proxy (paid count per day × 25)
+  const revenueSparkData = sevenDayPaidData.map((v) => v * 25)
 
   const userCompletionMap = new Map<string, Set<number>>()
   for (const p of allCompleted) {
@@ -94,7 +146,6 @@ export default async function AdminPage() {
   const totalPracticeMin = practiceAgg._sum.duration ?? 0
   const totalSessions = practiceAgg._count._all
 
-  // Signups in last 30 days grouped by day
   const signupsByDay: Record<string, number> = {}
   const recentAllSignups = await prisma.user.findMany({
     where: { createdAt: { gte: thirtyDaysAgo } },
@@ -106,30 +157,63 @@ export default async function AdminPage() {
   }
   const maxSignupsDay = Math.max(...Object.values(signupsByDay), 1)
 
+  const primaryStats = [
+    { label: 'Revenue', value: `$${revenue.toLocaleString()}`, sub: `${paidUsers} paid × $25`, color: '#f59e0b', bg: '#1a1200', spark: revenueSparkData, sparkColor: '#f59e0b' },
+    { label: 'Paid Users', value: String(paidUsers), sub: `${conversion}% conversion`, color: '#86efac', bg: '#052e16', spark: sevenDayPaidData, sparkColor: '#86efac' },
+    { label: 'Active (7d)', value: String(active7d.length), sub: `${activeToday.length} active today`, color: '#93c5fd', bg: '#0c1a3a', spark: sevenDayActive, sparkColor: '#93c5fd' },
+    { label: 'Churn Risk', value: String(churnRisk), sub: 'paid, no practice 7d', color: '#fca5a5', bg: '#1a0000', spark: sevenDayChurn, sparkColor: '#fca5a5' },
+  ]
+
   return (
     <div style={{ backgroundColor: '#0a0a0a', minHeight: '100vh' }}>
       <Navbar />
       <div className="flex" style={{ minHeight: 'calc(100vh - 64px)' }}>
         <AdminSidebar />
         <main className="flex-1 p-6 lg:p-8 overflow-auto">
-          <div className="flex items-center justify-between mb-7">
+          <div className="flex items-start justify-between mb-7 flex-wrap gap-4">
             <div>
               <h1 className="text-2xl font-black text-white uppercase">Overview</h1>
               <p style={{ color: '#525252' }} className="text-xs mt-1">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            </div>
+            {/* Quick Actions */}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {[
+                { label: 'New Announcement', href: '/admin/announcements' },
+                { label: 'New Coupon', href: '/admin/coupons' },
+                { label: 'View Support', href: '/admin/support' },
+                { label: 'Email Users', href: '/admin/email' },
+              ].map((action) => (
+                <Link
+                  key={action.href}
+                  href={action.href}
+                  style={{
+                    border: '1px solid #262626',
+                    color: '#a3a3a3',
+                    borderRadius: 6,
+                    padding: '6px 12px',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    textDecoration: 'none',
+                    display: 'inline-block',
+                    transition: 'border-color 0.15s, color 0.15s',
+                  }}
+                  className="hover:border-amber-500 hover:text-amber-400"
+                >
+                  {action.label}
+                </Link>
+              ))}
             </div>
           </div>
 
           {/* Primary stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-            {[
-              { label: 'Revenue', value: `$${revenue.toLocaleString()}`, sub: `${paidUsers} paid × $25`, color: '#f59e0b', bg: '#1a1200' },
-              { label: 'Paid Users', value: String(paidUsers), sub: `${conversion}% conversion`, color: '#86efac', bg: '#052e16' },
-              { label: 'Active (7d)', value: String(active7d.length), sub: `${activeToday.length} active today`, color: '#93c5fd', bg: '#0c1a3a' },
-              { label: 'Churn Risk', value: String(churnRisk), sub: 'paid, no practice 7d', color: '#fca5a5', bg: '#1a0000' },
-            ].map((s) => (
+            {primaryStats.map((s) => (
               <div key={s.label} style={{ backgroundColor: s.bg, border: `1px solid ${s.color}22` }} className="rounded-xl p-4">
                 <p style={{ color: '#737373' }} className="text-xs uppercase tracking-wider mb-1">{s.label}</p>
-                <p style={{ color: s.color }} className="text-3xl font-black">{s.value}</p>
+                <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+                  <p style={{ color: s.color }} className="text-3xl font-black">{s.value}</p>
+                  <SparkLine data={s.spark} color={s.sparkColor} />
+                </div>
                 <p style={{ color: '#525252' }} className="text-xs mt-1">{s.sub}</p>
               </div>
             ))}
@@ -152,7 +236,7 @@ export default async function AdminPage() {
           </div>
 
           <div className="grid lg:grid-cols-2 gap-5 mb-5">
-            {/* Signup chart - last 30 days */}
+            {/* Signup chart */}
             <div style={{ backgroundColor: '#111111', border: '1px solid #1f1f1f' }} className="rounded-xl p-5">
               <h2 className="text-white font-bold text-xs uppercase tracking-wider mb-4">Signups — Last 30 Days</h2>
               <div className="flex items-end gap-1 h-24">

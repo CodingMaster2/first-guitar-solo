@@ -8,6 +8,15 @@ import Footer from '@/components/Footer'
 
 export const metadata = { title: 'Leaderboard — First Guitar Solo' }
 
+const medals = ['🥇', '🥈', '🥉']
+const medalBorders = ['#fbbf24', '#94a3b8', '#c27c51']
+const podiumGradients = [
+  'linear-gradient(180deg, #422006 0%, #1a0e00 100%)',
+  'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)',
+  'linear-gradient(180deg, #2d1a0a 0%, #1a1000 100%)',
+]
+const podiumHeights = [120, 90, 70]
+
 export default async function LeaderboardPage() {
   const session = await getServerSession(authOptions)
   if (!session?.user) redirect('/login')
@@ -28,6 +37,10 @@ export default async function LeaderboardPage() {
   ])
 
   const currentUserId = session.user.id
+  const maxXP = topXP[0]?.totalXP ?? 1
+
+  // Podium order: 2nd (index 1), 1st (index 0), 3rd (index 2)
+  const podiumOrder = [1, 0, 2].filter((idx) => topXP[idx] !== undefined)
 
   return (
     <div style={{ backgroundColor: '#0a0a0a', minHeight: '100vh' }}>
@@ -50,6 +63,53 @@ export default async function LeaderboardPage() {
             {topXP.some(p => p.user.id === currentUserId) ? 'Manage Leaderboard' : 'Join Leaderboard'}
           </Link>
         </div>
+
+        {/* Podium for top 3 */}
+        {topXP.length >= 1 && (
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 12, marginBottom: 40 }}>
+            {podiumOrder.map((idx) => {
+              const profile = topXP[idx]
+              if (!profile) return null
+              const height = podiumHeights[idx]
+              return (
+                <div key={profile.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                  {/* Avatar */}
+                  <div style={{ fontSize: '1.4rem' }}>{medals[idx]}</div>
+                  <div style={{
+                    width: 40, height: 40, borderRadius: '50%',
+                    border: `2px solid ${medalBorders[idx]}`,
+                    backgroundColor: '#1a1a1a',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: medalBorders[idx], fontWeight: 900, fontSize: '0.9rem',
+                  }}>
+                    {(profile.user.name ?? 'A')[0].toUpperCase()}
+                  </div>
+                  <p style={{ color: '#d4d4d4', fontSize: '0.7rem', fontWeight: 700, maxWidth: 80, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {profile.user.name ?? 'Anon'}
+                  </p>
+                  <p style={{ color: '#f59e0b', fontSize: '0.65rem', fontWeight: 900 }}>
+                    {profile.totalXP.toLocaleString()} XP
+                  </p>
+                  {/* Podium block */}
+                  <div style={{
+                    width: 90,
+                    height,
+                    background: podiumGradients[idx],
+                    border: `1px solid ${medalBorders[idx]}44`,
+                    borderRadius: '8px 8px 0 0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <span style={{ color: medalBorders[idx], fontWeight: 900, fontSize: '1.1rem' }}>
+                      {idx + 1}
+                    </span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Main XP table */}
@@ -79,7 +139,7 @@ export default async function LeaderboardPage() {
                   <div
                     className="grid px-5 py-2 text-xs uppercase tracking-wider"
                     style={{
-                      gridTemplateColumns: '40px 1fr 80px 60px 80px',
+                      gridTemplateColumns: '44px 1fr 80px 60px 80px',
                       color: '#525252',
                       borderBottom: '1px solid #1f1f1f',
                     }}
@@ -92,72 +152,84 @@ export default async function LeaderboardPage() {
                   </div>
                   {topXP.map((profile, i) => {
                     const isMe = profile.user.id === currentUserId
+                    const borderColor = i === 0 ? '#fbbf24' : i === 1 ? '#94a3b8' : i === 2 ? '#c27c51' : undefined
+                    const xpBarWidth = `${(profile.totalXP / maxXP) * 100}%`
                     return (
                       <div
                         key={profile.id}
-                        className="grid px-5 py-3 items-center transition-colors hover:opacity-90"
                         style={{
-                          gridTemplateColumns: '40px 1fr 80px 60px 80px',
                           borderBottom: '1px solid #1a1a1a',
-                          backgroundColor: isMe ? 'rgba(245,158,11,0.07)' : undefined,
-                          borderLeft: isMe ? '2px solid #f59e0b' : undefined,
+                          backgroundColor: isMe ? 'rgba(245,158,11,0.07)' : i < 3 ? 'rgba(255,255,255,0.02)' : undefined,
+                          borderLeft: isMe ? '2px solid #f59e0b' : i < 3 ? `2px solid ${borderColor}` : '2px solid transparent',
                         }}
                       >
-                        {/* Rank */}
-                        <span
-                          style={{
-                            color: i === 0 ? '#fbbf24' : i === 1 ? '#9ca3af' : i === 2 ? '#b45309' : '#404040',
-                            fontWeight: i < 3 ? 900 : 400,
-                          }}
-                          className="text-sm"
+                        <div
+                          className="grid px-5 py-3 items-center transition-colors hover:opacity-90"
+                          style={{ gridTemplateColumns: '44px 1fr 80px 60px 80px' }}
                         >
-                          {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`}
-                        </span>
+                          {/* Rank badge */}
+                          {i < 3 ? (
+                            <div style={{
+                              width: 26, height: 26, borderRadius: '50%',
+                              background: i === 0 ? 'linear-gradient(135deg,#fbbf24,#d97706)' : i === 1 ? 'linear-gradient(135deg,#94a3b8,#64748b)' : 'linear-gradient(135deg,#c27c51,#7c4e2e)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              color: '#000', fontSize: '0.65rem', fontWeight: 900,
+                            }}>
+                              {medals[i]}
+                            </div>
+                          ) : (
+                            <span style={{ color: '#404040' }} className="text-sm">{i + 1}</span>
+                          )}
 
-                        {/* Name + avatar */}
-                        <div className="flex items-center gap-2 min-w-0">
-                          <div
-                            style={{
-                              width: 28,
-                              height: 28,
-                              borderRadius: '50%',
-                              backgroundColor: isMe ? '#78350f' : '#1a1a1a',
-                              border: isMe ? '1px solid #f59e0b' : '1px solid #262626',
-                              flexShrink: 0,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            <span style={{ color: isMe ? '#f59e0b' : '#525252', fontSize: '0.7rem' }}>
-                              {(profile.user.name ?? 'A').charAt(0).toUpperCase()}
+                          {/* Name + avatar */}
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div
+                              style={{
+                                width: 28, height: 28, borderRadius: '50%',
+                                backgroundColor: isMe ? '#78350f' : '#1a1a1a',
+                                border: isMe ? '1px solid #f59e0b' : `1px solid ${borderColor ?? '#262626'}`,
+                                flexShrink: 0,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              }}
+                            >
+                              <span style={{ color: isMe ? '#f59e0b' : borderColor ?? '#525252', fontSize: '0.7rem' }}>
+                                {(profile.user.name ?? 'A').charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                            <span
+                              style={{ color: isMe ? '#f59e0b' : '#d4d4d4' }}
+                              className="text-sm font-medium truncate"
+                            >
+                              {profile.user.name ?? 'Anonymous'}{isMe ? ' (you)' : ''}
                             </span>
                           </div>
-                          <span
-                            style={{ color: isMe ? '#f59e0b' : '#d4d4d4' }}
-                            className="text-sm font-medium truncate"
-                          >
-                            {profile.user.name ?? 'Anonymous'}{isMe ? ' (you)' : ''}
+
+                          {/* XP */}
+                          <span style={{ color: '#f59e0b', fontWeight: 700 }} className="text-sm text-right">
+                            {profile.totalXP.toLocaleString()}
+                          </span>
+
+                          {/* Streak */}
+                          <span style={{ color: '#a3a3a3' }} className="text-sm text-right">
+                            {profile.streak > 0 ? `${profile.streak}🔥` : '—'}
+                          </span>
+
+                          {/* Days */}
+                          <span style={{ color: '#a3a3a3' }} className="text-sm text-right">
+                            {Math.max(0, profile.currentDay - 1)}/30
                           </span>
                         </div>
-
-                        {/* XP */}
-                        <span
-                          style={{ color: '#f59e0b', fontWeight: 700 }}
-                          className="text-sm text-right"
-                        >
-                          {profile.totalXP.toLocaleString()}
-                        </span>
-
-                        {/* Streak */}
-                        <span style={{ color: '#a3a3a3' }} className="text-sm text-right">
-                          {profile.streak > 0 ? `${profile.streak}🔥` : '—'}
-                        </span>
-
-                        {/* Days completed (currentDay - 1 as proxy) */}
-                        <span style={{ color: '#a3a3a3' }} className="text-sm text-right">
-                          {Math.max(0, profile.currentDay - 1)}/30
-                        </span>
+                        {/* XP progress bar */}
+                        <div style={{ height: 2, backgroundColor: '#1a1a1a', margin: '0 20px 6px' }}>
+                          <div style={{
+                            height: '100%',
+                            width: xpBarWidth,
+                            backgroundColor: i === 0 ? '#fbbf24' : i === 1 ? '#94a3b8' : i === 2 ? '#c27c51' : '#f59e0b',
+                            opacity: 0.5,
+                            borderRadius: 1,
+                            transition: 'width 0.5s ease',
+                          }} />
+                        </div>
                       </div>
                     )
                   })}
@@ -193,9 +265,7 @@ export default async function LeaderboardPage() {
                         }}
                       >
                         <div className="flex items-center gap-2 min-w-0">
-                          <span style={{ color: '#525252', fontSize: '0.7rem', width: 16 }}>
-                            {i + 1}
-                          </span>
+                          <span style={{ color: '#525252', fontSize: '0.7rem', width: 16 }}>{i + 1}</span>
                           <span
                             style={{ color: isMe ? '#f59e0b' : '#d4d4d4' }}
                             className="text-sm truncate"

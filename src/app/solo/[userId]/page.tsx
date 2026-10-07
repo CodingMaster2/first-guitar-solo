@@ -6,6 +6,9 @@ import Footer from '@/components/Footer'
 import SoloShareButtons from '@/components/SoloShareButtons'
 import { prisma } from '@/lib/prisma'
 
+// notFound is imported but used conditionally — keep the import for correctness
+void notFound
+
 interface Props {
   params: Promise<{ userId: string }>
 }
@@ -80,22 +83,6 @@ function styleBadgeColor(style: string | null | undefined): string {
   return '#f59e0b'
 }
 
-const Hr = () => (
-  <div style={{
-    color: '#f59e0b',
-    fontFamily: '"Courier New", Courier, monospace',
-    fontSize: '0.7rem',
-    letterSpacing: '0.05em',
-    textAlign: 'center',
-    opacity: 0.5,
-    margin: '20px 0',
-    overflow: 'hidden',
-    whiteSpace: 'nowrap',
-  }}>
-    {'━'.repeat(60)}
-  </div>
-)
-
 export default async function SoloPage({ params }: Props) {
   const { userId } = await params
 
@@ -136,14 +123,12 @@ export default async function SoloPage({ params }: Props) {
     ? new Date(profile.soloCompletedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     : null
 
-  // Parse tab lines
-  const tabLines = profile.customSolo
-    ? profile.customSolo.split('\n')
-    : []
+  const tabLines = profile.customSolo ? profile.customSolo.split('\n') : []
 
   return (
     <div style={{ backgroundColor: '#0a0a0a', color: '#ffffff', minHeight: '100vh' }}>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
         @media (max-width: 640px) {
           .tab-scroll { overflow-x: auto; }
           .tab-content { min-width: 600px; }
@@ -153,140 +138,157 @@ export default async function SoloPage({ params }: Props) {
       <Navbar />
 
       <main style={{ maxWidth: 860, margin: '0 auto', padding: '60px 16px 80px' }}>
-        {/* Certificate container */}
-        <div
-          style={{
-            backgroundColor: '#0d0d0d',
-            border: '1px solid #1f1f1f',
-            borderRadius: 16,
-            padding: 'clamp(24px, 5vw, 52px)',
-            position: 'relative',
-            overflow: 'hidden',
-          }}
-        >
-          {/* Amber top accent */}
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #d97706, #f59e0b, #fde68a, #f59e0b, #d97706)' }} />
+        {/* Outer glow wrapper */}
+        <div style={{ position: 'relative' }}>
+          {/* Amber radial glow */}
+          <div style={{
+            position: 'absolute',
+            top: '50%', left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 600, height: 400,
+            background: 'radial-gradient(ellipse, rgba(245,158,11,0.07) 0%, transparent 70%)',
+            pointerEvents: 'none',
+            zIndex: 0,
+          }} />
 
-          {/* Certificate header */}
-          <div style={{ textAlign: 'center', marginBottom: 8, marginTop: 8 }}>
-            <Hr />
-            <div style={{ fontSize: '1.6rem', marginBottom: 8 }}>🎸</div>
-            <h1
-              style={{
-                fontFamily: '"Courier New", Courier, monospace',
-                fontSize: 'clamp(1rem, 3vw, 1.4rem)',
-                fontWeight: 900,
-                textTransform: 'uppercase',
-                letterSpacing: '0.2em',
+          {/* Certificate frame */}
+          <div
+            style={{
+              border: '2px solid #f59e0b',
+              borderRadius: 16,
+              padding: 'clamp(24px, 5vw, 48px)',
+              position: 'relative',
+              background: 'linear-gradient(180deg, #111111 0%, #0a0a0a 100%)',
+              boxShadow: '0 0 60px rgba(245,158,11,0.1), inset 0 0 60px rgba(245,158,11,0.02)',
+              zIndex: 1,
+            }}
+          >
+            {/* Corner accents */}
+            <div style={{ position: 'absolute', top: -2, left: -2, width: 20, height: 20, borderTop: '3px solid #fde68a', borderLeft: '3px solid #fde68a', borderTopLeftRadius: 16 }} />
+            <div style={{ position: 'absolute', top: -2, right: -2, width: 20, height: 20, borderTop: '3px solid #fde68a', borderRight: '3px solid #fde68a', borderTopRightRadius: 16 }} />
+            <div style={{ position: 'absolute', bottom: -2, left: -2, width: 20, height: 20, borderBottom: '3px solid #fde68a', borderLeft: '3px solid #fde68a', borderBottomLeftRadius: 16 }} />
+            <div style={{ position: 'absolute', bottom: -2, right: -2, width: 20, height: 20, borderBottom: '3px solid #fde68a', borderRight: '3px solid #fde68a', borderBottomRightRadius: 16 }} />
+
+            {/* Header */}
+            <div style={{ textAlign: 'center', marginBottom: 28 }}>
+              <p style={{
                 color: '#f59e0b',
-                marginBottom: 4,
-              }}
-            >
-              First Guitar Solo
-            </h1>
-            <p style={{ color: '#525252', fontFamily: '"Courier New", Courier, monospace', fontSize: '0.7rem', letterSpacing: '0.15em' }}>
-              CERTIFICATE OF COMPLETION
-            </p>
-            <Hr />
-          </div>
+                fontFamily: '"Courier New", Courier, monospace',
+                fontSize: '0.65rem',
+                letterSpacing: '0.3em',
+                textTransform: 'uppercase',
+                marginBottom: 16,
+              }}>
+                Certificate of Completion
+              </p>
+              <div style={{ fontSize: '2rem', marginBottom: 12 }}>🎸</div>
+              <p style={{ color: '#404040', fontFamily: '"Courier New", Courier, monospace', fontSize: '0.65rem', letterSpacing: '0.15em' }}>
+                First Guitar Solo · Sixth String Labs
+              </p>
+              {/* Amber underline */}
+              <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, #f59e0b, transparent)', margin: '16px auto', maxWidth: 300 }} />
+            </div>
 
-          {/* Graduate info */}
-          <div style={{ textAlign: 'center', marginBottom: 8 }}>
-            <p style={{ color: '#737373', fontSize: '0.85rem', marginBottom: 8 }}>This certifies that</p>
-            <h2
-              style={{
-                fontSize: 'clamp(1.8rem, 5vw, 3rem)',
-                fontWeight: 900,
-                color: '#ffffff',
-                letterSpacing: '-0.02em',
-                marginBottom: 12,
-                lineHeight: 1.1,
-              }}
-            >
-              {name}
-            </h2>
-            <p style={{ color: '#a3a3a3', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: 16 }}>
-              composed and performed their first guitar solo
-              {profile.soloStyle && (
-                <>
-                  {' '}in the style of{' '}
-                  <span
-                    style={{
-                      backgroundColor: `${badgeColor}1a`,
-                      color: badgeColor,
-                      border: `1px solid ${badgeColor}3d`,
-                      borderRadius: 4,
-                      padding: '1px 8px',
-                      fontSize: '0.8rem',
-                      fontWeight: 700,
-                    }}
-                  >
-                    {profile.soloStyle}
-                  </span>
-                </>
-              )}
-              {profile.guitarHero && (
-                <>, inspired by <span style={{ color: '#f59e0b', fontWeight: 600 }}>{profile.guitarHero}</span></>
-              )}
-            </p>
-          </div>
-
-          <Hr />
-
-          {/* The solo tab */}
-          {tabLines.length > 0 && (
-            <div style={{ marginBottom: 8 }}>
-              <p
+            {/* Graduate info */}
+            <div style={{ textAlign: 'center', marginBottom: 28 }}>
+              <p style={{ color: '#737373', fontSize: '0.8rem', marginBottom: 10, letterSpacing: '0.05em' }}>This certifies that</p>
+              <h2
                 style={{
-                  fontFamily: '"Courier New", Courier, monospace',
-                  fontSize: '0.7rem',
-                  letterSpacing: '0.2em',
-                  color: '#525252',
-                  textAlign: 'center',
+                  fontFamily: '"Bebas Neue", "Arial Black", sans-serif',
+                  fontSize: 'clamp(2.5rem, 7vw, 4.5rem)',
+                  fontWeight: 400,
+                  color: '#ffffff',
+                  letterSpacing: '0.04em',
                   marginBottom: 16,
-                  textTransform: 'uppercase',
+                  lineHeight: 1,
                 }}
               >
-                The Solo
+                {name}
+              </h2>
+              <p style={{ color: '#a3a3a3', fontSize: '0.9rem', lineHeight: 1.7, marginBottom: 16, maxWidth: 480, margin: '0 auto 16px' }}>
+                has completed the 30-day First Guitar Solo program
+                and earned their personalized solo
               </p>
-              <div className="tab-scroll">
-                <div
-                  className="tab-content"
-                  style={{
-                    backgroundColor: '#111111',
-                    border: '1px solid #1f1f1f',
-                    borderRadius: 8,
-                    padding: '20px 20px',
-                    lineHeight: 1.8,
-                    fontSize: 'clamp(12px, 1.5vw, 14px)',
-                  }}
-                >
-                  {tabLines.map((line, i) => (
-                    <TabLine key={i} line={line} />
-                  ))}
-                </div>
+              {/* Style + vibe badges */}
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginTop: 12 }}>
+                {profile.soloStyle && (
+                  <span style={{
+                    backgroundColor: `${badgeColor}1a`,
+                    color: badgeColor,
+                    border: `1px solid ${badgeColor}3d`,
+                    borderRadius: 4, padding: '4px 12px',
+                    fontSize: '0.75rem', fontWeight: 700,
+                    textTransform: 'uppercase', letterSpacing: '0.08em',
+                  }}>
+                    {profile.soloStyle}
+                  </span>
+                )}
+                {profile.guitarHero && (
+                  <span style={{
+                    backgroundColor: '#1a1a1a',
+                    color: '#f59e0b',
+                    border: '1px solid #262626',
+                    borderRadius: 4, padding: '4px 12px',
+                    fontSize: '0.75rem', fontWeight: 600,
+                  }}>
+                    inspired by {profile.guitarHero}
+                  </span>
+                )}
               </div>
             </div>
-          )}
 
-          {/* Graduate note */}
-          {profile.graduateNote && (
-            <div style={{ margin: '20px 0', padding: '16px 20px', borderLeft: '3px solid #f59e0b', backgroundColor: '#111111', borderRadius: '0 8px 8px 0' }}>
-              <p style={{ color: '#a3a3a3', fontSize: '0.9rem', fontStyle: 'italic', lineHeight: 1.6, margin: 0 }}>
-                &ldquo;{profile.graduateNote}&rdquo;
-              </p>
-            </div>
-          )}
+            {/* Divider */}
+            <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, #262626, transparent)', margin: '0 0 28px' }} />
 
-          <Hr />
-
-          {/* Footer */}
-          <div style={{ textAlign: 'center' }}>
-            {gradDate && (
-              <p style={{ color: '#525252', fontFamily: '"Courier New", Courier, monospace', fontSize: '0.75rem', letterSpacing: '0.1em' }}>
-                Graduated {gradDate} &nbsp;·&nbsp; firstguitarsolo.com
-              </p>
+            {/* The solo tab */}
+            {tabLines.length > 0 && (
+              <div style={{ marginBottom: 28 }}>
+                <p style={{
+                  fontFamily: '"Courier New", Courier, monospace',
+                  fontSize: '0.65rem', letterSpacing: '0.2em',
+                  color: '#525252', textAlign: 'center',
+                  marginBottom: 16, textTransform: 'uppercase',
+                }}>
+                  The Solo
+                </p>
+                <div className="tab-scroll">
+                  <div
+                    className="tab-content"
+                    style={{
+                      backgroundColor: '#0d0d0d',
+                      border: '1px solid #1f1f1f',
+                      borderRadius: 8, padding: '20px',
+                      lineHeight: 1.8,
+                      fontSize: 'clamp(12px, 1.5vw, 14px)',
+                    }}
+                  >
+                    {tabLines.map((line, i) => (
+                      <TabLine key={i} line={line} />
+                    ))}
+                  </div>
+                </div>
+              </div>
             )}
+
+            {/* Graduate note */}
+            {profile.graduateNote && (
+              <div style={{ margin: '0 0 24px', padding: '16px 20px', borderLeft: '3px solid #f59e0b', backgroundColor: '#0d0d0d', borderRadius: '0 8px 8px 0' }}>
+                <p style={{ color: '#a3a3a3', fontSize: '0.9rem', fontStyle: 'italic', lineHeight: 1.6, margin: 0 }}>
+                  &ldquo;{profile.graduateNote}&rdquo;
+                </p>
+              </div>
+            )}
+
+            {/* Divider */}
+            <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, #262626, transparent)', margin: '0 0 24px' }} />
+
+            {/* Signature line */}
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ color: '#737373', fontFamily: '"Courier New", Courier, monospace', fontSize: '0.75rem', letterSpacing: '0.1em', marginBottom: 6 }}>
+                Sixth String Labs{gradDate ? ` — ${gradDate}` : ''}
+              </p>
+              <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, #f59e0b55, transparent)', maxWidth: 200, margin: '0 auto' }} />
+            </div>
           </div>
         </div>
 
@@ -301,13 +303,9 @@ export default async function SoloPage({ params }: Props) {
                 <span
                   key={t}
                   style={{
-                    backgroundColor: '#1a1a1a',
-                    color: '#d4d4d4',
-                    border: '1px solid #262626',
-                    borderRadius: 6,
-                    padding: '5px 12px',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
+                    backgroundColor: '#1a1a1a', color: '#d4d4d4',
+                    border: '1px solid #262626', borderRadius: 6,
+                    padding: '5px 12px', fontSize: '0.8rem', fontWeight: 600,
                   }}
                 >
                   {t}
@@ -338,8 +336,7 @@ export default async function SoloPage({ params }: Props) {
             marginTop: 48,
             backgroundColor: '#111111',
             border: '1px solid #1f1f1f',
-            borderRadius: 12,
-            padding: '28px 28px',
+            borderRadius: 12, padding: '28px',
             textAlign: 'center',
           }}
         >
@@ -354,15 +351,9 @@ export default async function SoloPage({ params }: Props) {
               href="/register"
               style={{
                 background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                color: '#000000',
-                padding: '12px 28px',
-                borderRadius: 8,
-                fontWeight: 900,
-                fontSize: '0.9rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                textDecoration: 'none',
-                display: 'inline-block',
+                color: '#000000', padding: '12px 28px', borderRadius: 8,
+                fontWeight: 900, fontSize: '0.9rem', textTransform: 'uppercase',
+                letterSpacing: '0.08em', textDecoration: 'none', display: 'inline-block',
               }}
             >
               Start Free / $25 Lifetime Access
@@ -370,15 +361,9 @@ export default async function SoloPage({ params }: Props) {
             <Link
               href="/graduates"
               style={{
-                backgroundColor: '#1a1a1a',
-                color: '#f59e0b',
-                border: '1px solid #f59e0b',
-                padding: '12px 24px',
-                borderRadius: 8,
-                fontWeight: 700,
-                fontSize: '0.85rem',
-                textDecoration: 'none',
-                display: 'inline-block',
+                backgroundColor: '#1a1a1a', color: '#f59e0b',
+                border: '1px solid #f59e0b', padding: '12px 24px', borderRadius: 8,
+                fontWeight: 700, fontSize: '0.85rem', textDecoration: 'none', display: 'inline-block',
               }}
             >
               See All Graduates →

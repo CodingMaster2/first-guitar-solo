@@ -1,43 +1,82 @@
 'use client'
+
 import { useEffect, useState } from 'react'
+import { getLevelInfo } from '@/lib/levels'
 
-interface Props { value: number; max: number; label: string; xp: number }
+interface Props {
+  xp: number
+  size?: number
+}
 
-export default function XPRing({ value, max, label, xp }: Props) {
+export default function XPRing({ xp, size = 140 }: Props) {
+  const { current, nextLevel, progressToNext } = getLevelInfo(xp)
   const [progress, setProgress] = useState(0)
-  const radius = 36
-  const circumference = 2 * Math.PI * radius
-  const pct = Math.min(100, Math.max(0, (value / Math.max(max, 1)) * 100))
-  const offset = circumference * (1 - progress / 100)
+
+  const cx = size / 2
+  const cy = size / 2
+  const r = size / 2 - 12
+  const circumference = 2 * Math.PI * r
 
   useEffect(() => {
-    const t = setTimeout(() => setProgress(pct), 150)
+    const t = setTimeout(() => setProgress(progressToNext), 150)
     return () => clearTimeout(t)
-  }, [pct])
+  }, [progressToNext])
 
   return (
-    <div style={{ position: 'relative', width: 96, height: 96, flexShrink: 0 }}>
-      <svg width="96" height="96" style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx="48" cy="48" r={radius} fill="none" stroke="#1a1a1a" strokeWidth="6" />
-        <circle
-          cx="48" cy="48" r={radius} fill="none"
-          stroke="url(#xpGrad)" strokeWidth="6" strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          style={{ transition: 'stroke-dashoffset 1s cubic-bezier(0.4,0,0.2,1)' }}
-        />
-        <defs>
-          <linearGradient id="xpGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#f59e0b" />
-            <stop offset="100%" stopColor="#fde68a" />
-          </linearGradient>
-        </defs>
-      </svg>
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ color: '#f59e0b', fontSize: '0.75rem', fontWeight: 900, lineHeight: 1 }}>{xp.toLocaleString()}</span>
-        <span style={{ color: '#525252', fontSize: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 2 }}>XP</span>
-        <span style={{ color: '#a3a3a3', fontSize: '0.45rem', marginTop: 1 }}>{label}</span>
-      </div>
-    </div>
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <defs>
+        <linearGradient id="xpGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#f59e0b" />
+          <stop offset="100%" stopColor="#fde68a" />
+        </linearGradient>
+      </defs>
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#1f1f1f" strokeWidth={10} />
+      <circle
+        cx={cx}
+        cy={cy}
+        r={r}
+        fill="none"
+        stroke="url(#xpGradient)"
+        strokeWidth={10}
+        strokeLinecap="round"
+        strokeDasharray={circumference}
+        strokeDashoffset={circumference - (circumference * progress / 100)}
+        transform={`rotate(-90 ${cx} ${cy})`}
+        style={{ transition: 'stroke-dashoffset 1s ease' }}
+      />
+      <text
+        x={cx}
+        y={cy - 8}
+        textAnchor="middle"
+        fill="#f59e0b"
+        fontSize={size * 0.18}
+        fontWeight="900"
+        fontFamily="inherit"
+      >
+        {current.level}
+      </text>
+      <text
+        x={cx}
+        y={cy + 10}
+        textAnchor="middle"
+        fill="#a3a3a3"
+        fontSize={size * 0.085}
+        fontFamily="inherit"
+      >
+        {current.title}
+      </text>
+      {nextLevel && (
+        <text
+          x={cx}
+          y={cy + 24}
+          textAnchor="middle"
+          fill="#525252"
+          fontSize={size * 0.07}
+          fontFamily="inherit"
+        >
+          {progress}%
+        </text>
+      )}
+    </svg>
   )
 }

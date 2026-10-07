@@ -35,6 +35,11 @@ export default async function LessonsPage() {
     { label: 'Week 4 — Performance', color: '#22c55e', num: 4 },
   ]
 
+  // Progress ring for badge: circumference ~138 (r=22)
+  const pct = completedDays.size / 30
+  const circumference = 2 * Math.PI * 22
+  const dashOffset = circumference * (1 - pct)
+
   return (
     <div style={{ backgroundColor: '#0a0a0a', minHeight: '100vh' }}>
       <Navbar />
@@ -44,9 +49,28 @@ export default async function LessonsPage() {
             <h1 className="text-3xl font-black text-white uppercase">All 30 Lessons</h1>
             <p style={{ color: '#a3a3a3' }} className="text-sm mt-1">The complete curriculum, one lesson at a time.</p>
           </div>
-          <span style={{ backgroundColor: '#111111', border: '1px solid #262626', color: '#a3a3a3' }} className="text-sm px-4 py-2 rounded-lg">
-            {completedDays.size}/30 complete
-          </span>
+          {/* Progress ring badge */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <svg width="52" height="52" viewBox="0 0 52 52">
+              <circle cx="26" cy="26" r="22" fill="none" stroke="#1f1f1f" strokeWidth="3" />
+              <circle
+                cx="26" cy="26" r="22" fill="none"
+                stroke="#f59e0b" strokeWidth="3"
+                strokeDasharray={circumference}
+                strokeDashoffset={dashOffset}
+                strokeLinecap="round"
+                transform="rotate(-90 26 26)"
+                style={{ transition: 'stroke-dashoffset 0.5s ease' }}
+              />
+              <text x="26" y="30" textAnchor="middle" style={{ fontSize: 10, fontWeight: 900, fill: '#f59e0b', fontFamily: 'inherit' }}>
+                {completedDays.size}/30
+              </text>
+            </svg>
+            <div>
+              <p style={{ color: '#f59e0b', fontWeight: 900, fontSize: '1rem', lineHeight: 1 }}>{completedDays.size}/30</p>
+              <p style={{ color: '#525252', fontSize: '0.7rem' }}>complete</p>
+            </div>
+          </div>
         </div>
 
         {adaptivePath.length > 0 && (
@@ -77,7 +101,7 @@ export default async function LessonsPage() {
             const weekDone = weekLessons.filter((l) => completedDays.has(l.day)).length
             return (
               <div key={week.num}>
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-3">
                     <div style={{ backgroundColor: week.color, width: 3, height: 20, borderRadius: 2 }} />
                     <h2 style={{ color: week.color }} className="font-bold text-sm uppercase tracking-wider">
@@ -88,19 +112,27 @@ export default async function LessonsPage() {
                     {weekDone}/{weekLessons.length}
                   </span>
                 </div>
+                {/* Week progress bar */}
+                <div style={{ height: 2, backgroundColor: '#1f1f1f', borderRadius: 1, marginBottom: 16 }}>
+                  <div style={{ height: '100%', width: `${(weekDone / weekLessons.length) * 100}%`, backgroundColor: week.color, borderRadius: 1, transition: 'width 0.5s ease' }} />
+                </div>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                   {weekLessons.map((lesson) => {
                     const isDone = completedDays.has(lesson.day)
                     const isCurrent = lesson.day === currentDay
                     const isInPath = adaptivePathSet.size > 0 && adaptivePathSet.has(lesson.day)
                     const pathBorder = isInPath && !isDone && !isCurrent ? '#92400e' : undefined
+                    const difficultyFilled = Math.min(5, Math.ceil(lesson.day / 6))
                     return (
                       <Link
                         href={`/lesson/${lesson.day}`}
                         key={lesson.day}
                         style={{
-                          backgroundColor: isDone ? '#0f0c00' : '#111111',
+                          background: isDone ? 'linear-gradient(135deg, #0f0c00, #111111)' : '#111111',
                           border: `1px solid ${isDone ? '#78350f' : isCurrent ? '#f59e0b' : pathBorder ?? '#262626'}`,
+                          minHeight: 160,
+                          display: 'flex',
+                          flexDirection: 'column',
                         }}
                         className="p-4 rounded-lg hover:border-amber-600 transition-all group block"
                       >
@@ -109,7 +141,15 @@ export default async function LessonsPage() {
                             Day {lesson.day}
                             {isCurrent && <span className="ml-1 text-xs">← Today</span>}
                           </span>
-                          {isDone && <span style={{ color: '#f59e0b' }} className="text-xs font-bold">✓</span>}
+                          {isDone && (
+                            <div style={{
+                              width: 20, height: 20, borderRadius: '50%',
+                              backgroundColor: '#f59e0b',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            }}>
+                              <span style={{ color: '#000', fontSize: 11, fontWeight: 900 }}>✓</span>
+                            </div>
+                          )}
                         </div>
                         <h3 className="text-white text-sm font-bold mb-1 group-hover:text-amber-400 transition-colors leading-snug">
                           {lesson.title}
@@ -146,6 +186,15 @@ export default async function LessonsPage() {
                               Your Path
                             </span>
                           )}
+                        </div>
+                        {/* Difficulty dots */}
+                        <div className="flex gap-1 mt-auto pt-3">
+                          {Array.from({ length: 5 }, (_, i) => (
+                            <div key={i} style={{
+                              width: 6, height: 6, borderRadius: '50%',
+                              backgroundColor: i < difficultyFilled ? '#f59e0b' : '#262626',
+                            }} />
+                          ))}
                         </div>
                       </Link>
                     )

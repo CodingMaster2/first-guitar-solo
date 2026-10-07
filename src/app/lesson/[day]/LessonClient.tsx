@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation'
 import type { Lesson, CoachMessageRecord } from '@/types'
 import AudioPlayer from '@/components/AudioPlayer'
 import { triggerConfetti } from '@/components/ConfettiEffect'
+import ReadingProgressBar from '@/components/ReadingProgressBar'
+import LessonShareButton from '@/components/LessonShareButton'
 import MilestoneModal from '@/components/MilestoneModal'
 import XPLevelUp from '@/components/XPLevelUp'
 import Metronome from '@/components/Metronome'
@@ -67,6 +69,7 @@ export default function LessonClient({
   const [notes, setNotes] = useState(existingProgress?.notes ?? '')
   const [completing, setCompleting] = useState(false)
   const [completed, setCompleted] = useState(existingProgress?.completed ?? false)
+  const [optimisticComplete, setOptimisticComplete] = useState(false)
   const [xpEarned, setXpEarned] = useState(0)
   const [showToast, setShowToast] = useState(false)
   const [newAchievements, setNewAchievements] = useState<string[]>([])
@@ -76,9 +79,9 @@ export default function LessonClient({
   const [showMilestone, setShowMilestone] = useState(false)
   const [milestoneDay, setMilestoneDay] = useState(0)
   const [levelUp, setLevelUp] = useState<{ from: string; to: string } | null>(null)
-  const [readProgress, setReadProgress] = useState(0)
   const [ripple, setRipple] = useState<{ x: number; y: number } | null>(null)
   const [showQuiz, setShowQuiz] = useState(false)
+  // readProgress is now tracked inside ReadingProgressBar component
   const [quizDone, setQuizDone] = useState(false)
   const [showSwipeHint, setShowSwipeHint] = useState(false)
   const [coachMessages, setCoachMessages] = useState<CoachMessageRecord[]>([])
@@ -190,16 +193,6 @@ export default function LessonClient({
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const el = document.documentElement
-      const scrolled = el.scrollTop
-      const total = el.scrollHeight - el.clientHeight
-      setReadProgress(total > 0 ? (scrolled / total) * 100 : 0)
-    }
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
 
   useEffect(() => {
     const isMobile = window.matchMedia('(max-width: 640px)').matches
@@ -251,6 +244,8 @@ export default function LessonClient({
 
   const completeLesson = async () => {
     if (completing) return
+    setOptimisticComplete(true)
+    triggerConfetti()
     setCompleting(true)
 
     try {
@@ -288,8 +283,6 @@ export default function LessonClient({
         setShowToast(true)
         setTimeout(() => setShowToast(false), 5000)
 
-        triggerConfetti()
-
         try {
           if (navigator.vibrate) navigator.vibrate([80, 40, 120])
         } catch {}
@@ -314,7 +307,7 @@ export default function LessonClient({
         }
       }
     } catch {
-      // ignore
+      setOptimisticComplete(false)
     } finally {
       setCompleting(false)
     }
@@ -340,6 +333,16 @@ export default function LessonClient({
     return 'Beginner'
   }
 
+  function getTechniqueColor(tech: string): { bg: string; border: string; text: string } {
+    const t = tech.toLowerCase()
+    if (t.includes('bend') || t.includes('vibrato')) return { bg: '#1a0f00', border: '#78350f', text: '#fb923c' }
+    if (t.includes('hammer') || t.includes('pull')) return { bg: '#0f0f1a', border: '#3b1f5e', text: '#c4b5fd' }
+    if (t.includes('slide')) return { bg: '#0f1a1a', border: '#0e4444', text: '#5eead4' }
+    if (t.includes('pick') || t.includes('alternate')) return { bg: '#1a1200', border: '#78350f', text: '#f59e0b' }
+    if (t.includes('scale') || t.includes('pentatonic')) return { bg: '#0f1a0f', border: '#1a5e1a', text: '#86efac' }
+    return { bg: '#111111', border: '#262626', text: '#a3a3a3' }
+  }
+
   const weekColors = ['#f59e0b', '#0ea5e9', '#a855f7', '#22c55e']
   const weekColor = weekColors[(lesson.week - 1) % weekColors.length]
 
@@ -357,28 +360,7 @@ export default function LessonClient({
 
   return (
     <>
-      {/* Fixed read progress bar */}
-      <div
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '3px',
-          zIndex: 9999,
-          backgroundColor: '#1a1a1a',
-        }}
-      >
-        <div
-          style={{
-            width: `${readProgress}%`,
-            height: '100%',
-            background: 'linear-gradient(90deg, #f59e0b, #fde68a)',
-            transition: 'width 0.1s ease',
-            boxShadow: '0 0 8px rgba(245,158,11,0.6)',
-          }}
-        />
-      </div>
+      <ReadingProgressBar />
 
       <main
         className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
@@ -443,32 +425,71 @@ export default function LessonClient({
           />
         </div>
 
-        {/* Breadcrumbs */}
-        <nav className="flex items-center gap-2 mb-4 flex-wrap">
-          <Link
-            href="/dashboard"
-            style={{ color: '#525252' }}
-            className="text-xs hover:text-white transition-colors"
-          >
-            Dashboard
-          </Link>
-          <span style={{ color: '#404040' }} className="text-xs">
-            &#8250;
-          </span>
-          <Link
-            href="/lessons"
-            style={{ color: '#525252' }}
-            className="text-xs hover:text-white transition-colors"
-          >
-            All Lessons
-          </Link>
-          <span style={{ color: '#404040' }} className="text-xs">
-            &#8250;
-          </span>
-          <span style={{ color: weekColor }} className="text-xs font-bold uppercase tracking-wider">
-            Day {lesson.day}: {lesson.title}
-          </span>
-        </nav>
+        {/* ─── LESSON HEADER ─── */}
+        <div style={{
+          background: 'linear-gradient(135deg, #0f0c00 0%, #0a0a0a 50%, #111111 100%)',
+          borderBottom: '1px solid #1f1f1f',
+          padding: '24px 16px 16px',
+          marginLeft: '-1rem',
+          marginRight: '-1rem',
+          marginBottom: '0',
+        }}>
+          <div className="max-w-4xl mx-auto">
+            {/* Breadcrumb */}
+            <div className="flex items-center gap-2 mb-4">
+              <Link href="/lessons" style={{ color: '#525252', fontSize: '0.75rem' }}>Lessons</Link>
+              <span style={{ color: '#404040', fontSize: '0.75rem' }}>›</span>
+              <span style={{ color: '#737373', fontSize: '0.75rem' }}>Day {lesson.day}</span>
+            </div>
+
+            {/* Day number + title */}
+            <div className="flex items-start gap-6 mb-4">
+              <div style={{
+                fontSize: 'clamp(3rem, 8vw, 5rem)',
+                fontWeight: 900,
+                color: '#f59e0b',
+                lineHeight: 1,
+                letterSpacing: '0.02em',
+                flexShrink: 0,
+                textShadow: '0 0 40px rgba(245,158,11,0.3)',
+              }}>
+                {lesson.day}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-white font-black text-2xl sm:text-3xl leading-tight mb-1">{lesson.title}</h1>
+                <p style={{ color: '#a3a3a3' }} className="text-sm leading-relaxed">{lesson.subtitle}</p>
+              </div>
+            </div>
+
+            {/* Meta row */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span style={{ backgroundColor: '#1a1a1a', border: '1px solid #262626', color: '#737373' }} className="text-xs px-3 py-1 rounded-full font-medium">
+                ⏱ {lesson.duration} min
+              </span>
+              {lesson.bpmTarget && (
+                <span style={{ backgroundColor: '#1a1200', border: '1px solid #78350f', color: '#f59e0b' }} className="text-xs px-3 py-1 rounded-full font-bold">
+                  🎵 {lesson.bpmTarget} BPM target
+                </span>
+              )}
+              <span style={{ backgroundColor: '#111111', border: '1px solid #1f1f1f', color: '#525252' }} className="text-xs px-3 py-1 rounded-full">
+                Week {lesson.week}
+              </span>
+              {lesson.techniques.map((tech) => {
+                const color = getTechniqueColor(tech)
+                return (
+                  <span key={tech} style={{ backgroundColor: color.bg, border: `1px solid ${color.border}`, color: color.text }} className="text-xs px-3 py-1 rounded-full font-semibold">
+                    {tech}
+                  </span>
+                )
+              })}
+              {(optimisticComplete || completed) && (
+                <span style={{ backgroundColor: '#052e16', color: '#86efac', border: '1px solid #166534' }} className="text-xs px-3 py-1 rounded-full font-bold">
+                  ✓ Completed
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* Keyboard nav hint */}
         <div className="hidden sm:flex justify-between items-center mb-4">
@@ -527,7 +548,6 @@ export default function LessonClient({
                     fontSize: '0.8rem',
                     fontWeight: isActive ? 700 : 500,
                     color: isActive ? '#ffffff' : '#525252',
-                    borderBottom: isActive ? '2px solid #f59e0b' : '2px solid transparent',
                     backgroundColor: 'transparent',
                     border: 'none',
                     borderBottomColor: isActive ? '#f59e0b' : 'transparent',
@@ -553,41 +573,37 @@ export default function LessonClient({
             animation: activeTab === 'learn' ? 'tabFadeIn 0.15s ease' : 'none',
           }}
         >
-          {/* Lesson header */}
-          <div
-            style={{
-              background: 'linear-gradient(135deg, #111111 0%, #0f0e00 50%, #111111 100%)',
-              borderTop: '3px solid #f59e0b',
-              borderBottom: '1px solid rgba(245,158,11,0.1)',
-              borderLeft: '1px solid rgba(245,158,11,0.05)',
-              borderRight: '1px solid rgba(245,158,11,0.05)',
-              borderRadius: '0.75rem',
-              padding: '1.25rem',
-              marginBottom: '1.5rem',
-            }}
-          >
-            <h1 className="text-4xl font-black text-white uppercase mb-2">{lesson.title}</h1>
-            <p style={{ color: '#a3a3a3' }} className="text-base mb-4">
-              {lesson.subtitle}
-            </p>
-            <div
+          {/* XP badge row */}
+          <div className="flex flex-wrap gap-2 mb-6 mt-2">
+            <span
               style={{
-                borderLeft: '3px solid #f59e0b',
-                backgroundColor: 'rgba(0,0,0,0.25)',
+                backgroundColor: '#1a0f00',
+                color: '#f59e0b',
+                border: '1px solid #78350f',
               }}
-              className="pl-4 py-3 pr-4 rounded-r-lg"
+              className="text-xs px-3 py-1 rounded font-bold"
             >
-              <p
-                style={{ color: '#f59e0b' }}
-                className="text-xs font-bold uppercase tracking-wider mb-1"
+              +{lesson.xpReward} XP
+            </span>
+            {lesson.soloSection && (
+              <span
+                style={{
+                  backgroundColor: '#160a1f',
+                  color: '#a855f7',
+                  border: '1px solid #6b21a8',
+                }}
+                className="text-xs px-3 py-1 rounded font-bold"
               >
-                Why This Matters
-              </p>
-              <p style={{ color: '#a3a3a3' }} className="text-sm leading-relaxed">
-                {lesson.why}
-              </p>
-            </div>
+                Solo Section {lesson.soloSection}
+              </span>
+            )}
           </div>
+
+          {/* Why This Matters */}
+          <div style={{ borderLeft: '3px solid #f59e0b', paddingLeft: 12, marginBottom: 8 }}>
+            <h3 style={{ color: '#f59e0b', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em' }}>Why This Matters</h3>
+          </div>
+          <p style={{ color: '#d4d4d4', lineHeight: 1.8, fontSize: '0.9375rem', marginBottom: '1.5rem' }}>{lesson.why}</p>
 
           {/* Prerequisites */}
           {lesson.prerequisites && lesson.prerequisites.length > 0 && (
@@ -597,7 +613,7 @@ export default function LessonClient({
                 border: '1px solid #1f1f1f',
                 borderRadius: '0.5rem',
                 padding: '0.875rem',
-                marginBottom: '1rem',
+                marginBottom: '1.5rem',
               }}
             >
               <p
@@ -621,65 +637,7 @@ export default function LessonClient({
             </div>
           )}
 
-          {/* Duration / XP badges */}
-          <div className="flex flex-wrap gap-2 mb-6">
-            <span
-              style={{
-                backgroundColor: '#1a1a1a',
-                color: '#a3a3a3',
-                border: '1px solid #262626',
-              }}
-              className="text-xs px-3 py-1 rounded font-medium"
-            >
-              &#9201; {lesson.duration} min
-            </span>
-            <span
-              style={{
-                backgroundColor: '#1a0f00',
-                color: '#f59e0b',
-                border: '1px solid #78350f',
-              }}
-              className="text-xs px-3 py-1 rounded font-bold"
-            >
-              +{lesson.xpReward} XP
-            </span>
-            <span
-              style={{
-                backgroundColor: '#1a1a1a',
-                color: '#a3a3a3',
-                border: '1px solid #262626',
-              }}
-              className="text-xs px-3 py-1 rounded"
-            >
-              Week {lesson.week}
-            </span>
-            {lesson.soloSection && (
-              <span
-                style={{
-                  backgroundColor: '#160a1f',
-                  color: '#a855f7',
-                  border: '1px solid #6b21a8',
-                }}
-                className="text-xs px-3 py-1 rounded font-bold"
-              >
-                Solo Section {lesson.soloSection}
-              </span>
-            )}
-            {completed && (
-              <span
-                style={{
-                  backgroundColor: '#052e16',
-                  color: '#86efac',
-                  border: '1px solid #166534',
-                }}
-                className="text-xs px-3 py-1 rounded font-bold"
-              >
-                ✓ Completed
-              </span>
-            )}
-          </div>
-
-          {/* Techniques tags */}
+          {/* Techniques with tooltips */}
           <div className="flex flex-wrap gap-2 mb-6">
             {lesson.techniques.map((tech) => (
               <TechniqueTooltip key={tech} term={tech}>
@@ -700,11 +658,11 @@ export default function LessonClient({
 
           {/* Main lesson content */}
           <section className="mb-6">
-            <h2 className="text-white text-xs font-bold uppercase tracking-widest mb-4">
-              Lesson Content
-            </h2>
+            <div style={{ borderLeft: '3px solid #f59e0b', paddingLeft: 12, marginBottom: 8 }}>
+              <h3 style={{ color: '#f59e0b', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em' }}>Lesson Content</h3>
+            </div>
             <div
-              style={{ color: '#d4d4d4' }}
+              style={{ color: '#d4d4d4', lineHeight: 1.8, fontSize: '0.9375rem' }}
               className="prose prose-sm max-w-none lesson-content"
               dangerouslySetInnerHTML={{ __html: lesson.mainContent }}
             />
@@ -836,6 +794,14 @@ export default function LessonClient({
               </div>
             )}
           </section>
+
+          {/* Success Criteria */}
+          {lesson.successCriteria && (
+            <div style={{ backgroundColor: '#0f1a0f', border: '1px solid #166534', borderRadius: 12 }} className="p-4 mt-6 mb-8">
+              <p style={{ color: '#86efac', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>✓ Ready to Move On When...</p>
+              <p style={{ color: '#d4d4d4', lineHeight: 1.7, fontSize: '0.875rem' }}>{lesson.successCriteria}</p>
+            </div>
+          )}
         </div>
 
         {/* ─── TAB: PLAY ─── */}
@@ -1047,7 +1013,7 @@ export default function LessonClient({
             style={{ backgroundColor: '#111111', border: '1px solid #262626' }}
             className="rounded-xl p-6 mb-8"
           >
-            {completed ? (
+            {(optimisticComplete || completed) ? (
               <div>
                 <div
                   style={{
@@ -1149,6 +1115,9 @@ export default function LessonClient({
             <p style={{ color: '#a3a3a3' }} className="text-sm leading-relaxed">
               {lesson.selfCheck}
             </p>
+            <div className="mt-4">
+              <LessonShareButton day={lesson.day} title={lesson.title} />
+            </div>
           </section>
 
           {/* How Did It Feel? */}
@@ -1170,7 +1139,7 @@ export default function LessonClient({
                   <button
                     key={opt.val}
                     onClick={() => setDifficulty(opt.val)}
-                    disabled={completed}
+                    disabled={optimisticComplete || completed}
                     style={{
                       backgroundColor: difficulty === opt.val ? '#f59e0b' : '#1a1a1a',
                       color: difficulty === opt.val ? '#000' : '#a3a3a3',
@@ -1193,8 +1162,8 @@ export default function LessonClient({
                   {DIFFICULT_AREAS.map((area) => (
                     <button
                       key={area}
-                      onClick={() => !completed && toggleArea(area)}
-                      disabled={completed}
+                      onClick={() => !(optimisticComplete || completed) && toggleArea(area)}
+                      disabled={optimisticComplete || completed}
                       style={{
                         backgroundColor: difficultAreas.includes(area)
                           ? '#1a1a1a'
@@ -1221,8 +1190,8 @@ export default function LessonClient({
                 {[1, 2, 3, 4, 5].map((n) => (
                   <button
                     key={n}
-                    onClick={() => !completed && setRating(n)}
-                    disabled={completed}
+                    onClick={() => !(optimisticComplete || completed) && setRating(n)}
+                    disabled={optimisticComplete || completed}
                     style={{
                       color: n <= rating ? '#f59e0b' : '#262626',
                       fontSize: '1.5rem',
@@ -1235,7 +1204,7 @@ export default function LessonClient({
               </div>
             </div>
 
-            {!completed && (
+            {!(optimisticComplete || completed) && (
               <button
                 onClick={handleCompleteClick}
                 disabled={completing}
@@ -1267,7 +1236,7 @@ export default function LessonClient({
               </button>
             )}
 
-            {completed && (
+            {(optimisticComplete || completed) && (
               <div>
                 <div
                   style={{

@@ -4,6 +4,11 @@ import Providers from '@/components/Providers'
 import MobileBottomNav from '@/components/MobileBottomNav'
 import ToastContainer from '@/components/Toast'
 import AnnouncementBanner from '@/components/AnnouncementBanner'
+import CommandPalette from '@/components/CommandPalette'
+import BackToTop from '@/components/BackToTop'
+import KeyboardShortcutsOverlay from '@/components/KeyboardShortcutsOverlay'
+import OfflineBanner from '@/components/OfflineBanner'
+import PWAInstallBanner from '@/components/PWAInstallBanner'
 
 export const metadata: Metadata = {
   title: 'First Guitar Solo | Sixth String Labs',
@@ -77,6 +82,11 @@ export default function RootLayout({
           {children}
           <MobileBottomNav />
           <ToastContainer />
+          <CommandPalette />
+          <BackToTop />
+          <KeyboardShortcutsOverlay />
+          <OfflineBanner />
+          <PWAInstallBanner />
         </Providers>
       </body>
     </html>
