@@ -214,3 +214,241 @@ export async function sendPasswordChangedEmail(to: string): Promise<void> {
     console.error('[email] sendPasswordChangedEmail failed:', err)
   }
 }
+
+export async function sendDayCheckInEmail(
+  user: { email: string; name: string | null },
+  day: number,
+  streak: number,
+): Promise<void> {
+  const resend = getResend()
+  if (!resend) return
+
+  const practiceUrl = `${process.env.NEXTAUTH_URL}/lesson/${day}`
+  const displayName = user.name || 'Guitarist'
+
+  const html = baseEmailHtml(`
+    <h1 style="margin:0 0 8px;color:#ffffff;font-size:24px;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;">Day ${day} Check-In 🎸</h1>
+    <p style="margin:0 0 24px;color:#f59e0b;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">${streak}-Day Streak</p>
+    <p style="margin:0 0 16px;color:#d4d4d4;font-size:15px;line-height:1.6;">Hey ${displayName}, you've been at it for ${day} days. Your ${streak}-day streak is looking great — keep that momentum going.</p>
+    <p style="margin:0 0 24px;color:#d4d4d4;font-size:15px;line-height:1.6;">Every day you practice, your fingers get a little faster and your ear gets a little sharper. Today's session is waiting.</p>
+    <table cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+      <tr><td>${btnLink(practiceUrl, 'Continue Practice')}</td></tr>
+    </table>
+    <p style="margin:0;color:#525252;font-size:12px;line-height:1.6;">Keep it up — you're building a habit that lasts.</p>
+  `)
+
+  try {
+    await resend.emails.send({
+      from: FROM_ADDRESS,
+      to: user.email,
+      replyTo: FROM_ADDRESS,
+      subject: `Day ${day} check-in — keep your ${streak}-day streak alive 🎸`,
+      html,
+    })
+  } catch (err) {
+    console.warn('[email] sendDayCheckInEmail failed:', err)
+  }
+}
+
+export async function sendInactivityEmail(
+  user: { email: string; name: string | null },
+  daysMissed: number,
+  currentDay: number,
+): Promise<void> {
+  const resend = getResend()
+  if (!resend) return
+
+  const resumeUrl = `${process.env.NEXTAUTH_URL}/lesson/${currentDay}`
+  const displayName = user.name || 'Guitarist'
+
+  const html = baseEmailHtml(`
+    <h1 style="margin:0 0 8px;color:#ffffff;font-size:24px;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;">Your Guitar is Waiting</h1>
+    <p style="margin:0 0 24px;color:#f59e0b;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">${daysMissed} days since your last practice</p>
+    <p style="margin:0 0 16px;color:#d4d4d4;font-size:15px;line-height:1.6;">Hey ${displayName}, life gets busy. That's completely okay.</p>
+    <p style="margin:0 0 16px;color:#d4d4d4;font-size:15px;line-height:1.6;">But your guitar misses you. You were on Day ${currentDay} — and you were making real progress. It only takes 2 minutes to get back in the groove and remember why you started.</p>
+    <p style="margin:0 0 24px;color:#d4d4d4;font-size:15px;line-height:1.6;">No pressure. No guilt. Just a reminder that Day ${currentDay} is still here waiting for you.</p>
+    <table cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+      <tr><td>${btnLink(resumeUrl, `Resume Day ${currentDay}`)}</td></tr>
+    </table>
+    <p style="margin:0;color:#525252;font-size:12px;line-height:1.6;">You've already done the hardest part — you started.</p>
+  `)
+
+  try {
+    await resend.emails.send({
+      from: FROM_ADDRESS,
+      to: user.email,
+      replyTo: FROM_ADDRESS,
+      subject: `Your guitar is waiting (${daysMissed} days since your last practice)`,
+      html,
+    })
+  } catch (err) {
+    console.warn('[email] sendInactivityEmail failed:', err)
+  }
+}
+
+export async function sendStreakMilestoneEmail(
+  user: { email: string; name: string | null },
+  streak: number,
+): Promise<void> {
+  const resend = getResend()
+  if (!resend) return
+
+  const dashboardUrl = `${process.env.NEXTAUTH_URL}/dashboard`
+  const displayName = user.name || 'Guitarist'
+
+  const html = baseEmailHtml(`
+    <h1 style="margin:0 0 8px;color:#ffffff;font-size:48px;font-weight:900;text-align:center;">🔥</h1>
+    <h2 style="margin:0 0 8px;color:#f59e0b;font-size:36px;font-weight:900;text-align:center;letter-spacing:0.05em;">${streak} Days</h2>
+    <p style="margin:0 0 24px;color:#ffffff;font-size:18px;font-weight:700;text-align:center;text-transform:uppercase;letter-spacing:0.1em;">Streak Milestone!</p>
+    <p style="margin:0 0 16px;color:#d4d4d4;font-size:15px;line-height:1.6;">Hey ${displayName}, you've hit a ${streak}-day streak — that puts you in the top 10% of students who stick with it.</p>
+    <p style="margin:0 0 16px;color:#d4d4d4;font-size:15px;line-height:1.6;">Studies show that ${streak} days of consistent practice rewires your muscle memory in a permanent way. The patterns your fingers are building right now? They don't go away.</p>
+    <p style="margin:0 0 24px;color:#d4d4d4;font-size:15px;line-height:1.6;">Keep this streak alive. You're building something real.</p>
+    <table cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+      <tr><td>${btnLink(dashboardUrl, 'View Your Progress')}</td></tr>
+    </table>
+    <p style="margin:0;color:#525252;font-size:12px;line-height:1.6;">Most people quit before ${streak} days. You didn't.</p>
+  `)
+
+  try {
+    await resend.emails.send({
+      from: FROM_ADDRESS,
+      to: user.email,
+      replyTo: FROM_ADDRESS,
+      subject: `🔥 ${streak}-day streak! You're in the top 10% of students`,
+      html,
+    })
+  } catch (err) {
+    console.warn('[email] sendStreakMilestoneEmail failed:', err)
+  }
+}
+
+export async function sendHalfwayEmail(
+  user: { email: string; name: string | null },
+): Promise<void> {
+  const resend = getResend()
+  if (!resend) return
+
+  const day16Url = `${process.env.NEXTAUTH_URL}/lesson/16`
+  const displayName = user.name || 'Guitarist'
+
+  const html = baseEmailHtml(`
+    <h1 style="margin:0 0 8px;color:#ffffff;font-size:24px;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;">Halfway There 🎸</h1>
+    <p style="margin:0 0 24px;color:#f59e0b;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">Day 15 Complete</p>
+    <p style="margin:0 0 16px;color:#d4d4d4;font-size:15px;line-height:1.6;">Hey ${displayName}, you've done something most beginners never do — you stuck with it for 15 days.</p>
+    <p style="margin:0 0 16px;color:#d4d4d4;font-size:15px;line-height:1.6;">The techniques you've been drilling are starting to click. The second half is where it all comes together — you'll hear yourself actually playing, not just practicing.</p>
+    <p style="margin:0 0 24px;color:#d4d4d4;font-size:15px;line-height:1.6;">The solo is within reach. Day 16 is ready for you.</p>
+    <table cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+      <tr><td>${btnLink(day16Url, 'Continue to Day 16')}</td></tr>
+    </table>
+    <p style="margin:0;color:#525252;font-size:12px;line-height:1.6;">15 down. 15 to go. You've got this.</p>
+  `)
+
+  try {
+    await resend.emails.send({
+      from: FROM_ADDRESS,
+      to: user.email,
+      replyTo: FROM_ADDRESS,
+      subject: `You're halfway there — Day 15 complete 🎸`,
+      html,
+    })
+  } catch (err) {
+    console.warn('[email] sendHalfwayEmail failed:', err)
+  }
+}
+
+export async function sendGraduationEmail(
+  user: { email: string; name: string | null },
+): Promise<void> {
+  const resend = getResend()
+  if (!resend) return
+
+  const baseUrl = process.env.NEXTAUTH_URL ?? ''
+  const certificateUrl = `${baseUrl}/solo/${encodeURIComponent(user.email)}`
+  const upsellUrl = `${baseUrl}/upsell`
+  const displayName = user.name || 'Guitarist'
+
+  const html = baseEmailHtml(`
+    <h1 style="margin:0 0 8px;color:#f59e0b;font-size:36px;font-weight:900;text-align:center;letter-spacing:0.05em;">🎸</h1>
+    <h2 style="margin:0 0 8px;color:#ffffff;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;text-align:center;">You Did It.</h2>
+    <p style="margin:0 0 24px;color:#f59e0b;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;text-align:center;">30 Days Complete</p>
+    <p style="margin:0 0 16px;color:#d4d4d4;font-size:15px;line-height:1.6;">Hey ${displayName}, you just completed your first guitar solo.</p>
+    <p style="margin:0 0 16px;color:#d4d4d4;font-size:15px;line-height:1.6;">That's not nothing. Most people who pick up a guitar put it down after a few weeks. You didn't. You showed up for 30 days and built something real from scratch.</p>
+    <p style="margin:0 0 24px;color:#d4d4d4;font-size:15px;line-height:1.6;">Your guitar journey is just beginning. View your certificate — then, when you're ready, take on the next challenge.</p>
+    <table cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
+      <tr><td>${btnLink(certificateUrl, 'View Your Certificate')}</td></tr>
+    </table>
+    <table cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+      <tr><td><a href="${upsellUrl}" style="display:inline-block;background-color:transparent;color:#f59e0b;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;text-decoration:underline;padding:8px 0;">Explore Advanced Solo 2 →</a></td></tr>
+    </table>
+    <p style="margin:0;color:#525252;font-size:12px;line-height:1.6;">We're proud of you. Seriously.</p>
+  `)
+
+  try {
+    await resend.emails.send({
+      from: FROM_ADDRESS,
+      to: user.email,
+      replyTo: FROM_ADDRESS,
+      subject: `You did it. Your guitar journey is just beginning.`,
+      html,
+    })
+  } catch (err) {
+    console.warn('[email] sendGraduationEmail failed:', err)
+  }
+}
+
+export async function sendWeeklyDigestEmail(
+  user: { email: string; name: string | null },
+  stats: { lessonsCompleted: number; xpEarned: number; streak: number; currentDay: number },
+): Promise<void> {
+  const resend = getResend()
+  if (!resend) return
+
+  const dashboardUrl = `${process.env.NEXTAUTH_URL}/dashboard`
+  const displayName = user.name || 'Guitarist'
+
+  const html = baseEmailHtml(`
+    <h1 style="margin:0 0 8px;color:#ffffff;font-size:24px;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;">Your Week in Review 🎸</h1>
+    <p style="margin:0 0 24px;color:#f59e0b;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">Week ending ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+    <p style="margin:0 0 24px;color:#d4d4d4;font-size:15px;line-height:1.6;">Hey ${displayName}, here's what you accomplished this week:</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+      <tr>
+        <td style="background-color:#1a1a1a;border:1px solid #262626;border-radius:8px;padding:16px;text-align:center;width:25%;">
+          <p style="margin:0 0 4px;color:#f59e0b;font-size:28px;font-weight:900;">${stats.lessonsCompleted}</p>
+          <p style="margin:0;color:#a3a3a3;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">Lessons</p>
+        </td>
+        <td style="width:8px;"></td>
+        <td style="background-color:#1a1a1a;border:1px solid #262626;border-radius:8px;padding:16px;text-align:center;width:25%;">
+          <p style="margin:0 0 4px;color:#f59e0b;font-size:28px;font-weight:900;">${stats.xpEarned}</p>
+          <p style="margin:0;color:#a3a3a3;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">XP Earned</p>
+        </td>
+        <td style="width:8px;"></td>
+        <td style="background-color:#1a1a1a;border:1px solid #262626;border-radius:8px;padding:16px;text-align:center;width:25%;">
+          <p style="margin:0 0 4px;color:#f59e0b;font-size:28px;font-weight:900;">${stats.streak}</p>
+          <p style="margin:0;color:#a3a3a3;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">Day Streak</p>
+        </td>
+        <td style="width:8px;"></td>
+        <td style="background-color:#1a1a1a;border:1px solid #262626;border-radius:8px;padding:16px;text-align:center;width:25%;">
+          <p style="margin:0 0 4px;color:#f59e0b;font-size:28px;font-weight:900;">${stats.currentDay}</p>
+          <p style="margin:0;color:#a3a3a3;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">Current Day</p>
+        </td>
+      </tr>
+    </table>
+    <p style="margin:0 0 24px;color:#d4d4d4;font-size:15px;line-height:1.6;">Every week you practice is a week you're becoming the guitarist you want to be. Keep showing up.</p>
+    <table cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+      <tr><td>${btnLink(dashboardUrl, 'Continue Learning')}</td></tr>
+    </table>
+    <p style="margin:0;color:#525252;font-size:12px;line-height:1.6;">See you next week.</p>
+  `)
+
+  try {
+    await resend.emails.send({
+      from: FROM_ADDRESS,
+      to: user.email,
+      replyTo: FROM_ADDRESS,
+      subject: `Your week in review — ${stats.lessonsCompleted} lessons, ${stats.xpEarned} XP earned 🎸`,
+      html,
+    })
+  } catch (err) {
+    console.warn('[email] sendWeeklyDigestEmail failed:', err)
+  }
+}

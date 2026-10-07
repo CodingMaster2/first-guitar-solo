@@ -14,6 +14,9 @@ export interface Lesson {
   soloSection?: number
   quiz?: Array<{ question: string; options: string[]; correct: number }>
   commonMistakes?: string[]
+  bonusChallenge?: string
+  listenTo?: string
+  warmupTip?: string
   bonusContent?: string
   crossRefs?: Array<{ day: number; description: string }>
   prerequisites?: string[]

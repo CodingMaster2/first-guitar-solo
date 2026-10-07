@@ -11,6 +11,7 @@ interface UserRow {
   createdAt: string
   purchaseStatus: string
   role: string
+  utmSource?: string | null
   profile: { currentDay: number; lastPracticeDate: string | null; streak: number; totalXP: number; bestStreak: number } | null
   completedCount: number
 }
@@ -146,7 +147,7 @@ export default function BatchUsersTable({ users }: Props) {
                     className="accent-amber-500"
                   />
                 </th>
-                {['User', 'Status', 'Progress', 'XP', 'Streak', 'Last Active', 'Actions'].map((h) => (
+                {['User', 'Status', 'Risk', 'Progress', 'XP', 'Streak', 'Source', 'Last Active', 'Actions'].map((h) => (
                   <th key={h} style={{ color: '#525252' }} className="text-left px-4 py-3 text-xs uppercase tracking-wider font-medium">
                     {h}
                   </th>
@@ -197,6 +198,43 @@ export default function BatchUsersTable({ users }: Props) {
                         {user.purchaseStatus}
                       </span>
                     </td>
+                    {/* Churn risk */}
+                    <td className="px-4 py-3">
+                      {(() => {
+                        const riskLevel =
+                          daysSinceActive === null
+                            ? 'never'
+                            : daysSinceActive <= 1
+                            ? 'active'
+                            : daysSinceActive <= 4
+                            ? 'at-risk'
+                            : 'churned'
+                        const riskMap = {
+                          never: { dot: '#525252', color: '#737373', label: 'Never' },
+                          active: { dot: '#22c55e', color: '#86efac', label: 'Active' },
+                          'at-risk': { dot: '#f59e0b', color: '#fbbf24', label: 'At risk' },
+                          churned: { dot: '#ef4444', color: '#fca5a5', label: 'Churned' },
+                        } as const
+                        const r = riskMap[riskLevel]
+                        return (
+                          <span className="flex items-center gap-1.5">
+                            <span
+                              style={{
+                                width: 7,
+                                height: 7,
+                                borderRadius: '50%',
+                                backgroundColor: r.dot,
+                                flexShrink: 0,
+                                display: 'inline-block',
+                              }}
+                            />
+                            <span style={{ color: r.color }} className="text-xs">
+                              {r.label}
+                            </span>
+                          </span>
+                        )
+                      })()}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <div style={{ backgroundColor: '#1a1a1a', width: '60px', height: '4px', borderRadius: '9999px' }}>
@@ -213,6 +251,26 @@ export default function BatchUsersTable({ users }: Props) {
                       {user.profile?.streak ?? 0}d
                       {(user.profile?.bestStreak ?? 0) > 0 && (
                         <span style={{ color: '#525252' }} className="block text-xs">best: {user.profile?.bestStreak}d</span>
+                      )}
+                    </td>
+                    {/* UTM Source */}
+                    <td style={{ color: '#737373' }} className="px-4 py-3 text-xs">
+                      {user.utmSource ? (
+                        <span
+                          style={{
+                            backgroundColor: '#1a1a1a',
+                            border: '1px solid #262626',
+                            borderRadius: 4,
+                            padding: '1px 5px',
+                            fontSize: '0.65rem',
+                            color: '#a3a3a3',
+                          }}
+                          title={user.utmSource}
+                        >
+                          {user.utmSource.slice(0, 10)}
+                        </span>
+                      ) : (
+                        <span style={{ color: '#2a2a2a' }}>—</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-xs">

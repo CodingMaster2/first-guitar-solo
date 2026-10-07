@@ -17,6 +17,12 @@ import ReviewQueue from '@/components/ReviewQueue'
 import WeeklyPlanCard from '@/components/WeeklyPlanCard'
 import AdaptivePath from '@/components/AdaptivePath'
 import PartnerWidget from '@/components/PartnerWidget'
+import StreakFlame from '@/components/StreakFlame'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Dashboard — First Guitar Solo',
+}
 
 const GUITARIST_QUOTES = [
   { quote: 'The more you practice, the luckier you get.', author: 'Gary Player' },
@@ -33,6 +39,8 @@ const QUICK_ACTIONS = [
   { label: 'AI Coach', icon: '🤖', href: '/coach' },
   { label: 'My Solo', icon: '⚡', href: '/my-solo' },
   { label: 'Leaderboard', icon: '🏆', href: '/leaderboard' },
+  { label: 'Trophy Room', icon: '🏅', href: '/trophy-room' },
+  { label: 'Challenges', icon: '⚔️', href: '/challenges' },
 ]
 
 export default async function DashboardPage() {
@@ -40,7 +48,7 @@ export default async function DashboardPage() {
   if (!session?.user) redirect('/login')
   if (session.user.purchaseStatus !== 'PAID') redirect('/success?new=true')
 
-  const [profile, progress, practiceSessions] = await Promise.all([
+  const [profile, progress, practiceSessions, reviewsDue] = await Promise.all([
     prisma.profile.findUnique({ where: { userId: session.user.id } }),
     prisma.progress.findMany({ where: { userId: session.user.id, completed: true }, orderBy: { day: 'asc' } }),
     prisma.practiceSession.findMany({
@@ -48,9 +56,27 @@ export default async function DashboardPage() {
       select: { createdAt: true },
       orderBy: { createdAt: 'desc' },
     }),
+    prisma.progress.count({
+      where: { userId: session.user.id, nextReviewAt: { lte: new Date() }, completed: true },
+    }),
   ])
 
   if (!profile) redirect('/onboarding')
+
+  // Streak at risk: streak > 0 and last practice was exactly yesterday
+  const streak = profile.streak
+  const lastPracticeDate = profile.lastPracticeDate
+  let streakAtRisk = false
+  if (streak > 0 && lastPracticeDate) {
+    const todayUTC = new Date()
+    todayUTC.setHours(0, 0, 0, 0)
+    const yesterdayUTC = new Date(todayUTC)
+    yesterdayUTC.setDate(yesterdayUTC.getDate() - 1)
+    const lastPracticeDay = new Date(lastPracticeDate)
+    lastPracticeDay.setHours(0, 0, 0, 0)
+    streakAtRisk =
+      lastPracticeDay.getTime() === yesterdayUTC.getTime()
+  }
 
   const currentDay = profile.currentDay
   const completedDays = new Set(progress.map((p) => p.day))
@@ -101,6 +127,27 @@ export default async function DashboardPage() {
           </h1>
           <p style={{ color: '#737373', fontSize: '0.875rem', marginTop: '0.25rem' }}>{todayDate}</p>
         </div>
+
+        {/* Streak at risk warning */}
+        {streakAtRisk && (
+          <div style={{ background: 'linear-gradient(135deg, #1a0a00, #0f0600)', border: '1px solid #d97706', borderRadius: 12, padding: '16px 20px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: '1.5rem' }}>⚠️</span>
+            <div>
+              <p style={{ color: '#fbbf24', fontWeight: 700, fontSize: '0.875rem' }}>Streak at risk!</p>
+              <p style={{ color: '#92400e', fontSize: '0.8rem' }}>Practice today to keep your {streak}-day streak alive.</p>
+            </div>
+            <a href={`/lesson/${currentDay}`} style={{ marginLeft: 'auto', backgroundColor: '#f59e0b', color: '#000', padding: '6px 16px', borderRadius: 8, fontWeight: 700, fontSize: '0.8rem', textDecoration: 'none' }}>Practice Now</a>
+          </div>
+        )}
+
+        {/* Reviews due pill */}
+        {reviewsDue > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <a href="/lessons?filter=review" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, backgroundColor: '#1a1200', border: '1px solid #d97706', borderRadius: 20, padding: '6px 14px', textDecoration: 'none', animation: 'pulse 2s infinite' }}>
+              <span style={{ color: '#f59e0b', fontSize: '0.8rem', fontWeight: 700 }}>🔄 {reviewsDue} lesson{reviewsDue > 1 ? 's' : ''} due for review</span>
+            </a>
+          </div>
+        )}
 
         {/* Today's Mission */}
         <TodaysMission
@@ -154,16 +201,15 @@ export default async function DashboardPage() {
           <div
             style={{ backgroundColor: '#111111', border: '1px solid #262626', borderRadius: '0.75rem', padding: '1.25rem' }}
           >
-            <div>
-              <p style={{ color: '#f59e0b', fontSize: '1.75rem', fontWeight: 900, lineHeight: 1 }}>
-                <span className="flame-anim" style={{ display: 'inline-block', marginRight: '0.25rem' }}>🔥</span>
-                {profile.streak}
-              </p>
-              <p style={{ color: '#a3a3a3', fontSize: '0.75rem', marginTop: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Day Streak
-              </p>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+              <StreakFlame streak={profile.streak} size={40} />
+              <div>
+                <p style={{ color: '#a3a3a3', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Day Streak
+                </p>
+                <p style={{ color: '#525252', fontSize: '0.7rem', marginTop: '0.25rem' }}>Best: {profile.bestStreak}d</p>
+              </div>
             </div>
-            <p style={{ color: '#525252', fontSize: '0.7rem', marginTop: '0.5rem' }}>Best: {profile.bestStreak}d</p>
           </div>
 
           {/* Days completed */}

@@ -122,6 +122,15 @@ export default async function AdminPage() {
     ),
   ])
 
+  const [graduated, funnelDay1Users, funnelDay7Users] = await Promise.all([
+    prisma.user.count({ where: { purchaseStatus: 'PAID', profile: { soloCompleted: true } } }),
+    prisma.user.count({ where: { progress: { some: { day: 1 } } } }),
+    prisma.user.count({ where: { progress: { some: { day: 7, completed: true } } } }),
+  ])
+  const graduationRate = paidUsers > 0 ? Math.round((graduated / paidUsers) * 100) : 0
+  const gradColor = graduationRate > 30 ? '#86efac' : graduationRate > 15 ? '#f59e0b' : '#fca5a5'
+  const gradBg = graduationRate > 30 ? '#052e16' : graduationRate > 15 ? '#1a1200' : '#1a0000'
+
   const revenue = paidUsers * 25
   const conversion = totalUsers > 0 ? Math.round((paidUsers / totalUsers) * 100) : 0
 
@@ -205,6 +214,40 @@ export default async function AdminPage() {
             </div>
           </div>
 
+          {/* Graduation Rate KPI */}
+          <div
+            style={{ backgroundColor: gradBg, border: `2px solid ${gradColor}44` }}
+            className="rounded-xl p-5 mb-4 flex items-center gap-6 flex-wrap"
+          >
+            <div>
+              <p style={{ color: '#737373' }} className="text-xs uppercase tracking-wider mb-1">
+                Graduation Rate
+              </p>
+              <p style={{ color: gradColor }} className="text-4xl font-black">
+                {graduationRate}%
+              </p>
+              <p style={{ color: '#525252' }} className="text-xs mt-1">
+                {graduated} of {paidUsers} paid users completed the solo
+              </p>
+            </div>
+            <div className="flex-1" style={{ maxWidth: 240 }}>
+              <div style={{ backgroundColor: '#262626', height: 10, borderRadius: 5, overflow: 'hidden' }}>
+                <div
+                  style={{
+                    width: `${graduationRate}%`,
+                    height: 10,
+                    borderRadius: 5,
+                    backgroundColor: gradColor,
+                    transition: 'width 0.3s ease',
+                  }}
+                />
+              </div>
+              <p style={{ color: '#525252' }} className="text-xs mt-1">
+                Target: 30%
+              </p>
+            </div>
+          </div>
+
           {/* Primary stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
             {primaryStats.map((s) => (
@@ -233,6 +276,70 @@ export default async function AdminPage() {
                 <p style={{ color: '#404040' }} className="text-xs mt-1">{s.sub}</p>
               </div>
             ))}
+          </div>
+
+          {/* Funnel Overview */}
+          <div
+            style={{ backgroundColor: '#111111', border: '1px solid #1f1f1f' }}
+            className="rounded-xl p-5 mb-5"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-white font-bold text-xs uppercase tracking-wider">
+                Funnel Overview
+              </h2>
+              <Link href="/admin/funnel" style={{ color: '#f59e0b' }} className="text-xs hover:underline">
+                Full analytics →
+              </Link>
+            </div>
+            <div className="space-y-3">
+              {[
+                { label: 'Registered', count: totalUsers, prev: null as number | null },
+                { label: 'Purchased', count: paidUsers, prev: totalUsers },
+                { label: 'Started Day 1', count: funnelDay1Users, prev: paidUsers },
+                { label: 'Completed Day 7', count: funnelDay7Users, prev: funnelDay1Users },
+                { label: 'Graduated', count: graduated, prev: funnelDay7Users },
+              ].map((step) => {
+                const pct = totalUsers > 0 ? (step.count / totalUsers) * 100 : 0
+                const fromPrev =
+                  step.prev !== null && step.prev > 0
+                    ? Math.round((step.count / step.prev) * 100)
+                    : null
+                return (
+                  <div key={step.label} className="flex items-center gap-3">
+                    <span
+                      style={{ color: '#737373', minWidth: '110px' }}
+                      className="text-xs"
+                    >
+                      {step.label}
+                    </span>
+                    <div
+                      className="flex-1"
+                      style={{ backgroundColor: '#1f1f1f', height: 8, borderRadius: 4 }}
+                    >
+                      <div
+                        style={{
+                          width: `${Math.max(pct, 0.5)}%`,
+                          height: 8,
+                          borderRadius: 4,
+                          backgroundColor: '#f59e0b',
+                          opacity: step.prev === null ? 1 : 0.7,
+                        }}
+                      />
+                    </div>
+                    <span className="text-white text-xs font-bold w-12 text-right">
+                      {step.count.toLocaleString()}
+                    </span>
+                    {fromPrev !== null ? (
+                      <span style={{ color: '#525252' }} className="text-xs w-14 text-right">
+                        {fromPrev}%
+                      </span>
+                    ) : (
+                      <span className="w-14" />
+                    )}
+                  </div>
+                )
+              })}
+            </div>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-5 mb-5">

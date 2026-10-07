@@ -167,6 +167,18 @@ export default function LandingPage({ graduateCountBadge, graduatesTeaser }: Lan
     return () => obs.disconnect()
   }, [])
 
+  // Crisp chat — replace CRISP_WEBSITE_ID with your ID from crisp.chat
+  useEffect(() => {
+    const w = window as typeof window & { $crisp: unknown[]; CRISP_WEBSITE_ID: string }
+    w.$crisp = []
+    w.CRISP_WEBSITE_ID = 'YOUR_CRISP_ID'
+    const d = document
+    const s = d.createElement('script')
+    s.src = 'https://client.crisp.chat/l.js'
+    s.async = true
+    d.getElementsByTagName('head')[0].appendChild(s)
+  }, [])
+
   return (
     <div style={{ backgroundColor: '#0a0a0a', color: '#ffffff' }} className="min-h-screen">
       <InstallPrompt />
@@ -811,12 +823,18 @@ export default function LandingPage({ graduateCountBadge, graduatesTeaser }: Lan
                     letterSpacing: '0.1em',
                     padding: '1.125rem 1rem',
                     borderRadius: '0.5rem',
-                    marginBottom: '1.25rem',
+                    marginBottom: '0.75rem',
                   }}
                   aria-label="Start your 30-day guitar solo journey for $25"
                 >
                   Start Your 30-Day Journey — $25
                 </Link>
+
+                {/* Money-back guarantee badge */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', marginTop: 12 }}>
+                  <span style={{ color: '#86efac', fontSize: '1rem' }}>🛡️</span>
+                  <span style={{ color: '#86efac', fontSize: '0.8rem', fontWeight: 600 }}>30-Day Money-Back Guarantee — No questions asked</span>
+                </div>
 
                 {/* Trust badges */}
                 <p
@@ -833,6 +851,19 @@ export default function LandingPage({ graduateCountBadge, graduatesTeaser }: Lan
                 </p>
               </div>
             </div>
+
+            {/* Monthly option — subtle, below main card */}
+            <p style={{ textAlign: 'center', color: '#525252', fontSize: '0.875rem', marginTop: 16 }}>
+              Prefer monthly?{' '}
+              <a href="/subscribe" style={{ color: '#f59e0b', textDecoration: 'none' }}>
+                $9/month — cancel anytime →
+              </a>
+            </p>
+
+            {/* Gift link */}
+            <p style={{ textAlign: 'center', color: '#525252', fontSize: '0.8rem', marginTop: 8 }}>
+              <a href="/gift" style={{ color: '#737373', textDecoration: 'none' }}>🎁 Give as a gift</a>
+            </p>
           </div>
         </div>
       </section>
@@ -842,6 +873,19 @@ export default function LandingPage({ graduateCountBadge, graduatesTeaser }: Lan
       {/* ══════════════════════════════════════════════════════════════════════
           FAQ
       ══════════════════════════════════════════════════════════════════════ */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: [
+            { '@type': 'Question', name: 'How long does it take to learn a guitar solo?', acceptedAnswer: { '@type': 'Answer', text: 'With the First Guitar Solo program, most students play their first complete solo within 30 days, practicing 20-30 minutes per day.' } },
+            { '@type': 'Question', name: 'Do I need any guitar experience?', acceptedAnswer: { '@type': 'Answer', text: "No. The course starts from absolute zero — you don't need to know any chords, scales, or music theory." } },
+            { '@type': 'Question', name: 'What guitar do I need?', acceptedAnswer: { '@type': 'Answer', text: 'Any guitar works. Electric is recommended for learning solos, but acoustic will work fine.' } },
+            { '@type': 'Question', name: 'Is there a refund policy?', acceptedAnswer: { '@type': 'Answer', text: 'Yes — 30-day money-back guarantee. If you practice and don\'t improve, email for a full refund.' } },
+          ]
+        })}}
+      />
       <section
         id="faq"
         style={{ backgroundColor: '#080808', borderTop: '1px solid #1a1a1a' }}

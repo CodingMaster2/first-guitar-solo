@@ -1,8 +1,9 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
+// GET — return the current user's referral link and count
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
@@ -10,66 +11,51 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const user = await prisma.user.findUnique({
+    const baseUrl =
+      process.env.NEXTAUTH_URL ??
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+
+    let user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { referralCode: true, referralCount: true },
     })
 
-    return NextResponse.json({
-      code: user?.referralCode ?? null,
-      count: user?.referralCount ?? 0,
-    })
+    // Generate referralCode if missing
+    if (!user?.referralCode) {
+      const code = session.user.id.slice(-8).toUpperCase()
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { referralCode: code },
+      })
+      user = { referralCode: code, referralCount: user?.referralCount ?? 0 }
+    }
+
+    const link = `${baseUrl}/register?ref=${user.referralCode}`
+    return NextResponse.json({ link, count: user.referralCount ?? 0 })
   } catch (error) {
     console.error('GET /api/referral error:', error)
     return NextResponse.json({ error: 'Failed to fetch referral data' }, { status: 500 })
   }
 }
 
-export async function POST() {
+// POST — track a referral click (called from register page when ?ref= is in URL)
+export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const body = await req.json()
+    const { referralCode } = body as { referralCode?: string }
+
+    if (!referralCode) {
+      return NextResponse.json({ error: 'referralCode is required' }, { status: 400 })
     }
 
-    // Check if user already has a code
-    const existing = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { referralCode: true, referralCount: true },
+    await prisma.user.update({
+      where: { referralCode },
+      data: { referralCount: { increment: 1 } },
     })
 
-    if (existing?.referralCode) {
-      return NextResponse.json({
-        code: existing.referralCode,
-        count: existing.referralCount,
-      })
-    }
-
-    // Generate a unique 6-char uppercase code
-    let code: string
-    let attempts = 0
-    do {
-      code = Math.random().toString(36).slice(2, 8).toUpperCase()
-      attempts++
-      if (attempts > 20) {
-        return NextResponse.json({ error: 'Could not generate unique code' }, { status: 500 })
-      }
-    } while (
-      await prisma.user.findUnique({ where: { referralCode: code } })
-    )
-
-    const updated = await prisma.user.update({
-      where: { id: session.user.id },
-      data: { referralCode: code },
-      select: { referralCode: true, referralCount: true },
-    })
-
-    return NextResponse.json({
-      code: updated.referralCode,
-      count: updated.referralCount,
-    })
+    return NextResponse.json({ ok: true })
   } catch (error) {
     console.error('POST /api/referral error:', error)
-    return NextResponse.json({ error: 'Failed to generate referral code' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to track referral' }, { status: 500 })
   }
 }

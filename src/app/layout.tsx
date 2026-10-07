@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import Script from 'next/script'
 import './globals.css'
 import Providers from '@/components/Providers'
 import MobileBottomNav from '@/components/MobileBottomNav'
@@ -88,6 +89,13 @@ export default function RootLayout({
           <OfflineBanner />
           <PWAInstallBanner />
         </Providers>
+        <Script id="sw-register" strategy="afterInteractive">{`
+          if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+              navigator.serviceWorker.register('/sw.js').catch(function() {});
+            });
+          }
+        `}</Script>
       </body>
     </html>
   )

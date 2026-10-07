@@ -6,6 +6,14 @@ import { LESSONS } from '@/lib/lessons'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import React from 'react'
+
+const MILESTONES: Record<number, { title: string; desc: string; emoji: string }> = {
+  7:  { title: 'Week 1 Complete!', desc: "You've built your foundation. The techniques start connecting now.", emoji: '🎯' },
+  14: { title: 'Halfway There!', desc: 'Your fingers know the scale. Now you start sounding like a guitarist.', emoji: '⚡' },
+  21: { title: 'Three Weeks In!', desc: 'The solo is taking shape. Most students say this is where it clicks.', emoji: '🔥' },
+  30: { title: 'The Final Push!', desc: "One week left. You're so close to playing your first complete solo.", emoji: '🎸' },
+}
 
 export const metadata = {
   title: 'All 30 Lessons | First Guitar Solo',
@@ -123,80 +131,103 @@ export default async function LessonsPage() {
                     const isInPath = adaptivePathSet.size > 0 && adaptivePathSet.has(lesson.day)
                     const pathBorder = isInPath && !isDone && !isCurrent ? '#92400e' : undefined
                     const difficultyFilled = Math.min(5, Math.ceil(lesson.day / 6))
+                    const milestone = MILESTONES[lesson.day]
                     return (
-                      <Link
-                        href={`/lesson/${lesson.day}`}
-                        key={lesson.day}
-                        style={{
-                          background: isDone ? 'linear-gradient(135deg, #0f0c00, #111111)' : '#111111',
-                          border: `1px solid ${isDone ? '#78350f' : isCurrent ? '#f59e0b' : pathBorder ?? '#262626'}`,
-                          minHeight: 160,
-                          display: 'flex',
-                          flexDirection: 'column',
-                        }}
-                        className="p-4 rounded-lg hover:border-amber-600 transition-all group block"
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <span style={{ color: isDone ? '#f59e0b' : isCurrent ? '#f59e0b' : '#525252' }} className="text-xs font-bold">
-                            Day {lesson.day}
-                            {isCurrent && <span className="ml-1 text-xs">← Today</span>}
-                          </span>
-                          {isDone && (
-                            <div style={{
-                              width: 20, height: 20, borderRadius: '50%',
-                              backgroundColor: '#f59e0b',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            }}>
-                              <span style={{ color: '#000', fontSize: 11, fontWeight: 900 }}>✓</span>
+                      <React.Fragment key={lesson.day}>
+                        <Link
+                          href={`/lesson/${lesson.day}`}
+                          style={{
+                            background: isDone ? 'linear-gradient(135deg, #0f0c00, #111111)' : '#111111',
+                            border: `1px solid ${isDone ? '#78350f' : isCurrent ? '#f59e0b' : pathBorder ?? '#262626'}`,
+                            minHeight: 160,
+                            display: 'flex',
+                            flexDirection: 'column',
+                          }}
+                          className="p-4 rounded-lg hover:border-amber-600 transition-all group block"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <span style={{ color: isDone ? '#f59e0b' : isCurrent ? '#f59e0b' : '#525252' }} className="text-xs font-bold">
+                              Day {lesson.day}
+                              {isCurrent && <span className="ml-1 text-xs">← Today</span>}
+                            </span>
+                            {isDone && (
+                              <div style={{
+                                width: 20, height: 20, borderRadius: '50%',
+                                backgroundColor: '#f59e0b',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              }}>
+                                <span style={{ color: '#000', fontSize: 11, fontWeight: 900 }}>✓</span>
+                              </div>
+                            )}
+                          </div>
+                          <h3 className="text-white text-sm font-bold mb-1 group-hover:text-amber-400 transition-colors leading-snug">
+                            {lesson.title}
+                          </h3>
+                          <p style={{ color: '#525252' }} className="text-xs mb-3 leading-snug line-clamp-2">
+                            {lesson.subtitle}
+                          </p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span
+                              style={{ color: '#525252', backgroundColor: '#1a1a1a', border: '1px solid #1f1f1f' }}
+                              className="text-xs px-2 py-0.5 rounded"
+                            >
+                              {lesson.duration} min
+                            </span>
+                            <span
+                              style={{ color: '#d97706', backgroundColor: '#1a0f00', border: '1px solid #44240f' }}
+                              className="text-xs px-2 py-0.5 rounded font-bold"
+                            >
+                              +{lesson.xpReward} XP
+                            </span>
+                            {lesson.soloSection && (
+                              <span
+                                style={{ color: '#a855f7', backgroundColor: '#1a0f1a', border: '1px solid #3b1f3b' }}
+                                className="text-xs px-2 py-0.5 rounded font-bold"
+                              >
+                                Solo §{lesson.soloSection}
+                              </span>
+                            )}
+                            {isInPath && !isDone && (
+                              <span
+                                style={{ color: '#f59e0b', backgroundColor: '#1a1200', border: '1px solid #78350f' }}
+                                className="text-xs px-2 py-0.5 rounded font-bold"
+                              >
+                                Your Path
+                              </span>
+                            )}
+                          </div>
+                          {/* Difficulty dots */}
+                          <div className="flex gap-1 mt-auto pt-3">
+                            {Array.from({ length: 5 }, (_, i) => (
+                              <div key={i} style={{
+                                width: 6, height: 6, borderRadius: '50%',
+                                backgroundColor: i < difficultyFilled ? '#f59e0b' : '#262626',
+                              }} />
+                            ))}
+                          </div>
+                        </Link>
+                        {milestone && (
+                          <div
+                            style={{
+                              gridColumn: '1 / -1',
+                              backgroundColor: '#0a0801',
+                              border: '1px solid #1f1f1f',
+                              borderLeft: '4px solid #f59e0b',
+                              borderRadius: '0.5rem',
+                              padding: '14px 20px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 14,
+                            }}
+                          >
+                            <span style={{ fontSize: '1.75rem', lineHeight: 1, flexShrink: 0 }}>{milestone.emoji}</span>
+                            <div>
+                              <p style={{ color: '#f59e0b', fontWeight: 800, fontSize: '0.9rem', margin: 0 }}>{milestone.title}</p>
+                              <p style={{ color: '#a3a3a3', fontSize: '0.8rem', margin: '2px 0 0', lineHeight: 1.5 }}>{milestone.desc}</p>
                             </div>
-                          )}
-                        </div>
-                        <h3 className="text-white text-sm font-bold mb-1 group-hover:text-amber-400 transition-colors leading-snug">
-                          {lesson.title}
-                        </h3>
-                        <p style={{ color: '#525252' }} className="text-xs mb-3 leading-snug line-clamp-2">
-                          {lesson.subtitle}
-                        </p>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span
-                            style={{ color: '#525252', backgroundColor: '#1a1a1a', border: '1px solid #1f1f1f' }}
-                            className="text-xs px-2 py-0.5 rounded"
-                          >
-                            {lesson.duration} min
-                          </span>
-                          <span
-                            style={{ color: '#d97706', backgroundColor: '#1a0f00', border: '1px solid #44240f' }}
-                            className="text-xs px-2 py-0.5 rounded font-bold"
-                          >
-                            +{lesson.xpReward} XP
-                          </span>
-                          {lesson.soloSection && (
-                            <span
-                              style={{ color: '#a855f7', backgroundColor: '#1a0f1a', border: '1px solid #3b1f3b' }}
-                              className="text-xs px-2 py-0.5 rounded font-bold"
-                            >
-                              Solo §{lesson.soloSection}
-                            </span>
-                          )}
-                          {isInPath && !isDone && (
-                            <span
-                              style={{ color: '#f59e0b', backgroundColor: '#1a1200', border: '1px solid #78350f' }}
-                              className="text-xs px-2 py-0.5 rounded font-bold"
-                            >
-                              Your Path
-                            </span>
-                          )}
-                        </div>
-                        {/* Difficulty dots */}
-                        <div className="flex gap-1 mt-auto pt-3">
-                          {Array.from({ length: 5 }, (_, i) => (
-                            <div key={i} style={{
-                              width: 6, height: 6, borderRadius: '50%',
-                              backgroundColor: i < difficultyFilled ? '#f59e0b' : '#262626',
-                            }} />
-                          ))}
-                        </div>
-                      </Link>
+                          </div>
+                        )}
+                      </React.Fragment>
                     )
                   })}
                 </div>

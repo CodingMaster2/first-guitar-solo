@@ -6,11 +6,14 @@ import { useRouter } from 'next/navigation'
 import type { Lesson, CoachMessageRecord } from '@/types'
 import AudioPlayer from '@/components/AudioPlayer'
 import { triggerConfetti } from '@/components/ConfettiEffect'
+import confetti from 'canvas-confetti'
+import PrintLesson from '@/components/PrintLesson'
 import ReadingProgressBar from '@/components/ReadingProgressBar'
 import LessonShareButton from '@/components/LessonShareButton'
 import MilestoneModal from '@/components/MilestoneModal'
 import XPLevelUp from '@/components/XPLevelUp'
 import Metronome from '@/components/Metronome'
+import AudioSpeedControl from '@/components/AudioSpeedControl'
 import TechniqueTooltip from '@/components/TechniqueTooltip'
 import KeyboardShortcutMap from '@/components/KeyboardShortcutMap'
 import LessonQuiz from '@/components/LessonQuiz'
@@ -202,6 +205,23 @@ export default function LessonClient({
     return () => clearTimeout(t)
   }, [])
 
+  // Browser tab title
+  useEffect(() => {
+    document.title = `Day ${lesson.day} of 30 — First Guitar Solo`
+    return () => { document.title = 'First Guitar Solo' }
+  }, [lesson.day])
+
+  // Load notes from localStorage on mount if no server-side notes saved
+  useEffect(() => {
+    if (!existingProgress?.notes) {
+      try {
+        const saved = localStorage.getItem(`lesson-${lesson.day}-notes`)
+        if (saved) setNotes(saved)
+      } catch {}
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX
     touchStartY.current = e.touches[0].clientY
@@ -246,6 +266,9 @@ export default function LessonClient({
     if (completing) return
     setOptimisticComplete(true)
     triggerConfetti()
+    if ([7, 14, 21].includes(lesson.day)) {
+      confetti({ particleCount: 60, spread: 50, origin: { y: 0.6 }, colors: ['#f59e0b', '#fde68a', '#ffffff'] })
+    }
     setCompleting(true)
 
     try {
@@ -881,9 +904,29 @@ export default function LessonClient({
             <SpeedTrainer />
           </section>
 
-          {/* Metronome */}
+          {/* Practice Tools */}
           <section className="mb-6">
-            <Metronome />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <h2 style={{ color: '#a3a3a3' }} className="text-xs font-bold uppercase tracking-widest">
+                Practice Tools
+              </h2>
+              <Link
+                href="/practice-room"
+                style={{ color: '#f59e0b', fontSize: '0.75rem', fontWeight: 600, textDecoration: 'none' }}
+              >
+                Open Practice Room →
+              </Link>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+              <div style={{ flex: '1 1 260px', minWidth: 0 }}>
+                <Metronome />
+              </div>
+              {audioUrl && (
+                <div style={{ flex: '1 1 260px', minWidth: 0 }}>
+                  <AudioSpeedControl src={audioUrl} label={audioLabel ?? `Day ${lesson.day} Audio`} />
+                </div>
+              )}
+            </div>
           </section>
 
           {/* Practice Timer */}
@@ -1115,8 +1158,9 @@ export default function LessonClient({
             <p style={{ color: '#a3a3a3' }} className="text-sm leading-relaxed">
               {lesson.selfCheck}
             </p>
-            <div className="mt-4">
+            <div className="mt-4 flex items-center gap-3 flex-wrap">
               <LessonShareButton day={lesson.day} title={lesson.title} />
+              <PrintLesson day={lesson.day} title={lesson.title} />
             </div>
           </section>
 

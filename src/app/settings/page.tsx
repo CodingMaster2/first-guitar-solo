@@ -7,35 +7,94 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import PracticeReminder from '@/components/PracticeReminder'
 
+function Toggle({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: boolean
+  onChange: (v: boolean) => void
+  disabled?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={value}
+      onClick={() => onChange(!value)}
+      disabled={disabled}
+      style={{
+        backgroundColor: value ? '#f59e0b' : '#1a1a1a',
+        border: `1px solid ${value ? '#d97706' : '#262626'}`,
+        borderRadius: 20,
+        width: 44,
+        height: 24,
+        padding: 2,
+        transition: 'background-color 0.2s',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        flexShrink: 0,
+      }}
+    >
+      <div
+        style={{
+          backgroundColor: value ? '#000' : '#525252',
+          borderRadius: '50%',
+          width: 18,
+          height: 18,
+          transform: value ? 'translateX(20px)' : 'translateX(0)',
+          transition: 'transform 0.2s',
+        }}
+      />
+    </button>
+  )
+}
+
+const pillStyle = (active: boolean) => ({
+  backgroundColor: active ? '#f59e0b' : '#111111',
+  color: active ? '#000000' : '#525252',
+  border: active ? 'none' : '1px solid #1f1f1f',
+  borderRadius: 9999,
+  padding: '6px 14px',
+  fontSize: 13,
+  fontWeight: 600,
+  cursor: 'pointer',
+})
+
+const saveBtn = (status: string) => ({
+  backgroundColor: status === 'saved' ? '#14532d' : '#f59e0b',
+  color: status === 'saved' ? '#86efac' : '#000000',
+})
+
 export default function SettingsPage() {
   const { data: session, status, update } = useSession()
   const router = useRouter()
 
+  // Profile
   const [name, setName] = useState('')
   const [nameStatus, setNameStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [nameError, setNameError] = useState('')
 
+  // Avatar
   const [avatarUrl, setAvatarUrl] = useState('')
   const [avatarStatus, setAvatarStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [avatarError, setAvatarError] = useState('')
 
+  // Password
   const [currentPw, setCurrentPw] = useState('')
   const [newPw, setNewPw] = useState('')
   const [confirmPw, setConfirmPw] = useState('')
   const [pwStatus, setPwStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [pwError, setPwError] = useState('')
 
+  // Danger zone modals
   const [resetModal, setResetModal] = useState(false)
   const [resetConfirm, setResetConfirm] = useState('')
   const [resetStatus, setResetStatus] = useState<'idle' | 'resetting' | 'done' | 'error'>('idle')
-
   const [deleteModal, setDeleteModal] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState('')
   const [deleteStatus, setDeleteStatus] = useState<'idle' | 'deleting' | 'done' | 'error'>('idle')
 
-  const [leaderboardOptIn, setLeaderboardOptIn] = useState(false)
-  const [leaderboardStatus, setLeaderboardStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
-
+  // Solo data
   const [soloData, setSoloData] = useState<{
     soloStyle: string | null
     guitarHero: string | null
@@ -43,6 +102,27 @@ export default function SettingsPage() {
     customSolo: string | null
     soloCompleted: boolean
   } | null>(null)
+
+  // Practice preferences
+  const [weeklyGoalDays, setWeeklyGoalDays] = useState(5)
+  const [reminderTime, setReminderTime] = useState('')
+  const [prefStatus, setPrefStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+
+  // Guitar setup
+  const [guitarType, setGuitarType] = useState('')
+  const [preferredGenre, setPreferredGenre] = useState('')
+  const [leftHanded, setLeftHanded] = useState(false)
+  const [guitarStatus, setGuitarStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+
+  // Accessibility
+  const [fontSize, setFontSize] = useState('Normal')
+  const [focusMode, setFocusMode] = useState(false)
+  const [accessStatus, setAccessStatus] = useState<'idle' | 'saved'>('idle')
+
+  // Privacy
+  const [leaderboardOptIn, setLeaderboardOptIn] = useState(false)
+  const [publicProfile, setPublicProfile] = useState(false)
+  const [privacyStatus, setPrivacyStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
 
   useEffect(() => {
     if (session?.user?.name) setName(session.user.name)
@@ -60,24 +140,67 @@ export default function SettingsPage() {
 
   useEffect(() => {
     fetch('/api/my-solo')
-      .then((r) => r.ok ? r.json() : null)
-      .then((data: { soloStyle?: string | null; guitarHero?: string | null; soloVibe?: string | null; customSolo?: string | null; soloCompleted?: boolean } | null) => {
-        if (data) {
-          setSoloData({
-            soloStyle: data.soloStyle ?? null,
-            guitarHero: data.guitarHero ?? null,
-            soloVibe: data.soloVibe ?? null,
-            customSolo: data.customSolo ?? null,
-            soloCompleted: data.soloCompleted ?? false,
-          })
-        }
-      })
+      .then((r) => (r.ok ? r.json() : null))
+      .then(
+        (data: {
+          soloStyle?: string | null
+          guitarHero?: string | null
+          soloVibe?: string | null
+          customSolo?: string | null
+          soloCompleted?: boolean
+        } | null) => {
+          if (data) {
+            setSoloData({
+              soloStyle: data.soloStyle ?? null,
+              guitarHero: data.guitarHero ?? null,
+              soloVibe: data.soloVibe ?? null,
+              customSolo: data.customSolo ?? null,
+              soloCompleted: data.soloCompleted ?? false,
+            })
+          }
+        },
+      )
       .catch(() => { /* ignore */ })
   }, [])
 
   useEffect(() => {
+    fetch('/api/settings/preferences')
+      .then((r) => r.json())
+      .then(
+        (data: {
+          weeklyGoalDays?: number
+          guitarType?: string
+          preferredGenre?: string
+          reminderTime?: string
+          publicProfile?: boolean
+          leaderboardOptIn?: boolean
+        }) => {
+          if (typeof data.weeklyGoalDays === 'number') setWeeklyGoalDays(data.weeklyGoalDays)
+          if (typeof data.guitarType === 'string' && data.guitarType) setGuitarType(data.guitarType)
+          if (typeof data.preferredGenre === 'string' && data.preferredGenre) setPreferredGenre(data.preferredGenre)
+          if (typeof data.reminderTime === 'string') setReminderTime(data.reminderTime)
+          if (typeof data.publicProfile === 'boolean') setPublicProfile(data.publicProfile)
+          if (typeof data.leaderboardOptIn === 'boolean') setLeaderboardOptIn(data.leaderboardOptIn)
+        },
+      )
+      .catch(() => { /* ignore */ })
+  }, [])
+
+  useEffect(() => {
+    try {
+      const lh = localStorage.getItem('user-left-handed')
+      if (lh === 'true') setLeftHanded(true)
+      const fs = localStorage.getItem('user-font-size')
+      if (fs) setFontSize(fs)
+      const fm = localStorage.getItem('user-focus-mode')
+      if (fm === 'true') setFocusMode(true)
+    } catch { /* ignore */ }
+  }, [])
+
+  useEffect(() => {
     if (status === 'unauthenticated') router.replace('/login')
-    else if (status === 'authenticated' && session?.user?.purchaseStatus !== 'PAID') router.replace('/success?new=true')
+    else if (status === 'authenticated' && session?.user?.purchaseStatus !== 'PAID')
+      router.replace('/success?new=true')
   }, [status, session, router])
 
   const saveName = async () => {
@@ -89,7 +212,7 @@ export default function SettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
       })
-      const data = await res.json() as { ok?: boolean; error?: string }
+      const data = (await res.json()) as { ok?: boolean; error?: string }
       if (!res.ok) throw new Error(data.error ?? 'Failed')
       await update()
       setNameStatus('saved')
@@ -109,7 +232,7 @@ export default function SettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ avatarUrl: avatarUrl.trim() }),
       })
-      const data = await res.json() as { ok?: boolean; error?: string }
+      const data = (await res.json()) as { ok?: boolean; error?: string }
       if (!res.ok) throw new Error(data.error ?? 'Failed')
       setAvatarStatus('saved')
       setTimeout(() => setAvatarStatus('idle'), 3000)
@@ -130,9 +253,11 @@ export default function SettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ currentPassword: currentPw, newPassword: newPw }),
       })
-      const data = await res.json() as { ok?: boolean; error?: string }
+      const data = (await res.json()) as { ok?: boolean; error?: string }
       if (!res.ok) throw new Error(data.error ?? 'Failed')
-      setCurrentPw(''); setNewPw(''); setConfirmPw('')
+      setCurrentPw('')
+      setNewPw('')
+      setConfirmPw('')
       setPwStatus('saved')
       setTimeout(() => setPwStatus('idle'), 3000)
     } catch (err) {
@@ -141,22 +266,67 @@ export default function SettingsPage() {
     }
   }
 
-  const saveLeaderboard = async (value: boolean) => {
-    setLeaderboardOptIn(value)
-    setLeaderboardStatus('saving')
+  const savePracticePrefs = async () => {
+    setPrefStatus('saving')
     try {
-      const res = await fetch('/api/settings', {
+      const res = await fetch('/api/settings/preferences', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ leaderboardOptIn: value }),
+        body: JSON.stringify({ weeklyGoalDays, reminderTime: reminderTime || undefined }),
       })
-      const data = await res.json() as { ok?: boolean; error?: string }
+      const data = (await res.json()) as { ok?: boolean; error?: string }
       if (!res.ok) throw new Error(data.error ?? 'Failed')
-      setLeaderboardStatus('saved')
-      setTimeout(() => setLeaderboardStatus('idle'), 3000)
+      setPrefStatus('saved')
+      setTimeout(() => setPrefStatus('idle'), 3000)
     } catch {
-      setLeaderboardStatus('error')
-      setLeaderboardOptIn(!value) // revert
+      setPrefStatus('error')
+    }
+  }
+
+  const saveGuitarSetup = async () => {
+    try { localStorage.setItem('user-left-handed', String(leftHanded)) } catch { /* ignore */ }
+    setGuitarStatus('saving')
+    try {
+      const res = await fetch('/api/settings/preferences', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          guitarType: guitarType || undefined,
+          preferredGenre: preferredGenre || undefined,
+        }),
+      })
+      const data = (await res.json()) as { ok?: boolean; error?: string }
+      if (!res.ok) throw new Error(data.error ?? 'Failed')
+      setGuitarStatus('saved')
+      setTimeout(() => setGuitarStatus('idle'), 3000)
+    } catch {
+      setGuitarStatus('error')
+    }
+  }
+
+  const saveAccessibility = () => {
+    try {
+      localStorage.setItem('user-font-size', fontSize)
+      localStorage.setItem('user-focus-mode', String(focusMode))
+    } catch { /* ignore */ }
+    setAccessStatus('saved')
+    setTimeout(() => setAccessStatus('idle'), 3000)
+  }
+
+  const savePrivacy = async () => {
+    setPrivacyStatus('saving')
+    try {
+      const res = await fetch('/api/settings/preferences', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ publicProfile, leaderboardOptIn }),
+      })
+      const data = (await res.json()) as { ok?: boolean; error?: string }
+      if (!res.ok) throw new Error(data.error ?? 'Failed')
+      setPrivacyStatus('saved')
+      setTimeout(() => setPrivacyStatus('idle'), 3000)
+    } catch {
+      setPrivacyStatus('error')
     }
   }
 
@@ -235,17 +405,17 @@ export default function SettingsPage() {
               <p style={{ color: '#404040' }} className="text-xs mt-1">Email cannot be changed.</p>
             </div>
             {nameError && (
-              <p style={{ color: '#ef4444', backgroundColor: '#1a0000', border: '1px solid #7f1d1d' }} className="text-xs px-3 py-2 rounded-lg">
+              <p
+                style={{ color: '#ef4444', backgroundColor: '#1a0000', border: '1px solid #7f1d1d' }}
+                className="text-xs px-3 py-2 rounded-lg"
+              >
                 {nameError}
               </p>
             )}
             <button
               onClick={saveName}
               disabled={nameStatus === 'saving'}
-              style={{
-                backgroundColor: nameStatus === 'saved' ? '#14532d' : '#f59e0b',
-                color: nameStatus === 'saved' ? '#86efac' : '#000000',
-              }}
+              style={saveBtn(nameStatus)}
               className="px-6 py-2 rounded-lg text-sm font-bold uppercase tracking-wider hover:opacity-90 transition-all disabled:opacity-50"
             >
               {nameStatus === 'saving' ? 'Saving...' : nameStatus === 'saved' ? '✓ Saved' : 'Save Name'}
@@ -253,7 +423,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Avatar URL */}
+        {/* Avatar */}
         <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6 mb-6">
           <h2 className="text-white font-bold text-sm uppercase tracking-wider mb-5">Avatar</h2>
           <div className="space-y-4">
@@ -264,7 +434,9 @@ export default function SettingsPage() {
                   src={avatarUrl}
                   alt="Avatar preview"
                   style={{ width: 56, height: 56, borderRadius: '50%', border: '2px solid #f59e0b', objectFit: 'cover' }}
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                  onError={(e) => {
+                    ;(e.target as HTMLImageElement).style.display = 'none'
+                  }}
                 />
                 <span style={{ color: '#a3a3a3' }} className="text-xs">Current avatar</span>
               </div>
@@ -284,17 +456,17 @@ export default function SettingsPage() {
               <p style={{ color: '#404040' }} className="text-xs mt-1">Paste a direct image URL (JPEG, PNG, etc).</p>
             </div>
             {avatarError && (
-              <p style={{ color: '#ef4444', backgroundColor: '#1a0000', border: '1px solid #7f1d1d' }} className="text-xs px-3 py-2 rounded-lg">
+              <p
+                style={{ color: '#ef4444', backgroundColor: '#1a0000', border: '1px solid #7f1d1d' }}
+                className="text-xs px-3 py-2 rounded-lg"
+              >
                 {avatarError}
               </p>
             )}
             <button
               onClick={saveAvatar}
               disabled={avatarStatus === 'saving'}
-              style={{
-                backgroundColor: avatarStatus === 'saved' ? '#14532d' : '#f59e0b',
-                color: avatarStatus === 'saved' ? '#86efac' : '#000000',
-              }}
+              style={saveBtn(avatarStatus)}
               className="px-6 py-2 rounded-lg text-sm font-bold uppercase tracking-wider hover:opacity-90 transition-all disabled:opacity-50"
             >
               {avatarStatus === 'saving' ? 'Saving...' : avatarStatus === 'saved' ? '✓ Saved' : 'Save Avatar'}
@@ -326,17 +498,17 @@ export default function SettingsPage() {
               )
             })}
             {pwError && (
-              <p style={{ color: '#ef4444', backgroundColor: '#1a0000', border: '1px solid #7f1d1d' }} className="text-xs px-3 py-2 rounded-lg">
+              <p
+                style={{ color: '#ef4444', backgroundColor: '#1a0000', border: '1px solid #7f1d1d' }}
+                className="text-xs px-3 py-2 rounded-lg"
+              >
                 {pwError}
               </p>
             )}
             <button
               onClick={savePassword}
               disabled={pwStatus === 'saving' || !currentPw || !newPw || !confirmPw}
-              style={{
-                backgroundColor: pwStatus === 'saved' ? '#14532d' : '#f59e0b',
-                color: pwStatus === 'saved' ? '#86efac' : '#000000',
-              }}
+              style={saveBtn(pwStatus)}
               className="px-6 py-2 rounded-lg text-sm font-bold uppercase tracking-wider hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {pwStatus === 'saving' ? 'Updating...' : pwStatus === 'saved' ? '✓ Password Updated' : 'Update Password'}
@@ -349,52 +521,211 @@ export default function SettingsPage() {
           <PracticeReminder />
         </div>
 
-        {/* Leaderboard */}
+        {/* Practice Preferences */}
         <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6 mb-6">
-          <h2 className="text-white font-bold text-sm uppercase tracking-wider mb-2">Leaderboard</h2>
-          <p style={{ color: '#a3a3a3' }} className="text-sm mb-5 leading-relaxed">
-            Opt in to appear on the{' '}
-            <a href="/leaderboard" style={{ color: '#f59e0b' }} className="hover:underline">student leaderboard</a>.
-            Your name, XP, streak, and days completed will be visible to other students. You can opt out at any time.
-          </p>
-          <div className="flex items-center gap-4">
-            <button
-              role="switch"
-              aria-checked={leaderboardOptIn}
-              onClick={() => saveLeaderboard(!leaderboardOptIn)}
-              disabled={leaderboardStatus === 'saving'}
-              style={{
-                backgroundColor: leaderboardOptIn ? '#f59e0b' : '#1a1a1a',
-                border: `1px solid ${leaderboardOptIn ? '#d97706' : '#262626'}`,
-                borderRadius: 20,
-                width: 44,
-                height: 24,
-                padding: 2,
-                transition: 'background-color 0.2s',
-                cursor: 'pointer',
-                flexShrink: 0,
-              }}
-            >
-              <div
-                style={{
-                  backgroundColor: leaderboardOptIn ? '#000' : '#525252',
-                  borderRadius: '50%',
-                  width: 18,
-                  height: 18,
-                  transform: leaderboardOptIn ? 'translateX(20px)' : 'translateX(0)',
-                  transition: 'transform 0.2s',
-                }}
+          <h2 className="text-white font-bold text-sm uppercase tracking-wider mb-5">Practice Preferences</h2>
+          <div className="space-y-5">
+            <div>
+              <label style={{ color: '#a3a3a3' }} className="text-xs uppercase tracking-wider block mb-2">
+                Practice Reminder Time
+              </label>
+              <input
+                type="time"
+                value={reminderTime}
+                onChange={(e) => setReminderTime(e.target.value)}
+                style={{ backgroundColor: '#1a1a1a', border: '1px solid #262626', color: '#ffffff' }}
+                className="rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 transition-colors"
               />
-            </button>
-            <span style={{ color: leaderboardOptIn ? '#f59e0b' : '#a3a3a3' }} className="text-sm font-bold">
-              {leaderboardOptIn ? 'On leaderboard' : 'Not on leaderboard'}
-            </span>
-            {leaderboardStatus === 'saved' && (
-              <span style={{ color: '#86efac' }} className="text-xs">✓ Saved</span>
-            )}
-            {leaderboardStatus === 'error' && (
-              <span style={{ color: '#ef4444' }} className="text-xs">Failed to save</span>
-            )}
+              <p style={{ color: '#404040' }} className="text-xs mt-1">We&apos;ll remind you to practice at this time.</p>
+            </div>
+            <div>
+              <label style={{ color: '#a3a3a3' }} className="text-xs uppercase tracking-wider block mb-2">
+                Weekly Goal
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {([3, 5, 7] as const).map((days) => (
+                  <button
+                    key={days}
+                    type="button"
+                    onClick={() => setWeeklyGoalDays(days)}
+                    style={pillStyle(weeklyGoalDays === days)}
+                  >
+                    {days} days
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={savePracticePrefs}
+                disabled={prefStatus === 'saving'}
+                style={saveBtn(prefStatus)}
+                className="px-6 py-2 rounded-lg text-sm font-bold uppercase tracking-wider hover:opacity-90 transition-all disabled:opacity-50"
+              >
+                {prefStatus === 'saving' ? 'Saving...' : prefStatus === 'saved' ? '✓ Saved' : 'Save Preferences'}
+              </button>
+              {prefStatus === 'error' && (
+                <span style={{ color: '#ef4444' }} className="text-xs">Failed to save.</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Guitar Setup */}
+        <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6 mb-6">
+          <h2 className="text-white font-bold text-sm uppercase tracking-wider mb-5">Guitar Setup</h2>
+          <div className="space-y-5">
+            <div>
+              <label style={{ color: '#a3a3a3' }} className="text-xs uppercase tracking-wider block mb-2">
+                Guitar Type
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {['Acoustic', 'Electric', 'Bass'].map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => setGuitarType(opt)}
+                    style={pillStyle(guitarType === opt)}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+              <p style={{ color: '#404040' }} className="text-xs mt-1">Affects tip text throughout the course.</p>
+            </div>
+            <div>
+              <label style={{ color: '#a3a3a3' }} className="text-xs uppercase tracking-wider block mb-2">
+                Preferred Genre
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {['Blues', 'Rock', 'Metal', 'Country', 'Pop'].map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => setPreferredGenre(opt)}
+                    style={pillStyle(preferredGenre === opt)}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label style={{ color: '#a3a3a3' }} className="text-xs uppercase tracking-wider block mb-3">
+                Left-Handed Mode
+              </label>
+              <div className="flex items-center gap-3">
+                <Toggle value={leftHanded} onChange={setLeftHanded} />
+                <span style={{ color: leftHanded ? '#f59e0b' : '#a3a3a3' }} className="text-sm font-bold">
+                  {leftHanded ? 'Left-handed' : 'Right-handed'}
+                </span>
+              </div>
+              <p style={{ color: '#404040' }} className="text-xs mt-2">Mirrors all fretboard diagrams.</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={saveGuitarSetup}
+                disabled={guitarStatus === 'saving'}
+                style={saveBtn(guitarStatus)}
+                className="px-6 py-2 rounded-lg text-sm font-bold uppercase tracking-wider hover:opacity-90 transition-all disabled:opacity-50"
+              >
+                {guitarStatus === 'saving' ? 'Saving...' : guitarStatus === 'saved' ? '✓ Saved' : 'Save Guitar Setup'}
+              </button>
+              {guitarStatus === 'error' && (
+                <span style={{ color: '#ef4444' }} className="text-xs">Failed to save.</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Accessibility */}
+        <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6 mb-6">
+          <h2 className="text-white font-bold text-sm uppercase tracking-wider mb-5">Accessibility</h2>
+          <div className="space-y-5">
+            <div>
+              <label style={{ color: '#a3a3a3' }} className="text-xs uppercase tracking-wider block mb-2">
+                Font Size
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {['Small', 'Normal', 'Large'].map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => setFontSize(opt)}
+                    style={pillStyle(fontSize === opt)}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label style={{ color: '#a3a3a3' }} className="text-xs uppercase tracking-wider block mb-3">
+                Focus Mode
+              </label>
+              <div className="flex items-center gap-3">
+                <Toggle value={focusMode} onChange={setFocusMode} />
+                <span style={{ color: focusMode ? '#f59e0b' : '#a3a3a3' }} className="text-sm font-bold">
+                  {focusMode ? 'Focus mode on' : 'Focus mode off'}
+                </span>
+              </div>
+              <p style={{ color: '#404040' }} className="text-xs mt-2">Hides XP and gamification elements during lessons.</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={saveAccessibility}
+                style={saveBtn(accessStatus)}
+                className="px-6 py-2 rounded-lg text-sm font-bold uppercase tracking-wider hover:opacity-90 transition-all"
+              >
+                {accessStatus === 'saved' ? '✓ Saved' : 'Save Accessibility'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Privacy */}
+        <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6 mb-6">
+          <h2 className="text-white font-bold text-sm uppercase tracking-wider mb-5">Privacy</h2>
+          <div className="space-y-5">
+            <div>
+              <div className="flex items-center gap-3 mb-1">
+                <Toggle value={publicProfile} onChange={setPublicProfile} />
+                <span style={{ color: publicProfile ? '#f59e0b' : '#a3a3a3' }} className="text-sm font-bold">
+                  {publicProfile ? 'Public profile on' : 'Public profile off'}
+                </span>
+              </div>
+              <p style={{ color: '#404040' }} className="text-xs">
+                Let others see your progress at /profile/{session?.user?.id ?? 'your-id'}.
+              </p>
+            </div>
+            <div>
+              <div className="flex items-center gap-3 mb-1">
+                <Toggle value={leaderboardOptIn} onChange={setLeaderboardOptIn} />
+                <span style={{ color: leaderboardOptIn ? '#f59e0b' : '#a3a3a3' }} className="text-sm font-bold">
+                  {leaderboardOptIn ? 'On leaderboard' : 'Not on leaderboard'}
+                </span>
+              </div>
+              <p style={{ color: '#404040' }} className="text-xs">
+                Show your name on the{' '}
+                <a href="/leaderboard" style={{ color: '#737373' }} className="hover:underline">
+                  leaderboard
+                </a>
+                .
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={savePrivacy}
+                disabled={privacyStatus === 'saving'}
+                style={saveBtn(privacyStatus)}
+                className="px-6 py-2 rounded-lg text-sm font-bold uppercase tracking-wider hover:opacity-90 transition-all disabled:opacity-50"
+              >
+                {privacyStatus === 'saving' ? 'Saving...' : privacyStatus === 'saved' ? '✓ Saved' : 'Save Privacy'}
+              </button>
+              {privacyStatus === 'error' && (
+                <span style={{ color: '#ef4444' }} className="text-xs">Failed to save.</span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -402,7 +733,8 @@ export default function SettingsPage() {
         <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6 mb-6">
           <h2 className="text-white font-bold text-sm uppercase tracking-wider mb-2">Accountability Partner</h2>
           <p style={{ color: '#a3a3a3' }} className="text-sm mb-4 leading-relaxed">
-            Get matched with a student at a similar level. You will each see the other&apos;s practice streak — keeping each other accountable.
+            Get matched with a student at a similar level. You will each see the other&apos;s practice streak — keeping
+            each other accountable.
           </p>
           <a
             href="/partners"
@@ -438,9 +770,11 @@ export default function SettingsPage() {
                   <div className="flex gap-2 text-sm">
                     <span style={{ color: '#525252' }} className="w-20 shrink-0">Vibe</span>
                     <span className="text-white">
-                      {soloData.soloVibe === 'slow_melodic' ? 'Slow & Expressive'
-                        : soloData.soloVibe === 'fast_shreddy' ? 'Fast & Shreddy'
-                        : 'Balanced'}
+                      {soloData.soloVibe === 'slow_melodic'
+                        ? 'Slow & Expressive'
+                        : soloData.soloVibe === 'fast_shreddy'
+                          ? 'Fast & Shreddy'
+                          : 'Balanced'}
                     </span>
                   </div>
                 )}
@@ -471,7 +805,8 @@ export default function SettingsPage() {
           ) : (
             <div>
               <p style={{ color: '#a3a3a3' }} className="text-sm mb-4 leading-relaxed">
-                You haven&apos;t generated your personalized guitar solo yet. It&apos;s the goal the entire 30-day course builds toward.
+                You haven&apos;t generated your personalized guitar solo yet. It&apos;s the goal the entire 30-day
+                course builds toward.
               </p>
               <a
                 href="/my-solo"
@@ -486,13 +821,15 @@ export default function SettingsPage() {
 
         {/* Danger Zone */}
         <div style={{ backgroundColor: '#0d0000', border: '1px solid #7f1d1d' }} className="rounded-xl p-6">
-          <h2 style={{ color: '#ef4444' }} className="font-bold text-sm uppercase tracking-wider mb-5">Danger Zone</h2>
+          <h2 style={{ color: '#ef4444' }} className="font-bold text-sm uppercase tracking-wider mb-5">
+            Danger Zone
+          </h2>
 
-          {/* Reset Progress */}
           <div className="mb-6">
             <h3 className="text-white font-bold text-sm mb-1">Reset Progress</h3>
             <p style={{ color: '#a3a3a3' }} className="text-sm mb-4">
-              Reset your progress to start the 30-day program from scratch. This permanently deletes all lesson completions, practice sessions, XP, achievements, and coach messages.
+              Reset your progress to start the 30-day program from scratch. This permanently deletes all lesson
+              completions, practice sessions, XP, achievements, and coach messages.
             </p>
             <button
               onClick={() => setResetModal(true)}
@@ -540,10 +877,12 @@ export default function SettingsPage() {
             className="rounded-xl p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ color: '#ef4444' }} className="font-black text-lg uppercase mb-3">Confirm Reset</h3>
+            <h3 style={{ color: '#ef4444' }} className="font-black text-lg uppercase mb-3">
+              Confirm Reset
+            </h3>
             <p style={{ color: '#a3a3a3' }} className="text-sm mb-4 leading-relaxed">
-              This will permanently delete all your progress, XP, achievements, and coach history.
-              You will restart from Day 1. <strong className="text-white">This cannot be undone.</strong>
+              This will permanently delete all your progress, XP, achievements, and coach history. You will restart from
+              Day 1. <strong className="text-white">This cannot be undone.</strong>
             </p>
             <p style={{ color: '#a3a3a3' }} className="text-sm mb-2">
               Type <span className="text-white font-bold">RESET</span> to confirm:
@@ -557,10 +896,14 @@ export default function SettingsPage() {
               className="w-full rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none"
             />
             {resetStatus === 'done' && (
-              <p style={{ color: '#86efac' }} className="text-sm mb-4">Progress reset. Redirecting...</p>
+              <p style={{ color: '#86efac' }} className="text-sm mb-4">
+                Progress reset. Redirecting...
+              </p>
             )}
             {resetStatus === 'error' && (
-              <p style={{ color: '#ef4444' }} className="text-sm mb-4">Reset failed. Please try again.</p>
+              <p style={{ color: '#ef4444' }} className="text-sm mb-4">
+                Reset failed. Please try again.
+              </p>
             )}
             <div className="flex gap-3">
               <button
@@ -573,7 +916,11 @@ export default function SettingsPage() {
               <button
                 onClick={resetProgress}
                 disabled={resetConfirm !== 'RESET' || resetStatus === 'resetting'}
-                style={{ backgroundColor: resetConfirm === 'RESET' ? '#7f1d1d' : '#1a0000', color: '#ef4444', border: '1px solid #7f1d1d' }}
+                style={{
+                  backgroundColor: resetConfirm === 'RESET' ? '#7f1d1d' : '#1a0000',
+                  color: '#ef4444',
+                  border: '1px solid #7f1d1d',
+                }}
                 className="flex-1 py-2 rounded-lg text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-all"
               >
                 {resetStatus === 'resetting' ? 'Resetting...' : 'Reset Everything'}
@@ -595,10 +942,12 @@ export default function SettingsPage() {
             className="rounded-xl p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ color: '#ef4444' }} className="font-black text-lg uppercase mb-3">Delete Account</h3>
+            <h3 style={{ color: '#ef4444' }} className="font-black text-lg uppercase mb-3">
+              Delete Account
+            </h3>
             <p style={{ color: '#a3a3a3' }} className="text-sm mb-4 leading-relaxed">
-              This will permanently delete your account, all progress, coach messages, profile data, and practice sessions.{' '}
-              <strong className="text-white">This cannot be undone.</strong>
+              This will permanently delete your account, all progress, coach messages, profile data, and practice
+              sessions. <strong className="text-white">This cannot be undone.</strong>
             </p>
             <p style={{ color: '#a3a3a3' }} className="text-sm mb-2">
               Type <span className="text-white font-bold">DELETE</span> to confirm:
@@ -612,10 +961,14 @@ export default function SettingsPage() {
               className="w-full rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none"
             />
             {deleteStatus === 'done' && (
-              <p style={{ color: '#86efac' }} className="text-sm mb-4">Account deleted. Signing out...</p>
+              <p style={{ color: '#86efac' }} className="text-sm mb-4">
+                Account deleted. Signing out...
+              </p>
             )}
             {deleteStatus === 'error' && (
-              <p style={{ color: '#ef4444' }} className="text-sm mb-4">Deletion failed. Please try again.</p>
+              <p style={{ color: '#ef4444' }} className="text-sm mb-4">
+                Deletion failed. Please try again.
+              </p>
             )}
             <div className="flex gap-3">
               <button
@@ -628,7 +981,11 @@ export default function SettingsPage() {
               <button
                 onClick={deleteAccount}
                 disabled={deleteConfirm !== 'DELETE' || deleteStatus === 'deleting'}
-                style={{ backgroundColor: deleteConfirm === 'DELETE' ? '#7f1d1d' : '#1a0000', color: '#ef4444', border: '1px solid #7f1d1d' }}
+                style={{
+                  backgroundColor: deleteConfirm === 'DELETE' ? '#7f1d1d' : '#1a0000',
+                  color: '#ef4444',
+                  border: '1px solid #7f1d1d',
+                }}
                 className="flex-1 py-2 rounded-lg text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-all"
               >
                 {deleteStatus === 'deleting' ? 'Deleting...' : 'Delete My Account'}

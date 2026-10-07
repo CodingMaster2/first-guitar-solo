@@ -1,3 +1,4 @@
+// TODO: migrate to edge runtime after moving Prisma queries to a separate endpoint
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'

@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { LESSONS } from '@/lib/lessons'
 import Navbar from '@/components/Navbar'
@@ -13,6 +13,11 @@ export default async function LessonPreviewPage({ params }: PageProps) {
   const day = parseInt(dayParam)
   if (isNaN(day) || day < 1 || day > 30) notFound()
 
+  // Days 2–30 require registration
+  if (day !== 1) {
+    redirect('/register?ref=preview&message=Start+from+Day+1+free')
+  }
+
   const lesson = LESSONS.find((l) => l.day === day)
   if (!lesson) notFound()
 
@@ -21,6 +26,20 @@ export default async function LessonPreviewPage({ params }: PageProps) {
 
   return (
     <div style={{ backgroundColor: '#0a0a0a', color: '#ffffff', minHeight: '100vh' }}>
+      {/* Amber top banner — Day 1 only */}
+      <div
+        style={{
+          backgroundColor: '#f59e0b',
+          color: '#000000',
+          textAlign: 'center',
+          padding: '0.5rem 1rem',
+          fontSize: '0.8rem',
+          fontWeight: 700,
+          letterSpacing: '0.05em',
+        }}
+      >
+        Free Preview — Day 1 of 30 &nbsp;·&nbsp; No account required
+      </div>
       <Navbar />
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Free preview badge */}
@@ -71,29 +90,85 @@ export default async function LessonPreviewPage({ params }: PageProps) {
           <p style={{ color: '#d4d4d4' }} className="text-sm leading-relaxed">{lesson.exercise}</p>
         </section>
 
-        {/* CTA — full program */}
+        {/* CTA — Day 1 completion card */}
         <div
-          style={{ backgroundColor: '#111111', border: '2px solid #f59e0b' }}
-          className="rounded-xl p-8 text-center"
+          style={{
+            backgroundColor: '#111111',
+            border: '2px solid #f59e0b',
+            borderRadius: '0.75rem',
+            padding: '2rem',
+            textAlign: 'center',
+          }}
         >
-          <div style={{ color: '#f59e0b' }} className="text-xs font-bold uppercase tracking-widest mb-4">
+          <div
+            style={{ color: '#f59e0b', fontSize: '0.7rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '1rem' }}
+          >
             Free Preview Complete
           </div>
-          <h2 className="text-2xl font-black uppercase mb-3">
-            This is Day 1 of 30.
-          </h2>
-          <p style={{ color: '#a3a3a3' }} className="text-sm leading-relaxed mb-6 max-w-md mx-auto">
-            To track your progress, access the AI Guitar Coach, and unlock all 30 days of the
-            blues-rock solo program, register for the full course.
-          </p>
-          <Link
-            href="/register"
-            style={{ backgroundColor: '#f59e0b', color: '#000000' }}
-            className="inline-block text-base font-black px-8 py-4 rounded uppercase tracking-wider hover:opacity-90 transition-opacity"
+          <h2
+            style={{
+              color: '#ffffff',
+              fontSize: '1.5rem',
+              fontWeight: 800,
+              marginBottom: '0.625rem',
+            }}
           >
-            Start the Full Program &mdash; $25
-          </Link>
-          <p style={{ color: '#525252' }} className="text-xs mt-4">
+            You just completed Day 1 — for free.
+          </h2>
+          <p
+            style={{
+              color: '#a3a3a3',
+              fontSize: '0.9rem',
+              lineHeight: 1.65,
+              marginBottom: '1.75rem',
+              maxWidth: '28rem',
+              margin: '0 auto 1.75rem',
+            }}
+          >
+            Join 500+ students who&apos;ve learned their first guitar solo. Unlock all 30 days, the AI
+            Guitar Coach, and progress tracking.
+          </p>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.75rem',
+              alignItems: 'center',
+            }}
+          >
+            <Link
+              href="/register"
+              style={{
+                display: 'inline-block',
+                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                color: '#000000',
+                fontWeight: 900,
+                fontSize: '1rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                padding: '1rem 2.25rem',
+                borderRadius: '0.5rem',
+                textDecoration: 'none',
+              }}
+            >
+              Start Learning — $25
+            </Link>
+            <a
+              href="#the-curriculum"
+              style={{
+                color: '#a3a3a3',
+                fontSize: '0.875rem',
+                textDecoration: 'none',
+                border: '1px solid #262626',
+                borderRadius: '0.5rem',
+                padding: '0.75rem 1.5rem',
+                display: 'inline-block',
+              }}
+            >
+              See what&apos;s in the course ↓
+            </a>
+          </div>
+          <p style={{ color: '#525252', fontSize: '0.75rem', marginTop: '1rem' }}>
             One-time payment &middot; 30-day money-back guarantee
           </p>
         </div>

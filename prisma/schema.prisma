@@ -15,10 +15,17 @@ model User {
   role             String            @default("USER")
   purchaseStatus   String            @default("UNPAID")
   stripeCustomerId String?
+  stripeSubscriptionId String?
+  subscriptionStatus   String        @default("none")
   tags             String?
   adminNotes       String?
   referralCode     String?           @unique
   referralCount    Int               @default(0)
+  referredBy       String?
+  cohortId         String?
+  utmSource        String?
+  utmMedium        String?
+  utmCampaign      String?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   profile          Profile?
@@ -34,6 +41,9 @@ model User {
   partnersAsUser      AccountabilityPartner[]  @relation("partnerUser")
   partnersAsPartner   AccountabilityPartner[]  @relation("partnerMatch")
   passwordResetTokens PasswordResetToken[]
+  cohort           Cohort?           @relation(fields: [cohortId], references: [id])
+  funnelEvents     FunnelEvent[]
+  giftCodesRedeemed GiftCode[]       @relation("giftRedeemer")
 }
 
 model PasswordResetToken {
@@ -247,4 +257,52 @@ model AccountabilityPartner {
   createdAt DateTime @default(now())
 
   @@unique([userId, partnerId])
+}
+
+model Cohort {
+  id        String   @id @default(cuid())
+  name      String
+  startDate DateTime
+  users     User[]
+  createdAt DateTime @default(now())
+}
+
+model BlogPost {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  title       String
+  excerpt     String
+  content     String
+  published   Boolean   @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model FunnelEvent {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  event       String
+  page        String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  metadata    String?
+  createdAt   DateTime @default(now())
+}
+
+model GiftCode {
+  id                    String    @id @default(cuid())
+  code                  String    @unique
+  fromName              String?
+  fromEmail             String
+  toEmail               String?
+  message               String?
+  redeemed              Boolean   @default(false)
+  redeemedAt            DateTime?
+  redeemedById          String?
+  redeemedBy            User?     @relation("giftRedeemer", fields: [redeemedById], references: [id])
+  stripePaymentIntentId String?
+  createdAt             DateTime  @default(now())
 }

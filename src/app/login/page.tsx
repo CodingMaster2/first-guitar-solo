@@ -49,72 +49,94 @@ export default function LoginPage() {
           </Link>
         </div>
 
-        <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-8">
-          <h1 className="text-2xl font-black text-white uppercase mb-6">Log In</h1>
+        <main>
+          <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-8">
+            <h1 className="text-2xl font-black text-white uppercase mb-6">Log In</h1>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label style={{ color: '#a3a3a3' }} className="block text-xs font-medium uppercase tracking-wider mb-2">
-                Email
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                style={{ backgroundColor: '#1a1a1a', border: '1px solid #262626', color: '#ffffff' }}
-                className="w-full px-4 py-3 rounded-lg text-sm focus:outline-none focus:border-amber-500 placeholder-gray-600"
-                placeholder="you@example.com"
-              />
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label style={{ color: '#a3a3a3' }} className="block text-xs font-medium uppercase tracking-wider">
-                  Password
-                </label>
-                <Link
-                  href="/forgot-password"
-                  style={{ color: '#737373' }}
-                  className="text-xs hover:underline"
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label
+                  htmlFor="login-email"
+                  style={{ color: '#a3a3a3' }}
+                  className="block text-xs font-medium uppercase tracking-wider mb-2"
                 >
-                  Forgot password?
-                </Link>
+                  Email
+                </label>
+                <input
+                  id="login-email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  style={{ backgroundColor: '#1a1a1a', border: '1px solid #262626', color: '#ffffff' }}
+                  className="w-full px-4 py-3 rounded-lg text-sm focus:outline-none focus:border-amber-500 placeholder-gray-600"
+                  placeholder="you@example.com"
+                />
               </div>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                style={{ backgroundColor: '#1a1a1a', border: '1px solid #262626', color: '#ffffff' }}
-                className="w-full px-4 py-3 rounded-lg text-sm focus:outline-none focus:border-amber-500 placeholder-gray-600"
-                placeholder="Your password"
-              />
-            </div>
 
-            {error && (
-              <div style={{ backgroundColor: '#1a0000', border: '1px solid #7f1d1d', color: '#fca5a5' }} className="rounded-lg px-4 py-3 text-sm">
-                {error}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label
+                    htmlFor="login-password"
+                    style={{ color: '#a3a3a3' }}
+                    className="block text-xs font-medium uppercase tracking-wider"
+                  >
+                    Password
+                  </label>
+                  <Link
+                    href="/forgot-password"
+                    style={{ color: '#737373' }}
+                    className="text-xs hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+                <input
+                  id="login-password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  aria-describedby={error ? 'login-error' : undefined}
+                  style={{ backgroundColor: '#1a1a1a', border: '1px solid #262626', color: '#ffffff' }}
+                  className="w-full px-4 py-3 rounded-lg text-sm focus:outline-none focus:border-amber-500 placeholder-gray-600"
+                  placeholder="Your password"
+                />
               </div>
-            )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              style={{ backgroundColor: loading ? '#262626' : '#f59e0b', color: loading ? '#a3a3a3' : '#000000' }}
-              className="w-full py-3 rounded-lg font-black text-sm uppercase tracking-wider transition-colors disabled:cursor-not-allowed"
-            >
-              {loading ? 'Signing in...' : 'Log In'}
-            </button>
-          </form>
+              {error && (
+                <div
+                  id="login-error"
+                  role="alert"
+                  style={{ backgroundColor: '#1a0000', border: '1px solid #7f1d1d', color: '#fca5a5' }}
+                  className="rounded-lg px-4 py-3 text-sm"
+                >
+                  {error}
+                </div>
+              )}
 
-          <p style={{ color: '#a3a3a3' }} className="text-sm mt-6 text-center">
-            Don&apos;t have an account?{' '}
-            <Link href="/register" style={{ color: '#f59e0b' }} className="hover:underline font-medium">
-              Create one
-            </Link>
-          </p>
-        </div>
+              <button
+                type="submit"
+                disabled={loading}
+                style={{ backgroundColor: loading ? '#262626' : '#f59e0b', color: loading ? '#a3a3a3' : '#000000' }}
+                className="w-full py-3 rounded-lg font-black text-sm uppercase tracking-wider transition-colors disabled:cursor-not-allowed"
+              >
+                {loading ? 'Signing in...' : 'Log In'}
+              </button>
+            </form>
+
+            <p style={{ color: '#a3a3a3' }} className="text-sm mt-6 text-center">
+              Don&apos;t have an account?{' '}
+              <Link href="/register" style={{ color: '#f59e0b' }} className="hover:underline font-medium">
+                Create one
+              </Link>
+            </p>
+          </div>
+        </main>
       </div>
     </div>
   )

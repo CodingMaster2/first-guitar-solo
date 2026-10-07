@@ -20,29 +20,80 @@ export async function POST(req: NextRequest) {
   }
 
   if (event.type === 'checkout.session.completed') {
-    const session = event.data.object as { metadata?: { userId?: string }; customer?: string }
-    const userId = session.metadata?.userId
+    const session = event.data.object as {
+      metadata?: { userId?: string; type?: string; giftCodeId?: string }
+      customer?: string
+      payment_intent?: string
+    }
 
+    // Handle gift purchase completion
+    if (session.metadata?.type === 'gift' && session.metadata?.giftCodeId) {
+      await prisma.giftCode.update({
+        where: { id: session.metadata.giftCodeId },
+        data: { stripePaymentIntentId: typeof session.payment_intent === 'string' ? session.payment_intent : null },
+      })
+      // TODO: send gift code email to recipient
+    } else {
+      // Handle regular purchase
+      const userId = session.metadata?.userId
+      if (userId) {
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            purchaseStatus: 'PAID',
+            stripeCustomerId: typeof session.customer === 'string' ? session.customer : undefined,
+          },
+        })
+
+        // Seed achievements if empty
+        const achievementCount = await prisma.achievement.count()
+        if (achievementCount === 0) {
+          for (const a of ACHIEVEMENTS) {
+            await prisma.achievement.upsert({
+              where: { key: a.key },
+              update: {},
+              create: { key: a.key, name: a.name, description: a.description, xpReward: a.xpReward },
+            })
+          }
+        }
+      }
+    }
+  }
+
+  if (
+    event.type === 'customer.subscription.created' ||
+    event.type === 'customer.subscription.updated'
+  ) {
+    const sub = event.data.object as {
+      id: string
+      status: string
+      metadata?: { userId?: string }
+    }
+    const userId = sub.metadata?.userId
     if (userId) {
       await prisma.user.update({
         where: { id: userId },
         data: {
-          purchaseStatus: 'PAID',
-          stripeCustomerId: typeof session.customer === 'string' ? session.customer : undefined,
+          stripeSubscriptionId: sub.id,
+          subscriptionStatus: sub.status,
+          purchaseStatus: sub.status === 'active' ? 'PAID' : undefined,
         },
       })
+    }
+  }
 
-      // Seed achievements if empty
-      const achievementCount = await prisma.achievement.count()
-      if (achievementCount === 0) {
-        for (const a of ACHIEVEMENTS) {
-          await prisma.achievement.upsert({
-            where: { key: a.key },
-            update: {},
-            create: { key: a.key, name: a.name, description: a.description, xpReward: a.xpReward },
-          })
-        }
-      }
+  if (event.type === 'customer.subscription.deleted') {
+    const sub = event.data.object as {
+      id: string
+      status: string
+      metadata?: { userId?: string }
+    }
+    const userId = sub.metadata?.userId
+    if (userId) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { subscriptionStatus: 'canceled' },
+      })
     }
   }
 

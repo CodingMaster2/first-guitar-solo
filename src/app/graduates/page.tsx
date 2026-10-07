@@ -288,6 +288,29 @@ export default async function GraduatesPage() {
         )}
       </main>
 
+      {/* Submit Your Recording */}
+      <section style={{ maxWidth: 1100, margin: '0 auto', padding: '0 16px 80px' }}>
+        <div style={{ backgroundColor: '#111111', border: '1px solid #1f1f1f', borderRadius: 16, padding: '40px 32px', marginTop: 48, textAlign: 'center', maxWidth: 600, margin: '48px auto 0' }}>
+          <h2 style={{ color: '#ffffff', fontFamily: "'Bebas Neue', sans-serif", fontSize: '2rem', letterSpacing: '0.05em', marginBottom: 8 }}>
+            Share Your Solo
+          </h2>
+          <p style={{ color: '#737373', lineHeight: 1.7, marginBottom: 24 }}>
+            Graduated? Post your recording on Instagram or YouTube and tag <strong style={{ color: '#f59e0b' }}>#FirstGuitarSolo</strong> — we feature graduates every week.
+          </p>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" style={{ backgroundColor: '#1a1a1a', color: '#ffffff', border: '1px solid #262626', padding: '10px 20px', borderRadius: 8, fontWeight: 600, fontSize: '0.875rem', textDecoration: 'none' }}>
+              Post on Instagram
+            </a>
+            <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" style={{ backgroundColor: '#1a1a1a', color: '#ffffff', border: '1px solid #262626', padding: '10px 20px', borderRadius: 8, fontWeight: 600, fontSize: '0.875rem', textDecoration: 'none' }}>
+              Upload to YouTube
+            </a>
+            <a href="/solo-gallery" style={{ backgroundColor: '#f59e0b', color: '#000000', padding: '10px 20px', borderRadius: 8, fontWeight: 700, fontSize: '0.875rem', textDecoration: 'none' }}>
+              View the Gallery →
+            </a>
+          </div>
+        </div>
+      </section>
+
       <Footer />
     </div>
   )

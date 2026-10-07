@@ -93,6 +93,18 @@ const IconDollar = () => (
     <path d="M9 10a3 3 0 0 1 6 0c0 2-3 2-3 4a3 3 0 0 1-6 0"/>
   </svg>
 )
+const IconCohorts = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="9" cy="6" r="3"/><circle cx="17" cy="8" r="2.5"/>
+    <path d="M2 21v-1.5A4.5 4.5 0 0 1 6.5 15h5A4.5 4.5 0 0 1 16 19.5V21"/>
+    <path d="M17 11c2.2 0 4 1.8 4 4v1.5"/>
+  </svg>
+)
+const IconFunnel = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+  </svg>
+)
 const IconGear = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="3"/>
@@ -126,6 +138,8 @@ const navItems = [
   { href: '/admin/activity', label: 'Activity Feed', icon: IconLightning },
   { href: '/admin/email', label: 'Email Composer', icon: IconEnvelope },
   { href: '/admin/revenue', label: 'Revenue', icon: IconDollar },
+  { href: '/admin/cohorts', label: 'Cohorts', icon: IconCohorts },
+  { href: '/admin/funnel', label: 'Funnel', icon: IconFunnel },
   { href: '/admin/settings', label: 'Settings', icon: IconGear },
 ]
 

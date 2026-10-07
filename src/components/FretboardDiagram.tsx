@@ -1,171 +1,189 @@
-'use client'
-
-interface FretNote {
-  string: number  // 1 = high e, 6 = low E
+interface NotePosition {
+  string: number
   fret: number
+  finger?: number
   label?: string
   color?: string
 }
 
 interface FretboardDiagramProps {
-  notes?: FretNote[]
   title?: string
+  /** Finger/note positions to render. */
+  positions?: NotePosition[]
+  /** Alias for `positions` — accepted for backwards compatibility. */
+  notes?: NotePosition[]
   startFret?: number
+  fretCount?: number
+  strings?: number
 }
 
-const STRING_NAMES = ['e', 'B', 'G', 'D', 'A', 'E']  // index 0 = high e (string 1)
-const FRET_COUNT = 5  // frets 0 through 4 relative to startFret (fret 0 = nut/open)
+export default function FretboardDiagram({
+  title,
+  positions,
+  notes,
+  startFret = 1,
+  fretCount = 5,
+  strings = 6,
+}: FretboardDiagramProps) {
+  const resolvedPositions: NotePosition[] = positions ?? notes ?? []
+  const WIDTH = 120
+  const FRET_HEIGHT = 24
+  const NUT_HEIGHT = startFret === 1 ? 6 : 3
+  const TOP_MARGIN = 40 // space above nut for open/muted markers
+  const LEFT_MARGIN = 20 // space for fret numbers
+  const RIGHT_MARGIN = 10
+  const HEIGHT = TOP_MARGIN + NUT_HEIGHT + fretCount * FRET_HEIGHT + 8
 
-const CELL_W = 44
-const CELL_H = 28
-const LEFT_PAD = 28  // space for string labels
-const TOP_PAD = 22   // space for fret numbers
-const NUT_W = 4
-const DOT_R = 9
+  const innerWidth = WIDTH - LEFT_MARGIN - RIGHT_MARGIN
+  const stringSpacing = strings > 1 ? innerWidth / (strings - 1) : innerWidth
 
-export default function FretboardDiagram({ notes = [], title, startFret = 0 }: FretboardDiagramProps) {
-  const totalW = LEFT_PAD + NUT_W + FRET_COUNT * CELL_W + 4
-  const totalH = TOP_PAD + 6 * CELL_H + 4
+  // string 6 (low E) = leftmost, string 1 (high e) = rightmost
+  const stringX = (s: number) => LEFT_MARGIN + (strings - s) * stringSpacing
 
-  // Map notes for quick lookup: key = `string-fret`
-  const noteMap = new Map<string, FretNote>()
-  for (const n of notes) {
-    noteMap.set(`${n.string}-${n.fret}`, n)
-  }
+  // fret row y: startFret row top = TOP_MARGIN + NUT_HEIGHT
+  const fretY = (f: number) => TOP_MARGIN + NUT_HEIGHT + (f - startFret) * FRET_HEIGHT
 
-  const strings = [1, 2, 3, 4, 5, 6]   // 1=high e … 6=low E
-  const fretCols = Array.from({ length: FRET_COUNT }, (_, i) => i)  // 0..4 relative fret offsets
+  // center of a fret cell
+  const dotY = (f: number) => fretY(f) + FRET_HEIGHT / 2
 
-  const stringY = (s: number) => TOP_PAD + (s - 1) * CELL_H + CELL_H / 2
-  const fretX = (col: number) => LEFT_PAD + NUT_W + col * CELL_W + CELL_W / 2
+  // Separate open vs fretted positions
+  const frettedPositions = resolvedPositions.filter((p) => p.fret > 0)
+  const openStrings = new Set(resolvedPositions.filter((p) => p.fret === 0).map((p) => p.string))
+  const mutedStrings = new Set<number>()
+
+  // Any string not in resolvedPositions at all that we want to show as muted — only if no position on that string
+  const allStringsWithPositions = new Set(resolvedPositions.map((p) => p.string))
 
   return (
-    <div style={{ backgroundColor: '#111111', border: '1px solid #262626', borderRadius: '0.75rem', padding: '1rem', display: 'inline-block' }}>
+    <figure style={{ display: 'inline-block', textAlign: 'center', margin: 0 }}>
       {title && (
-        <p style={{ color: '#f59e0b' }} className="text-xs font-bold uppercase tracking-wider mb-3">
+        <figcaption
+          style={{
+            fontSize: '0.75rem',
+            color: '#a3a3a3',
+            marginBottom: 4,
+            fontWeight: 600,
+          }}
+        >
           {title}
-        </p>
+        </figcaption>
       )}
       <svg
-        width={totalW}
-        height={totalH}
-        style={{ display: 'block', overflow: 'visible' }}
+        width={WIDTH}
+        height={HEIGHT}
+        viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+        style={{ display: 'block' }}
         aria-label={title ?? 'Fretboard diagram'}
+        role="img"
       >
-        {/* Fret number labels across top */}
-        {fretCols.map((col) => {
-          const absF = startFret + col
+        {/* Fret number labels on the left */}
+        {Array.from({ length: fretCount }, (_, i) => {
+          const fretNum = startFret + i
           return (
             <text
-              key={`fn-${col}`}
-              x={fretX(col)}
-              y={TOP_PAD - 6}
-              textAnchor="middle"
-              fill="#525252"
-              fontSize={10}
+              key={fretNum}
+              x={LEFT_MARGIN - 4}
+              y={fretY(fretNum) + FRET_HEIGHT / 2 + 4}
+              textAnchor="end"
+              fontSize="9"
+              fill="#6b7280"
               fontFamily="monospace"
             >
-              {absF === 0 ? 'O' : absF}
+              {fretNum}
             </text>
           )
         })}
 
-        {/* String name labels on left */}
-        {strings.map((s) => (
-          <text
-            key={`sn-${s}`}
-            x={LEFT_PAD - 6}
-            y={stringY(s) + 4}
-            textAnchor="end"
-            fill="#525252"
-            fontSize={10}
-            fontFamily="monospace"
-          >
-            {STRING_NAMES[s - 1]}
-          </text>
-        ))}
-
-        {/* Nut */}
+        {/* Nut (thick bar when startFret === 1) */}
         <rect
-          x={LEFT_PAD}
-          y={TOP_PAD}
-          width={NUT_W}
-          height={6 * CELL_H}
-          fill={startFret === 0 ? '#d4d4d4' : '#404040'}
-          rx={1}
+          x={LEFT_MARGIN}
+          y={TOP_MARGIN}
+          width={innerWidth}
+          height={NUT_HEIGHT}
+          fill={startFret === 1 ? '#e5e7eb' : '#374151'}
         />
 
-        {/* Fret lines (vertical) */}
-        {Array.from({ length: FRET_COUNT + 1 }, (_, i) => i).map((i) => (
-          <line
-            key={`fl-${i}`}
-            x1={LEFT_PAD + NUT_W + i * CELL_W}
-            y1={TOP_PAD}
-            x2={LEFT_PAD + NUT_W + i * CELL_W}
-            y2={TOP_PAD + 6 * CELL_H}
-            stroke="#262626"
-            strokeWidth={1}
-          />
-        ))}
-
-        {/* String lines (horizontal) */}
-        {strings.map((s) => {
-          const thickness = 0.5 + (s - 1) * 0.25
+        {/* Fret lines */}
+        {Array.from({ length: fretCount + 1 }, (_, i) => {
+          const y = TOP_MARGIN + NUT_HEIGHT + i * FRET_HEIGHT
           return (
             <line
-              key={`sl-${s}`}
-              x1={LEFT_PAD}
-              y1={stringY(s)}
-              x2={LEFT_PAD + NUT_W + FRET_COUNT * CELL_W}
-              y2={stringY(s)}
-              stroke="#404040"
-              strokeWidth={thickness}
+              key={i}
+              x1={LEFT_MARGIN}
+              y1={y}
+              x2={LEFT_MARGIN + innerWidth}
+              y2={y}
+              stroke="#374151"
+              strokeWidth={1}
             />
           )
         })}
 
-        {/* Notes */}
-        {strings.map((s) =>
-          fretCols.map((col) => {
-            const absF = startFret + col
-            const note = noteMap.get(`${s}-${absF}`)
-            if (!note) return null
-            const cx = fretX(col)
-            const cy = stringY(s)
-            const dotColor = note.color ?? '#f59e0b'
-            return (
-              <g key={`note-${s}-${absF}`}>
-                <circle cx={cx} cy={cy} r={DOT_R} fill={dotColor} />
-                {note.label && (
-                  <text
-                    x={cx}
-                    y={cy + 4}
-                    textAnchor="middle"
-                    fill="#000"
-                    fontSize={9}
-                    fontWeight="bold"
-                    fontFamily="monospace"
-                  >
-                    {note.label}
-                  </text>
-                )}
-              </g>
-            )
-          })
-        )}
+        {/* String lines */}
+        {Array.from({ length: strings }, (_, i) => {
+          const s = i + 1
+          const x = stringX(s)
+          return (
+            <line
+              key={s}
+              x1={x}
+              y1={TOP_MARGIN}
+              x2={x}
+              y2={TOP_MARGIN + NUT_HEIGHT + fretCount * FRET_HEIGHT}
+              stroke="#6b7280"
+              strokeWidth={s <= 3 ? 1 : s === 4 ? 1.5 : s === 5 ? 2 : 2.5}
+            />
+          )
+        })}
 
-        {/* Open string indicators (fret 0) */}
-        {startFret === 0 && strings.map((s) => {
-          const note = noteMap.get(`${s}-0`)
-          if (note) return null  // already drawn above
+        {/* Open string circles above nut */}
+        {Array.from({ length: strings }, (_, i) => {
+          const s = i + 1
+          const x = stringX(s)
+          if (openStrings.has(s)) {
+            return (
+              <circle
+                key={`open-${s}`}
+                cx={x}
+                cy={TOP_MARGIN - 10}
+                r={5}
+                fill="none"
+                stroke="#f59e0b"
+                strokeWidth={1.5}
+              />
+            )
+          }
+          void mutedStrings
+          void allStringsWithPositions
           return null
         })}
+
+        {/* Finger position dots */}
+        {frettedPositions.map((pos, idx) => {
+          const x = stringX(pos.string)
+          const y = dotY(pos.fret)
+          const hasLabel = pos.finger !== undefined || pos.label !== undefined
+          const labelText = pos.finger !== undefined ? String(pos.finger) : pos.label ?? ''
+          return (
+            <g key={idx}>
+              <circle cx={x} cy={y} r={9} fill={pos.color ?? '#f59e0b'} />
+              {hasLabel && (
+                <text
+                  x={x}
+                  y={y + 4}
+                  textAnchor="middle"
+                  fontSize="9"
+                  fontWeight="700"
+                  fill="#000"
+                  fontFamily="sans-serif"
+                >
+                  {labelText}
+                </text>
+              )}
+            </g>
+          )
+        })}
       </svg>
-      {startFret > 0 && (
-        <p style={{ color: '#525252' }} className="text-xs mt-2">
-          Fret {startFret} position
-        </p>
-      )}
-    </div>
+    </figure>
   )
 }

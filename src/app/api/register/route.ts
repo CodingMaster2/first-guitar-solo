@@ -5,8 +5,15 @@ import { sendWelcomeEmail } from '@/lib/email'
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json() as { email: string; password: string; name?: string }
-    const { email, password, name } = body
+    const body = await req.json() as {
+      email: string
+      password: string
+      name?: string
+      utmSource?: string
+      utmMedium?: string
+      utmCampaign?: string
+    }
+    const { email, password, name, utmSource, utmMedium, utmCampaign } = body
 
     if (!email || !password) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
@@ -35,6 +42,29 @@ export async function POST(req: NextRequest) {
       await sendWelcomeEmail(email, name ?? '')
     } catch (emailErr) {
       console.error('[register] welcome email failed:', emailErr)
+    }
+
+    try {
+      await prisma.funnelEvent.create({
+        data: { userId: user.id, event: 'register' },
+      })
+    } catch (funnelErr) {
+      console.error('[register] funnel event failed:', funnelErr)
+    }
+
+    if (utmSource || utmMedium || utmCampaign) {
+      try {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            utmSource: utmSource ?? null,
+            utmMedium: utmMedium ?? null,
+            utmCampaign: utmCampaign ?? null,
+          },
+        })
+      } catch (utmErr) {
+        console.error('[register] utm update failed:', utmErr)
+      }
     }
 
     return NextResponse.json({ success: true, userId: user.id })

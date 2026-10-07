@@ -430,3 +430,29 @@ pre, code {
 
 /* Tabular numbers utility */
 .tabular-nums { font-variant-numeric: tabular-nums; }
+
+/* ─────────────────────────────────────────────
+   GAMIFICATION ANIMATIONS
+───────────────────────────────────────────── */
+
+/* Streak flame pulse */
+@keyframes flamePulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(245,158,11,0.6)); }
+  50% { transform: scale(1.12); filter: drop-shadow(0 0 12px rgba(245,158,11,0.9)); }
+}
+.flame-pulse { animation: flamePulse 1.5s ease-in-out infinite; }
+
+/* Challenge complete */
+@keyframes checkBounce {
+  0% { transform: scale(0) rotate(-10deg); }
+  60% { transform: scale(1.2) rotate(3deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+.check-bounce { animation: checkBounce 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+
+/* Streak at risk pulse */
+@keyframes riskPulse {
+  0%, 100% { border-color: #d97706; }
+  50% { border-color: #f59e0b; box-shadow: 0 0 12px rgba(245,158,11,0.3); }
+}
+.risk-pulse { animation: riskPulse 2s ease-in-out infinite; }

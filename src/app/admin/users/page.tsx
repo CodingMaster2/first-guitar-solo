@@ -24,6 +24,8 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
 
   const now = new Date()
   const sevenDaysAgo = new Date(now); sevenDaysAgo.setDate(now.getDate() - 7)
+  const twoDaysAgo = new Date(now); twoDaysAgo.setDate(now.getDate() - 2)
+  const fiveDaysAgo = new Date(now); fiveDaysAgo.setDate(now.getDate() - 5)
 
   // Build where clause using AND to avoid OR key conflicts
   const andFilters: Prisma.UserWhereInput[] = []
@@ -54,6 +56,16 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
         { profile: { lastPracticeDate: null } },
       ],
     })
+  } else if (activity === 'at-risk') {
+    andFilters.push({
+      profile: { lastPracticeDate: { gte: fiveDaysAgo, lt: twoDaysAgo } },
+    })
+  } else if (activity === 'churned') {
+    andFilters.push({
+      OR: [
+        { profile: { lastPracticeDate: { lt: fiveDaysAgo } } },
+      ],
+    })
   }
 
   const where: Prisma.UserWhereInput = andFilters.length > 0 ? { AND: andFilters } : {}
@@ -77,6 +89,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
         createdAt: true,
         purchaseStatus: true,
         role: true,
+        utmSource: true,
         profile: { select: { currentDay: true, lastPracticeDate: true, streak: true, totalXP: true, bestStreak: true } },
         _count: { select: { progress: true } },
       },
@@ -141,6 +154,30 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
               <h1 className="text-2xl font-black text-white uppercase">Users</h1>
               <p style={{ color: '#525252' }} className="text-xs mt-1">{total} matching</p>
             </div>
+            <a
+              href="/api/admin/export-users"
+              style={{
+                border: '1px solid #1f1f1f',
+                color: '#ffffff',
+                backgroundColor: '#111111',
+                borderRadius: 6,
+                padding: '7px 14px',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+              className="hover:border-neutral-500 transition-colors"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Export CSV
+            </a>
           </div>
 
           {/* Filters */}
@@ -170,6 +207,8 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
             >
               <option value="">All activity</option>
               <option value="active">Active (7d)</option>
+              <option value="at-risk">At risk (2–4d)</option>
+              <option value="churned">Churned (5d+)</option>
               <option value="inactive">Inactive (7d+)</option>
               <option value="never">Never practiced</option>
             </select>
