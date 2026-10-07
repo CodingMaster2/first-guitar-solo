@@ -124,6 +124,15 @@ export default function BatchUsersTable({ users }: Props) {
         </div>
       )}
 
+      {users.length === 0 ? (
+        <div
+          className="rounded-xl p-12 text-center"
+          style={{ backgroundColor: '#111111', border: '1px solid #1f1f1f' }}
+        >
+          <p className="text-white font-bold mb-1">No users found</p>
+          <p style={{ color: '#525252' }} className="text-sm">Try adjusting your filters or search term.</p>
+        </div>
+      ) : (
       <div style={{ backgroundColor: '#111111', border: '1px solid #1f1f1f' }} className="rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -154,6 +163,7 @@ export default function BatchUsersTable({ users }: Props) {
                 return (
                   <tr
                     key={user.id}
+                    title={`${user.email} · Day ${user.profile?.currentDay ?? 1} · ${user.purchaseStatus}`}
                     style={{
                       borderBottom: '1px solid #161616',
                       backgroundColor: isSelected ? '#1a1200' : 'transparent',
@@ -239,6 +249,7 @@ export default function BatchUsersTable({ users }: Props) {
           </table>
         </div>
       </div>
+      )}
     </div>
   )
 }

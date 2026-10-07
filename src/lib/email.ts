@@ -155,6 +155,38 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string): Prom
   }
 }
 
+export async function sendAdminEmail(
+  to: string,
+  subject: string,
+  message: string,
+): Promise<void> {
+  const resend = getResend()
+  if (!resend) return
+
+  // Escape HTML entities and preserve line breaks
+  const htmlMessage = message
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\n/g, '<br />')
+
+  const html = baseEmailHtml(`
+    <h1 style="margin:0 0 24px;color:#ffffff;font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;">${subject}</h1>
+    <div style="color:#d4d4d4;font-size:15px;line-height:1.7;">${htmlMessage}</div>
+  `)
+
+  try {
+    await resend.emails.send({
+      from: FROM_ADDRESS,
+      to,
+      subject,
+      html,
+    })
+  } catch (err) {
+    console.error(`[email] sendAdminEmail to ${to} failed:`, err)
+  }
+}
+
 export async function sendPasswordChangedEmail(to: string): Promise<void> {
   const resend = getResend()
   if (!resend) return

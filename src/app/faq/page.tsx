@@ -102,15 +102,25 @@ export default function FAQPage() {
 
         <div style={{ borderTop: '1px solid #262626' }} className="mt-12 pt-8 text-center">
           <p style={{ color: '#a3a3a3' }} className="text-sm mb-4">
-            Still have a question?
+            Still have questions?
           </p>
-          <a
-            href="mailto:support@sixthstringlabs.com"
-            style={{ color: '#f59e0b' }}
-            className="text-sm hover:underline"
+          <Link
+            href="/contact"
+            style={{ backgroundColor: '#f59e0b', color: '#000000' }}
+            className="inline-block px-6 py-3 rounded-lg text-sm font-black uppercase tracking-wider hover:opacity-90 transition-all mb-4"
           >
-            support@sixthstringlabs.com
-          </a>
+            Contact Us
+          </Link>
+          <p style={{ color: '#525252' }} className="text-xs">
+            Or email us at{' '}
+            <a
+              href="mailto:support@sixthstringlabs.com"
+              style={{ color: '#737373' }}
+              className="hover:underline"
+            >
+              support@sixthstringlabs.com
+            </a>
+          </p>
         </div>
       </main>
       <Footer />

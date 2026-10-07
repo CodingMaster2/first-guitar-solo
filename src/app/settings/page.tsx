@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
+import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
@@ -28,6 +28,10 @@ export default function SettingsPage() {
   const [resetModal, setResetModal] = useState(false)
   const [resetConfirm, setResetConfirm] = useState('')
   const [resetStatus, setResetStatus] = useState<'idle' | 'resetting' | 'done' | 'error'>('idle')
+
+  const [deleteModal, setDeleteModal] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState('')
+  const [deleteStatus, setDeleteStatus] = useState<'idle' | 'deleting' | 'done' | 'error'>('idle')
 
   const [leaderboardOptIn, setLeaderboardOptIn] = useState(false)
   const [leaderboardStatus, setLeaderboardStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
@@ -153,6 +157,19 @@ export default function SettingsPage() {
     } catch {
       setLeaderboardStatus('error')
       setLeaderboardOptIn(!value) // revert
+    }
+  }
+
+  const deleteAccount = async () => {
+    if (deleteConfirm !== 'DELETE') return
+    setDeleteStatus('deleting')
+    try {
+      const res = await fetch('/api/settings/delete-account', { method: 'POST' })
+      if (!res.ok) throw new Error('Deletion failed')
+      setDeleteStatus('done')
+      await signOut({ callbackUrl: '/' })
+    } catch {
+      setDeleteStatus('error')
     }
   }
 
@@ -468,18 +485,46 @@ export default function SettingsPage() {
         </div>
 
         {/* Danger Zone */}
-        <div style={{ backgroundColor: '#110000', border: '1px solid #7f1d1d' }} className="rounded-xl p-6">
-          <h2 style={{ color: '#ef4444' }} className="font-bold text-sm uppercase tracking-wider mb-2">Danger Zone</h2>
-          <p style={{ color: '#a3a3a3' }} className="text-sm mb-5">
-            Reset your progress to start the 30-day program from scratch. This permanently deletes all lesson completions, practice sessions, XP, achievements, and coach messages.
-          </p>
-          <button
-            onClick={() => setResetModal(true)}
-            style={{ backgroundColor: '#1a0000', border: '1px solid #7f1d1d', color: '#ef4444' }}
-            className="px-5 py-2 rounded-lg text-sm font-bold hover:bg-red-950 transition-colors"
-          >
-            Reset All Progress
-          </button>
+        <div style={{ backgroundColor: '#0d0000', border: '1px solid #7f1d1d' }} className="rounded-xl p-6">
+          <h2 style={{ color: '#ef4444' }} className="font-bold text-sm uppercase tracking-wider mb-5">Danger Zone</h2>
+
+          {/* Reset Progress */}
+          <div className="mb-6">
+            <h3 className="text-white font-bold text-sm mb-1">Reset Progress</h3>
+            <p style={{ color: '#a3a3a3' }} className="text-sm mb-4">
+              Reset your progress to start the 30-day program from scratch. This permanently deletes all lesson completions, practice sessions, XP, achievements, and coach messages.
+            </p>
+            <button
+              onClick={() => setResetModal(true)}
+              style={{ backgroundColor: '#1a0000', border: '1px solid #7f1d1d', color: '#ef4444' }}
+              className="px-5 py-2 rounded-lg text-sm font-bold hover:bg-red-950 transition-colors"
+            >
+              Reset All Progress
+            </button>
+          </div>
+
+          <div style={{ borderTop: '1px solid #3f0000' }} className="pt-6">
+            <h3 className="text-white font-bold text-sm mb-1">Delete Account</h3>
+            <p style={{ color: '#a3a3a3' }} className="text-sm mb-2">
+              Permanently deletes your account and all associated data including:
+            </p>
+            <ul style={{ color: '#737373' }} className="text-sm list-disc list-inside mb-4 space-y-1">
+              <li>All progress and lesson completions</li>
+              <li>All AI coach messages</li>
+              <li>Your profile and practice session history</li>
+              <li>Achievements and XP</li>
+            </ul>
+            <p style={{ color: '#ef4444' }} className="text-xs font-bold mb-4 uppercase tracking-wider">
+              This is permanent and cannot be undone.
+            </p>
+            <button
+              onClick={() => setDeleteModal(true)}
+              style={{ backgroundColor: '#1a0000', border: '1px solid #7f1d1d', color: '#ef4444' }}
+              className="px-5 py-2 rounded-lg text-sm font-bold hover:bg-red-950 transition-colors"
+            >
+              Delete My Account
+            </button>
+          </div>
         </div>
       </main>
 
@@ -532,6 +577,61 @@ export default function SettingsPage() {
                 className="flex-1 py-2 rounded-lg text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-all"
               >
                 {resetStatus === 'resetting' ? 'Resetting...' : 'Reset Everything'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Confirmation Modal */}
+      {deleteModal && (
+        <div
+          className="fixed inset-0 flex items-center justify-center z-50 px-4"
+          style={{ backgroundColor: 'rgba(0,0,0,0.85)' }}
+          onClick={() => setDeleteModal(false)}
+        >
+          <div
+            style={{ backgroundColor: '#111111', border: '1px solid #7f1d1d', maxWidth: 420, width: '100%' }}
+            className="rounded-xl p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ color: '#ef4444' }} className="font-black text-lg uppercase mb-3">Delete Account</h3>
+            <p style={{ color: '#a3a3a3' }} className="text-sm mb-4 leading-relaxed">
+              This will permanently delete your account, all progress, coach messages, profile data, and practice sessions.{' '}
+              <strong className="text-white">This cannot be undone.</strong>
+            </p>
+            <p style={{ color: '#a3a3a3' }} className="text-sm mb-2">
+              Type <span className="text-white font-bold">DELETE</span> to confirm:
+            </p>
+            <input
+              type="text"
+              value={deleteConfirm}
+              onChange={(e) => setDeleteConfirm(e.target.value)}
+              placeholder="DELETE"
+              style={{ backgroundColor: '#1a1a1a', border: '1px solid #7f1d1d', color: '#ffffff' }}
+              className="w-full rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none"
+            />
+            {deleteStatus === 'done' && (
+              <p style={{ color: '#86efac' }} className="text-sm mb-4">Account deleted. Signing out...</p>
+            )}
+            {deleteStatus === 'error' && (
+              <p style={{ color: '#ef4444' }} className="text-sm mb-4">Deletion failed. Please try again.</p>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setDeleteModal(false); setDeleteConfirm('') }}
+                style={{ border: '1px solid #262626', color: '#a3a3a3' }}
+                className="flex-1 py-2 rounded-lg text-sm font-bold hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={deleteAccount}
+                disabled={deleteConfirm !== 'DELETE' || deleteStatus === 'deleting'}
+                style={{ backgroundColor: deleteConfirm === 'DELETE' ? '#7f1d1d' : '#1a0000', color: '#ef4444', border: '1px solid #7f1d1d' }}
+                className="flex-1 py-2 rounded-lg text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-all"
+              >
+                {deleteStatus === 'deleting' ? 'Deleting...' : 'Delete My Account'}
               </button>
             </div>
           </div>

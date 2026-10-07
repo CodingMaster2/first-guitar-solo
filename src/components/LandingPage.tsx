@@ -876,7 +876,9 @@ G |--------------------------------------|`}</pre>
                 </Link>
                 <p style={{ color: '#a3a3a3' }} className="text-xs mt-4 text-center">
                   Have questions?{' '}
-                  <Link href="/faq" style={{ color: '#f59e0b' }} className="hover:underline">Read the FAQ &#8594;</Link>
+                  <Link href="/faq" style={{ color: '#f59e0b' }} className="hover:underline">Read the FAQ</Link>
+                  {' '}or{' '}
+                  <Link href="/contact" style={{ color: '#f59e0b' }} className="hover:underline">Contact Us &#8594;</Link>
                 </p>
               </div>
             </div>

@@ -15,6 +15,9 @@ const navItems = [
   { href: '/admin/support', label: 'Support', icon: '◻' },
   { href: '/admin/logs', label: 'Action Log', icon: '≡' },
   { href: '/admin/content', label: 'Content', icon: '✎' },
+  { href: '/admin/lessons', label: 'Lesson Perf.', icon: '◐' },
+  { href: '/admin/activity', label: 'Activity Feed', icon: '◑' },
+  { href: '/admin/email', label: 'Email Composer', icon: '◻' },
 ]
 
 export default function AdminSidebar() {
