@@ -13,6 +13,8 @@ import CurriculumAccordion from '@/components/landing/CurriculumAccordion'
 import TestimonialsSection from '@/components/landing/TestimonialsSection'
 import ComparisonTable from '@/components/landing/ComparisonTable'
 import ExitIntentModal from '@/components/landing/ExitIntentModal'
+import GuitarIllustration from '@/components/GuitarIllustration'
+import AppMockup from '@/components/AppMockup'
 
 // ─── FAQs ────────────────────────────────────────────────────────────────────
 
@@ -171,17 +173,8 @@ export default function LandingPage({ graduateCountBadge, graduatesTeaser }: Lan
 
       {/* ── Inline styles ── */}
       <style>{`
-        @keyframes meshMove {
-          0%,100% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-        }
         .hero-bg {
-          background:
-            radial-gradient(ellipse at 20% 50%, rgba(245,158,11,0.07) 0%, transparent 50%),
-            radial-gradient(ellipse at 80% 20%, rgba(245,158,11,0.04) 0%, transparent 40%),
-            #0a0a0a;
-          background-size: 200% 200%;
-          animation: meshMove 8s ease-in-out infinite;
+          background: radial-gradient(ellipse 80% 60% at 30% 50%, rgba(245,158,11,0.06) 0%, transparent 70%), #0a0a0a;
         }
         @keyframes ctaPulse {
           0%,100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.4), 0 4px 15px rgba(245,158,11,0.3); }
@@ -215,7 +208,7 @@ export default function LandingPage({ graduateCountBadge, graduatesTeaser }: Lan
       ══════════════════════════════════════════════════════════════════════ */}
       <section
         id="main-content"
-        className="hero-bg noise-overlay"
+        className="hero-bg"
         style={{
           position: 'relative',
           minHeight: '100vh',
@@ -265,175 +258,188 @@ export default function LandingPage({ graduateCountBadge, graduatesTeaser }: Lan
 
         {/* Content */}
         <div
-          className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-20"
+          className="max-w-7xl mx-auto w-full px-6 pt-20"
           style={{ position: 'relative', zIndex: 2 }}
         >
-          {/* Label */}
-          <p
-            style={{
-              color: '#f59e0b',
-              fontSize: '0.7rem',
-              fontWeight: 900,
-              textTransform: 'uppercase',
-              letterSpacing: '0.2em',
-              marginBottom: '1.25rem',
-            }}
-          >
-            Sixth String Labs Presents
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4rem' }}>
+            {/* Left: text content */}
+            <div style={{ flex: '1 1 55%' }}>
+              {/* Label */}
+              <p
+                style={{
+                  color: '#f59e0b',
+                  fontSize: '0.7rem',
+                  fontWeight: 900,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.2em',
+                  marginBottom: '1.25rem',
+                }}
+              >
+                Sixth String Labs Presents
+              </p>
 
-          {/* Graduate count badge (server-rendered slot) */}
-          {graduateCountBadge}
+              {/* Graduate count badge (server-rendered slot) */}
+              {graduateCountBadge}
 
-          {/* Main headline */}
-          <div style={{ marginBottom: '1.5rem' }}>
-            <h1
-              className="animate-fade-up-delay-1"
-              style={{
-                fontFamily: "'Bebas Neue', sans-serif",
-                fontSize: 'clamp(4rem, 12vw, 9rem)',
-                lineHeight: 0.95,
-                letterSpacing: '0.02em',
-                color: '#ffffff',
-                margin: 0,
-              }}
-            >
-              30 DAYS.
-            </h1>
-            <div
-              className="animate-fade-up-delay-2"
-              style={{
-                fontFamily: "'Bebas Neue', sans-serif",
-                fontSize: 'clamp(4rem, 12vw, 9rem)',
-                lineHeight: 0.95,
-                letterSpacing: '0.02em',
-                background: 'linear-gradient(135deg, #f59e0b 0%, #fde68a 50%, #f59e0b 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
-              ONE SOLO.
-            </div>
-            <div
-              className="hero-outline animate-fade-up-delay-3"
-              style={{
-                fontFamily: "'Bebas Neue', sans-serif",
-                fontSize: 'clamp(4rem, 12vw, 9rem)',
-                lineHeight: 0.95,
-                letterSpacing: '0.02em',
-              }}
-            >
-              YOURS.
-            </div>
-          </div>
-
-          {/* Subheadline */}
-          <p
-            style={{
-              color: '#a3a3a3',
-              fontSize: 'clamp(1rem, 2.5vw, 1.125rem)',
-              maxWidth: '38rem',
-              lineHeight: 1.65,
-              marginBottom: '2.5rem',
-            }}
-          >
-            A structured program that takes you from basic guitarist to confidently performing
-            your first complete lead guitar solo. $25. One time. Yours forever.
-          </p>
-
-          {/* CTA buttons */}
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.875rem',
-              marginBottom: '2rem',
-            }}
-            className="sm:flex-row"
-          >
-            <Link
-              href="/register"
-              className="cta-pulse"
-              style={{
-                display: 'inline-block',
-                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                color: '#000000',
-                fontWeight: 900,
-                fontSize: '1rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-                padding: '1rem 2rem',
-                borderRadius: '0.5rem',
-                textAlign: 'center',
-              }}
-              aria-label="Start the First Guitar Solo program for $25"
-            >
-              Start for $25 →
-            </Link>
-            <a
-              href="#the-solo"
-              style={{
-                display: 'inline-block',
-                border: '2px solid #262626',
-                color: '#ffffff',
-                fontWeight: 700,
-                fontSize: '1rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-                padding: '1rem 2rem',
-                borderRadius: '0.5rem',
-                textAlign: 'center',
-                transition: 'border-color 0.2s ease',
-              }}
-            >
-              See the curriculum ↓
-            </a>
-          </div>
-
-          {/* Social proof */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-              flexWrap: 'wrap',
-            }}
-          >
-            {/* Avatars */}
-            <div style={{ display: 'flex' }}>
-              {AVATARS.map((av, i) => (
-                <div
-                  key={i}
-                  aria-hidden="true"
+              {/* Main headline */}
+              <div style={{ marginBottom: '1.5rem' }}>
+                <h1
+                  className="animate-fade-up-delay-1"
                   style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: '50%',
-                    backgroundColor: av.bg,
-                    border: '2px solid #0a0a0a',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '0.6rem',
-                    fontWeight: 900,
-                    color: '#fff',
-                    marginLeft: i > 0 ? -8 : 0,
-                    flexShrink: 0,
+                    fontFamily: "'Bebas Neue', sans-serif",
+                    fontSize: 'clamp(4rem, 10vw, 9rem)',
+                    lineHeight: 0.95,
+                    letterSpacing: '0.02em',
+                    color: '#ffffff',
+                    margin: 0,
                   }}
                 >
-                  {av.initial}
+                  30 DAYS.
+                </h1>
+                <div
+                  className="animate-fade-up-delay-2"
+                  style={{
+                    fontFamily: "'Bebas Neue', sans-serif",
+                    fontSize: 'clamp(4rem, 10vw, 9rem)',
+                    lineHeight: 0.95,
+                    letterSpacing: '0.02em',
+                    background: 'linear-gradient(135deg, #f59e0b 0%, #fde68a 50%, #f59e0b 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}
+                >
+                  ONE SOLO.
                 </div>
-              ))}
+                <div
+                  className="hero-outline animate-fade-up-delay-3"
+                  style={{
+                    fontFamily: "'Bebas Neue', sans-serif",
+                    fontSize: 'clamp(4rem, 10vw, 9rem)',
+                    lineHeight: 0.95,
+                    letterSpacing: '0.02em',
+                  }}
+                >
+                  YOURS.
+                </div>
+              </div>
+
+              {/* Subheadline */}
+              <p
+                style={{
+                  color: '#a3a3a3',
+                  fontSize: 'clamp(1rem, 2.5vw, 1.125rem)',
+                  maxWidth: '38rem',
+                  lineHeight: 1.65,
+                  marginBottom: '2.5rem',
+                }}
+              >
+                A structured program that takes you from basic guitarist to confidently performing
+                your first complete lead guitar solo. $25. One time. Yours forever.
+              </p>
+
+              {/* CTA buttons */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.875rem',
+                  marginBottom: '2rem',
+                }}
+                className="sm:flex-row"
+              >
+                <Link
+                  href="/register"
+                  className="cta-pulse"
+                  style={{
+                    display: 'inline-block',
+                    background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                    color: '#000000',
+                    fontWeight: 900,
+                    fontSize: '1rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                    padding: '1rem 2rem',
+                    borderRadius: '0.5rem',
+                    textAlign: 'center',
+                  }}
+                  aria-label="Start the First Guitar Solo program for $25"
+                >
+                  Start for $25 →
+                </Link>
+                <a
+                  href="#the-solo"
+                  style={{
+                    display: 'inline-block',
+                    border: '2px solid #262626',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: '1rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                    padding: '1rem 2rem',
+                    borderRadius: '0.5rem',
+                    textAlign: 'center',
+                    transition: 'border-color 0.2s ease',
+                  }}
+                >
+                  See the curriculum ↓
+                </a>
+              </div>
+
+              {/* Social proof */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  flexWrap: 'wrap',
+                }}
+              >
+                {/* Avatars */}
+                <div style={{ display: 'flex' }}>
+                  {AVATARS.map((av, i) => (
+                    <div
+                      key={i}
+                      aria-hidden="true"
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: '50%',
+                        backgroundColor: av.bg,
+                        border: '2px solid #0a0a0a',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.6rem',
+                        fontWeight: 900,
+                        color: '#fff',
+                        marginLeft: i > 0 ? -8 : 0,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {av.initial}
+                    </div>
+                  ))}
+                </div>
+                <span
+                  style={{ color: '#f59e0b', fontSize: '0.875rem', letterSpacing: '0.05em' }}
+                >
+                  ★★★★★
+                </span>
+                <span style={{ color: '#a3a3a3', fontSize: '0.875rem' }}>
+                  Loved by 500+ guitarists
+                </span>
+              </div>
             </div>
-            <span
-              style={{ color: '#f59e0b', fontSize: '0.875rem', letterSpacing: '0.05em' }}
+
+            {/* Right: guitar illustration — hidden on small screens */}
+            <div
+              style={{ flex: '0 0 40%', maxWidth: 360, justifyContent: 'center' }}
+              className="hidden lg:flex"
             >
-              ★★★★★
-            </span>
-            <span style={{ color: '#a3a3a3', fontSize: '0.875rem' }}>
-              Loved by 500+ guitarists
-            </span>
+              <GuitarIllustration style={{ width: '100%', maxHeight: 500 }} />
+            </div>
           </div>
         </div>
 
@@ -474,6 +480,72 @@ export default function LandingPage({ graduateCountBadge, graduatesTeaser }: Lan
       <div className="section-divider" />
 
       {/* ══════════════════════════════════════════════════════════════════════
+          APP PREVIEW
+      ══════════════════════════════════════════════════════════════════════ */}
+      <section style={{ padding: '100px 0', backgroundColor: '#050505' }}>
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <p
+              className="section-label"
+              style={{ color: '#f59e0b', marginBottom: 8 }}
+            >
+              THE PLATFORM
+            </p>
+            <h2
+              style={{
+                fontFamily: "'Bebas Neue', sans-serif",
+                fontSize: 'clamp(2rem, 5vw, 3.5rem)',
+                color: '#ffffff',
+                letterSpacing: '0.05em',
+                margin: 0,
+              }}
+            >
+              Everything you need. Nothing you don&apos;t.
+            </h2>
+            <p
+              style={{
+                color: '#737373',
+                maxWidth: 480,
+                margin: '12px auto 0',
+                lineHeight: 1.7,
+              }}
+            >
+              A focused app built around one goal — your first guitar solo.
+            </p>
+          </div>
+
+          {/* App mockup centered */}
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <AppMockup />
+          </div>
+
+          {/* 3 feature callouts */}
+          <div
+            style={{
+              display: 'grid',
+              gap: '1.5rem',
+              marginTop: '3rem',
+            }}
+            className="grid-cols-1 sm:grid-cols-3"
+          >
+            {[
+              { icon: '📱', title: 'Works on any device', desc: 'Mobile, tablet, or desktop — practice anywhere' },
+              { icon: '⚡', title: 'Instant AI Coach', desc: 'Ask a question, get an answer in seconds' },
+              { icon: '🎯', title: 'One clear goal', desc: '30 days, one solo — no distractions' },
+            ].map((f) => (
+              <div key={f.title} style={{ textAlign: 'center', padding: '24px 16px' }}>
+                <div style={{ fontSize: '2rem', marginBottom: 12 }}>{f.icon}</div>
+                <p style={{ color: '#ffffff', fontWeight: 700, marginBottom: 6 }}>{f.title}</p>
+                <p style={{ color: '#525252', fontSize: '0.875rem', lineHeight: 1.6 }}>{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="section-divider" />
+
+      {/* ══════════════════════════════════════════════════════════════════════
           SECTION 4 — CURRICULUM ACCORDION  (id="the-solo" is inside)
       ══════════════════════════════════════════════════════════════════════ */}
       <CurriculumAccordion />
@@ -485,7 +557,7 @@ export default function LandingPage({ graduateCountBadge, graduatesTeaser }: Lan
       ══════════════════════════════════════════════════════════════════════ */}
       <section
         className="reveal py-24 px-4 sm:px-6 lg:px-8"
-        style={{ backgroundColor: '#0a0a0a' }}
+        style={{ backgroundColor: '#080808' }}
       >
         <div className="max-w-5xl mx-auto">
           <p
@@ -564,6 +636,7 @@ export default function LandingPage({ graduateCountBadge, graduatesTeaser }: Lan
       <section
         id="pricing"
         className="reveal py-24 px-4 sm:px-6 lg:px-8"
+        style={{ backgroundColor: '#0a0a0a' }}
         role="region"
         aria-label="Pricing"
       >
@@ -771,7 +844,7 @@ export default function LandingPage({ graduateCountBadge, graduatesTeaser }: Lan
       ══════════════════════════════════════════════════════════════════════ */}
       <section
         id="faq"
-        style={{ backgroundColor: '#111111', borderTop: '1px solid #1a1a1a' }}
+        style={{ backgroundColor: '#080808', borderTop: '1px solid #1a1a1a' }}
         className="py-24 px-4 sm:px-6 lg:px-8"
         role="region"
         aria-label="Frequently asked questions"
@@ -857,7 +930,7 @@ export default function LandingPage({ graduateCountBadge, graduatesTeaser }: Lan
       {/* ══════════════════════════════════════════════════════════════════════
           FINAL CTA
       ══════════════════════════════════════════════════════════════════════ */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 text-center">
+      <section className="py-24 px-4 sm:px-6 lg:px-8 text-center" style={{ backgroundColor: '#0a0a0a' }}>
         <div className="max-w-3xl mx-auto">
           <h2
             style={{
