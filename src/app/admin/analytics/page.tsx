@@ -6,6 +6,9 @@ import AdminSidebar from '@/components/AdminSidebar'
 import Navbar from '@/components/Navbar'
 import RemoveFromWallButton from '@/components/RemoveFromWallButton'
 import Link from 'next/link'
+import DauChart from '@/components/admin/DauChart'
+import LessonHeatmap from '@/components/admin/LessonHeatmap'
+import AutoRefresh from '@/components/admin/AutoRefresh'
 
 export default async function AdminAnalyticsPage() {
   const session = await getServerSession(authOptions)
@@ -209,6 +212,37 @@ export default async function AdminAnalyticsPage() {
   const estimatedCostUsd = (estimatedTokens / 1_000_000) * 0.05
   const avgCostPerUser = paidUsers > 0 ? estimatedCostUsd / paidUsers : 0
 
+  // === DAU / WAU data ===
+  const rawDau = await prisma.$queryRaw<{ date: string; count: bigint }[]>`
+    SELECT DATE("createdAt") as date, COUNT(DISTINCT "userId") as count
+    FROM "PracticeSession"
+    WHERE "createdAt" >= ${thirtyDaysAgo}
+    GROUP BY DATE("createdAt")
+    ORDER BY date ASC
+  `
+  const dauMap = new Map(rawDau.map((r) => [r.date, Number(r.count)]))
+  const dauData = Array.from({ length: 30 }, (_, i) => {
+    const d = new Date(Date.now() - (29 - i) * 86400000)
+    const dateStr = d.toISOString().split('T')[0]
+    return { date: dateStr, dau: dauMap.get(dateStr) ?? 0, wau: 0 }
+  })
+
+  // === Lesson completion heatmap ===
+  const lessonCompletions = await prisma.progress.groupBy({
+    by: ['day'],
+    where: { completed: true },
+    _count: { userId: true },
+    orderBy: { day: 'asc' },
+  })
+  const lessonHeatmapData = Array.from({ length: 30 }, (_, i) => ({
+    day: i + 1,
+    completions: lessonCompletions.find((l) => l.day === i + 1)?._count.userId ?? 0,
+  }))
+
+  // === LTV ===
+  const totalRevenue = paidUsers * 25
+  const ltv = paidUsers > 0 ? Math.round(totalRevenue / paidUsers) : 0
+
   // === Graduation Wall ===
   // graduatedUsersRaw is now prisma.profile[] with user included
   const graduatedCount = graduatedUsersRaw.length
@@ -230,6 +264,7 @@ export default async function AdminAnalyticsPage() {
         <AdminSidebar />
         <main className="flex-1 p-6 lg:p-8 overflow-auto">
           <h1 className="text-2xl font-black text-white uppercase mb-7">Analytics</h1>
+          <AutoRefresh intervalMs={30000} />
 
           {/* Revenue block */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-7">
@@ -579,6 +614,29 @@ export default async function AdminAnalyticsPage() {
                 ))}
               </div>
             )}
+          </div>
+
+          {/* DAU / WAU chart */}
+          <div style={{ backgroundColor: '#111111', border: '1px solid #1f1f1f' }} className="rounded-xl p-5 mb-5">
+            <h2 className="text-white font-bold text-xs uppercase tracking-wider mb-1">Daily Active Users (30 days)</h2>
+            <p style={{ color: '#525252' }} className="text-xs mb-4">Unique users with a practice session per day (DAU) and rolling 7-day window (WAU)</p>
+            <DauChart data={dauData} />
+          </div>
+
+          {/* Lesson completion heatmap */}
+          <div style={{ backgroundColor: '#111111', border: '1px solid #1f1f1f' }} className="rounded-xl p-5 mb-5">
+            <h2 className="text-white font-bold text-xs uppercase tracking-wider mb-1">Lesson Completion Heatmap</h2>
+            <p style={{ color: '#525252' }} className="text-xs mb-4">Total completions per lesson day across all users</p>
+            <LessonHeatmap data={lessonHeatmapData} />
+          </div>
+
+          {/* LTV stat card */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-7">
+            <div style={{ backgroundColor: '#111111', border: '1px solid #1f1f1f' }} className="rounded-xl p-4">
+              <p style={{ color: '#525252' }} className="text-xs uppercase tracking-wider mb-1">Avg LTV</p>
+              <p style={{ color: '#f59e0b' }} className="text-2xl font-black">${ltv}</p>
+              <p style={{ color: '#404040' }} className="text-xs mt-1">{paidUsers} paid × $25 / user</p>
+            </div>
           </div>
         </main>
       </div>

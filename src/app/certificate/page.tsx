@@ -1,242 +1,352 @@
-'use client'
-
-import { useSession } from 'next-auth/react'
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { getServerSession } from 'next-auth'
+import { redirect } from 'next/navigation'
+import { authOptions } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
+import Navbar from '@/components/Navbar'
 import Link from 'next/link'
+import CertificatePrint from './CertificatePrint'
 
-interface ProgressRecord {
-  day: number
-  completed: boolean
-  completedAt: string | null
-}
+export default async function CertificatePage() {
+  const session = await getServerSession(authOptions)
+  if (!session?.user) redirect('/login')
 
-interface ProgressApiResponse {
-  progress: ProgressRecord[]
-  profile: { currentDay: number } | null
-}
+  const [profile, user] = await Promise.all([
+    prisma.profile.findUnique({
+      where: { userId: session.user.id },
+      select: { soloCompleted: true, soloCompletedAt: true },
+    }),
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { name: true },
+    }),
+  ])
 
-export default function CertificatePage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
-  const [day30, setDay30] = useState<ProgressRecord | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [copied, setCopied] = useState(false)
-
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login')
-    }
-  }, [status, router])
-
-  useEffect(() => {
-    if (status !== 'authenticated') return
-    fetch('/api/progress')
-      .then((r) => r.json())
-      .then((data: ProgressApiResponse) => {
-        const d30 = data.progress?.find((p) => p.day === 30 && p.completed) ?? null
-        setDay30(d30)
-        setLoading(false)
+  const name = user?.name ?? session.user.email ?? 'Guitarist'
+  const completionDate = profile?.soloCompletedAt
+    ? new Date(profile.soloCompletedAt).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
       })
-      .catch(() => setLoading(false))
-  }, [status])
+    : new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
 
-  const handleShare = async () => {
-    const url = window.location.href
-    try {
-      await navigator.clipboard.writeText(url)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch {
-      // fallback
-    }
-  }
-
-  if (status === 'loading' || loading) {
+  if (!profile?.soloCompleted) {
     return (
-      <div style={{ backgroundColor: '#0a0a0a', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="flex gap-1">
-          <div className="w-2 h-2 rounded-full bg-amber-500 animate-bounce" style={{ animationDelay: '0ms' }} />
-          <div className="w-2 h-2 rounded-full bg-amber-500 animate-bounce" style={{ animationDelay: '150ms' }} />
-          <div className="w-2 h-2 rounded-full bg-amber-500 animate-bounce" style={{ animationDelay: '300ms' }} />
+      <div style={{ backgroundColor: '#0a0a0a', minHeight: '100vh' }}>
+        <Navbar />
+        <div
+          className="flex flex-col items-center justify-center"
+          style={{ minHeight: 'calc(100vh - 64px)', padding: '2rem 1rem' }}
+        >
+          <div
+            style={{
+              backgroundColor: '#111111',
+              border: '1px solid #262626',
+              borderRadius: '12px',
+              padding: '3rem 2rem',
+              maxWidth: '400px',
+              width: '100%',
+              textAlign: 'center',
+            }}
+          >
+            <svg
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#525252"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ margin: '0 auto 1.5rem' }}
+            >
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            <h1 className="text-xl font-black text-white uppercase mb-3">Certificate Locked</h1>
+            <p style={{ color: '#737373' }} className="text-sm mb-6">
+              Complete all 30 days to unlock your certificate of achievement.
+            </p>
+            <Link
+              href="/lessons"
+              style={{ backgroundColor: '#f59e0b', color: '#000000' }}
+              className="inline-block text-sm font-bold px-6 py-3 rounded-lg hover:opacity-90 transition-opacity"
+            >
+              Continue Learning
+            </Link>
+          </div>
         </div>
       </div>
     )
   }
-
-  if (!day30) {
-    return (
-      <div style={{ backgroundColor: '#0a0a0a', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }} className="px-4">
-        <div style={{ color: '#f59e0b', fontSize: '3rem', lineHeight: 1 }} className="mb-6">🎸</div>
-        <h1 className="text-2xl font-black text-white uppercase mb-3 text-center">Certificate Locked</h1>
-        <p style={{ color: '#a3a3a3' }} className="text-sm text-center max-w-xs mb-6">
-          Complete Day 30 to unlock your certificate of completion.
-        </p>
-        <Link
-          href="/lessons"
-          style={{ backgroundColor: '#f59e0b', color: '#000000' }}
-          className="text-sm font-bold px-6 py-3 rounded-lg hover:opacity-90 transition-opacity"
-        >
-          Continue Learning
-        </Link>
-      </div>
-    )
-  }
-
-  const completionDate = day30.completedAt
-    ? new Date(day30.completedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-    : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-
-  const studentName = session?.user?.name ?? session?.user?.email ?? 'Guitarist'
 
   return (
     <>
       <style>{`
         @media print {
           .no-print { display: none !important; }
-          body { background: #ffffff !important; }
-          .certificate-wrapper { background: #ffffff !important; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+          body { background: white; }
         }
       `}</style>
 
-      {/* Nav bar — hidden on print */}
-      <div className="no-print" style={{ backgroundColor: '#0a0a0a', borderBottom: '1px solid #262626' }}>
+      <div className="no-print" style={{ backgroundColor: '#0a0a0a' }}>
+        <Navbar />
+      </div>
+
+      <div
+        className="no-print"
+        style={{ backgroundColor: '#0a0a0a', borderBottom: '1px solid #1f1f1f' }}
+      >
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/dashboard" style={{ color: '#a3a3a3' }} className="text-sm hover:text-white transition-colors">
+          <Link
+            href="/dashboard"
+            style={{ color: '#a3a3a3' }}
+            className="text-sm hover:text-white transition-colors"
+          >
             ← Back to Dashboard
           </Link>
-          <div className="flex gap-3">
-            <button
-              onClick={handleShare}
-              style={{ border: '1px solid #262626', backgroundColor: '#111111', color: '#a3a3a3' }}
-              className="text-sm px-4 py-2 rounded-lg hover:border-amber-600 hover:text-white transition-colors"
-            >
-              {copied ? 'Copied!' : 'Share'}
-            </button>
-            <button
-              onClick={() => window.print()}
-              style={{ backgroundColor: '#f59e0b', color: '#000000' }}
-              className="text-sm font-bold px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
-            >
-              Download Certificate
-            </button>
-          </div>
+          <CertificatePrint />
         </div>
       </div>
 
-      {/* Certificate wrapper */}
-      <div className="certificate-wrapper" style={{ backgroundColor: '#0a0a0a', minHeight: 'calc(100vh - 65px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem 1rem' }}>
+      <div
+        style={{
+          backgroundColor: '#0a0a0a',
+          minHeight: 'calc(100vh - 130px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '2rem 1rem',
+        }}
+      >
         <div
           style={{
             backgroundColor: '#ffffff',
             color: '#1a1a1a',
-            maxWidth: '680px',
+            maxWidth: '700px',
             width: '100%',
             borderRadius: '4px',
-            padding: '3rem 3.5rem',
+            padding: '3.5rem',
             position: 'relative',
             boxShadow: '0 25px 60px rgba(0,0,0,0.5)',
             border: '1px solid #e5e5e5',
           }}
         >
-          {/* Outer decorative border */}
+          {/* Decorative outer border */}
           <div
             style={{
               position: 'absolute',
-              inset: '12px',
+              inset: '14px',
               border: '2px solid #f59e0b',
               borderRadius: '2px',
               pointerEvents: 'none',
             }}
           />
 
-          {/* Inner corner accents */}
-          {(['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const).map((corner) => (
+          {/* Corner accents */}
+          {(['tl', 'tr', 'bl', 'br'] as const).map((c) => (
             <div
-              key={corner}
+              key={c}
               style={{
                 position: 'absolute',
-                width: '24px',
-                height: '24px',
+                width: 24,
+                height: 24,
                 borderColor: '#d97706',
                 borderStyle: 'solid',
-                borderWidth: corner.includes('top') ? '3px 0 0 3px' : '0 3px 3px 0',
-                ...(corner.includes('top') ? { top: '20px' } : { bottom: '20px' }),
-                ...(corner.includes('left') ? { left: '20px' } : { right: '20px' }),
+                borderWidth: c.startsWith('t') ? '3px 0 0 3px' : '0 3px 3px 0',
+                ...(c.startsWith('t') ? { top: 22 } : { bottom: 22 }),
+                ...(c.endsWith('l') ? { left: 22 } : { right: 22 }),
               }}
             />
           ))}
 
-          {/* Header */}
-          <div className="text-center mb-6">
-            <p style={{ color: '#f59e0b', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+          {/* Certificate heading */}
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <p
+              style={{
+                color: '#f59e0b',
+                fontSize: '0.65rem',
+                fontWeight: 700,
+                letterSpacing: '0.3em',
+                textTransform: 'uppercase',
+                marginBottom: '0.5rem',
+              }}
+            >
               Sixth String Labs
             </p>
-            <div style={{ width: '40px', height: '2px', backgroundColor: '#f59e0b', margin: '0 auto 1.5rem' }} />
-            <h1 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '0.05em', textTransform: 'uppercase', color: '#1a1a1a', lineHeight: 1.1 }}>
-              Certificate
+            <div
+              style={{
+                width: 40,
+                height: 2,
+                backgroundColor: '#f59e0b',
+                margin: '0 auto 1.5rem',
+              }}
+            />
+            <h1
+              style={{
+                fontSize: '2.25rem',
+                fontWeight: 900,
+                letterSpacing: '0.05em',
+                textTransform: 'uppercase',
+                color: '#1a1a1a',
+                lineHeight: 1.1,
+                marginBottom: '0.15rem',
+              }}
+            >
+              Certificate of Achievement
             </h1>
-            <p style={{ fontSize: '1rem', fontWeight: 400, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#525252', marginTop: '0.25rem' }}>
-              of Completion
-            </p>
           </div>
 
           {/* Body */}
-          <div className="text-center mb-6">
-            <p style={{ color: '#737373', fontSize: '0.8rem', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <p
+              style={{
+                color: '#737373',
+                fontSize: '0.8rem',
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                marginBottom: '0.75rem',
+              }}
+            >
               This certifies that
             </p>
-            <p style={{ fontSize: '2rem', fontWeight: 700, color: '#1a1a1a', fontStyle: 'italic', marginBottom: '0.75rem', letterSpacing: '0.02em' }}>
-              {studentName}
+            <p
+              style={{
+                fontSize: '2rem',
+                fontWeight: 700,
+                color: '#1a1a1a',
+                fontStyle: 'italic',
+                marginBottom: '0.75rem',
+              }}
+            >
+              {name}
             </p>
-            <p style={{ color: '#525252', fontSize: '0.875rem', marginBottom: '1rem' }}>
-              has successfully completed
+            <p style={{ color: '#525252', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+              has successfully completed the
             </p>
-            <p style={{ fontSize: '1.75rem', fontWeight: 900, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
+            <p
+              style={{
+                fontSize: '1.5rem',
+                fontWeight: 900,
+                color: '#f59e0b',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                marginBottom: '0.25rem',
+              }}
+            >
               First Guitar Solo
             </p>
-            <p style={{ color: '#737373', fontSize: '0.875rem', letterSpacing: '0.05em' }}>
-              A 30-Day Blues-Rock Guitar Program
+            <p style={{ color: '#737373', fontSize: '0.875rem' }}>
+              30-Day Guitar Program
             </p>
           </div>
 
           {/* Divider */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '1.5rem 0' }}>
-            <div style={{ flex: 1, height: '1px', backgroundColor: '#e5e5e5' }} />
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+              margin: '1.5rem 0',
+            }}
+          >
+            <div style={{ flex: 1, height: 1, backgroundColor: '#e5e5e5' }} />
             <span style={{ color: '#f59e0b', fontSize: '1.25rem' }}>★</span>
-            <div style={{ flex: 1, height: '1px', backgroundColor: '#e5e5e5' }} />
+            <div style={{ flex: 1, height: 1, backgroundColor: '#e5e5e5' }} />
           </div>
 
           {/* Footer */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
             <div style={{ textAlign: 'center' }}>
-              <div style={{ width: '120px', height: '1px', backgroundColor: '#1a1a1a', marginBottom: '4px' }} />
-              <p style={{ color: '#737373', fontSize: '0.7rem', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Date Completed</p>
-              <p style={{ color: '#1a1a1a', fontSize: '0.8rem', fontWeight: 600 }}>{completionDate}</p>
+              <div
+                style={{
+                  width: 120,
+                  height: 1,
+                  backgroundColor: '#1a1a1a',
+                  marginBottom: 4,
+                }}
+              />
+              <p
+                style={{
+                  color: '#737373',
+                  fontSize: '0.65rem',
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Completion Date
+              </p>
+              <p style={{ color: '#1a1a1a', fontSize: '0.8rem', fontWeight: 600 }}>
+                {completionDate}
+              </p>
             </div>
 
             {/* Seal */}
-            <div style={{
-              width: '80px',
-              height: '80px',
-              borderRadius: '50%',
-              border: '3px solid #f59e0b',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: '#fffbeb',
-            }}>
-              <span style={{ fontSize: '1.5rem', lineHeight: 1 }}>🎸</span>
-              <span style={{ color: '#92400e', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', marginTop: '2px', textAlign: 'center', lineHeight: 1.2 }}>
+            <div
+              style={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                border: '3px solid #f59e0b',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: '#fffbeb',
+              }}
+            >
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#92400e"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                <path d="M6 12v5c3 3 9 3 12 0v-5" />
+              </svg>
+              <span
+                style={{
+                  color: '#92400e',
+                  fontSize: '0.5rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                }}
+              >
                 SSL
               </span>
             </div>
 
             <div style={{ textAlign: 'center' }}>
-              <div style={{ width: '120px', height: '1px', backgroundColor: '#1a1a1a', marginBottom: '4px' }} />
-              <p style={{ color: '#737373', fontSize: '0.7rem', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Issued by</p>
-              <p style={{ color: '#1a1a1a', fontSize: '0.8rem', fontWeight: 600 }}>Sixth String Labs</p>
+              <div
+                style={{
+                  width: 120,
+                  height: 1,
+                  backgroundColor: '#1a1a1a',
+                  marginBottom: 4,
+                }}
+              />
+              <p
+                style={{
+                  color: '#737373',
+                  fontSize: '0.65rem',
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Issued by
+              </p>
+              <p style={{ color: '#1a1a1a', fontSize: '0.8rem', fontWeight: 600 }}>
+                Sixth String Labs
+              </p>
             </div>
           </div>
         </div>

@@ -9,13 +9,20 @@ export async function GET() {
     const session = await getServerSession(authOptions)
     if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const profile = await prisma.profile.findUnique({
-      where: { userId: session.user.id },
-      select: { avatarUrl: true, leaderboardOptIn: true },
-    })
+    const [profile, user] = await Promise.all([
+      prisma.profile.findUnique({
+        where: { userId: session.user.id },
+        select: { avatarUrl: true, leaderboardOptIn: true },
+      }),
+      prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { stripeCustomerId: true },
+      }),
+    ])
     return NextResponse.json({
       avatarUrl: profile?.avatarUrl ?? null,
       leaderboardOptIn: profile?.leaderboardOptIn ?? false,
+      hasStripeCustomer: !!user?.stripeCustomerId,
     })
   } catch (error) {
     console.error('Settings GET error:', error)

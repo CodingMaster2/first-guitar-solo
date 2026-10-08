@@ -129,6 +129,27 @@ export default function Navbar() {
                     Progress
                   </Link>
                   <Link
+                    href="/leaderboard"
+                    style={{ color: isActive('/leaderboard') ? '#f59e0b' : '#a3a3a3' }}
+                    className={`text-sm hover:text-white transition-colors nav-link${isActive('/leaderboard') ? ' active' : ''}`}
+                  >
+                    Leaderboard
+                  </Link>
+                  <Link
+                    href="/workshop"
+                    style={{ color: isActive('/workshop') ? '#f59e0b' : '#a3a3a3' }}
+                    className={`text-sm hover:text-white transition-colors nav-link${isActive('/workshop') ? ' active' : ''}`}
+                  >
+                    Solo Forge
+                  </Link>
+                  <Link
+                    href="/fretboard"
+                    style={{ color: isActive('/fretboard') ? '#f59e0b' : '#a3a3a3' }}
+                    className={`text-sm hover:text-white transition-colors nav-link${isActive('/fretboard') ? ' active' : ''}`}
+                  >
+                    Fretboard
+                  </Link>
+                  <Link
                     href="/settings"
                     style={{ color: isActive('/settings') ? '#f59e0b' : '#a3a3a3' }}
                     className={`text-sm hover:text-white transition-colors nav-link${isActive('/settings') ? ' active' : ''}`}
@@ -276,6 +297,30 @@ export default function Navbar() {
                 onClick={() => setMobileOpen(false)}
               >
                 Progress
+              </Link>
+              <Link
+                href="/leaderboard"
+                style={{ color: isActive('/leaderboard') ? '#f59e0b' : '#a3a3a3' }}
+                className={`text-sm mobile-nav-link${isActive('/leaderboard') ? ' active' : ''}`}
+                onClick={() => setMobileOpen(false)}
+              >
+                Leaderboard
+              </Link>
+              <Link
+                href="/workshop"
+                style={{ color: isActive('/workshop') ? '#f59e0b' : '#a3a3a3' }}
+                className={`text-sm mobile-nav-link${isActive('/workshop') ? ' active' : ''}`}
+                onClick={() => setMobileOpen(false)}
+              >
+                Solo Forge
+              </Link>
+              <Link
+                href="/fretboard"
+                style={{ color: isActive('/fretboard') ? '#f59e0b' : '#a3a3a3' }}
+                className={`text-sm mobile-nav-link${isActive('/fretboard') ? ' active' : ''}`}
+                onClick={() => setMobileOpen(false)}
+              >
+                Fretboard
               </Link>
               <Link
                 href="/settings"

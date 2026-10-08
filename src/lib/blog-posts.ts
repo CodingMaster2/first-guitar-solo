@@ -5,6 +5,7 @@ export interface BlogPost {
   date: string
   readTime: string
   category: string
+  published?: boolean
 }
 
 export const POSTS: BlogPost[] = [
@@ -61,5 +62,45 @@ export const POSTS: BlogPost[] = [
     date: '2025-02-22',
     readTime: '9 min read',
     category: 'Songs',
+  },
+  {
+    slug: 'guitar-practice-tips-for-beginners',
+    title: '7 Practice Tips Every Beginning Guitarist Needs to Know',
+    excerpt:
+      "Most beginners practice wrong. Here's how to make every minute count with deliberate practice strategies used by pro guitarists.",
+    date: '2025-11-10',
+    readTime: '7 min read',
+    category: 'Practice',
+    published: true,
+  },
+  {
+    slug: 'pentatonic-scale-guitar-beginners-guide',
+    title: "The Pentatonic Scale: Your Complete Beginner's Guide to Guitar Soloing",
+    excerpt:
+      "The pentatonic scale is the foundation of virtually every guitar solo you've ever loved. Here's everything you need to know to start using it.",
+    date: '2025-11-17',
+    readTime: '8 min read',
+    category: 'Music Theory',
+    published: true,
+  },
+  {
+    slug: 'electric-vs-acoustic-guitar-for-beginners',
+    title: 'Electric vs Acoustic Guitar: Which Should You Learn First?',
+    excerpt:
+      "The age-old debate finally settled. We break down the real differences and help you choose the right guitar for your goals.",
+    date: '2025-11-24',
+    readTime: '7 min read',
+    category: 'Beginner Guide',
+    published: true,
+  },
+  {
+    slug: 'guitar-bending-technique-guide',
+    title: 'Guitar String Bending: The Complete Technique Guide',
+    excerpt:
+      "String bending is what separates a mechanical player from one who truly sings on the guitar. Here's how to master it.",
+    date: '2025-12-01',
+    readTime: '6 min read',
+    category: 'Technique',
+    published: true,
   },
 ]

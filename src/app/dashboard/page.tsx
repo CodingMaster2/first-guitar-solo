@@ -18,6 +18,11 @@ import WeeklyPlanCard from '@/components/WeeklyPlanCard'
 import AdaptivePath from '@/components/AdaptivePath'
 import PartnerWidget from '@/components/PartnerWidget'
 import StreakFlame from '@/components/StreakFlame'
+import LevelUpTrigger from '@/components/LevelUpTrigger'
+import PracticeChart from '@/components/PracticeChart'
+import StreakCalendar from '@/components/StreakCalendar'
+import ReviewReminders from '@/components/ReviewReminders'
+import CompletionEstimate from '@/components/CompletionEstimate'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -50,10 +55,10 @@ export default async function DashboardPage() {
 
   const [profile, progress, practiceSessions, reviewsDue] = await Promise.all([
     prisma.profile.findUnique({ where: { userId: session.user.id } }),
-    prisma.progress.findMany({ where: { userId: session.user.id, completed: true }, orderBy: { day: 'asc' } }),
+    prisma.progress.findMany({ where: { userId: session.user.id }, orderBy: { day: 'asc' } }),
     prisma.practiceSession.findMany({
       where: { userId: session.user.id },
-      select: { createdAt: true },
+      select: { day: true, duration: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
     }),
     prisma.progress.count({
@@ -79,7 +84,7 @@ export default async function DashboardPage() {
   }
 
   const currentDay = profile.currentDay
-  const completedDays = new Set(progress.map((p) => p.day))
+  const completedDays = new Set(progress.filter((p) => p.completed).map((p) => p.day))
   const completionPct = Math.round((completedDays.size / 30) * 100)
   const currentLesson = LESSONS.find((l) => l.day === currentDay) ?? LESSONS[0]
   const isCompleted = completedDays.has(currentDay)
@@ -90,6 +95,33 @@ export default async function DashboardPage() {
   const practiceDates = practiceSessions.map((s) =>
     new Date(s.createdAt).toISOString().slice(0, 10)
   )
+
+  // Serialize for client components
+  const recentSessions = practiceSessions.map((s) => ({
+    day: s.day,
+    duration: s.duration,
+    createdAt: new Date(s.createdAt).toISOString(),
+  }))
+
+  const progressForCalendar = progress.map((p) => ({
+    day: p.day,
+    completed: p.completed,
+    completedAt: p.completedAt ? new Date(p.completedAt).toISOString() : null,
+  }))
+
+  const nextReviews = progress
+    .filter((p) => p.nextReviewAt && !p.completed)
+    .map((p) => ({ day: p.day, nextReviewAt: new Date(p.nextReviewAt!).toISOString() }))
+    .sort((a, b) => new Date(a.nextReviewAt).getTime() - new Date(b.nextReviewAt).getTime())
+    .slice(0, 3)
+
+  // avg practices per week over last 28 days
+  const cutoff28 = new Date()
+  cutoff28.setDate(cutoff28.getDate() - 28)
+  const sessionsLast28 = practiceSessions.filter(
+    (s) => new Date(s.createdAt) >= cutoff28
+  ).length
+  const avgPracticesPerWeek = Math.round((sessionsLast28 / 4) * 10) / 10
 
   // Greeting based on server time
   const hour = new Date().getHours()
@@ -117,6 +149,8 @@ export default async function DashboardPage() {
       `}</style>
 
       <Navbar />
+
+      <LevelUpTrigger totalXP={profile.totalXP} />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
@@ -271,6 +305,43 @@ export default async function DashboardPage() {
           </div>
         </div>
 
+        {/* Practice Trends */}
+        <div
+          style={{
+            backgroundColor: '#111111',
+            border: '1px solid #262626',
+            borderRadius: '0.75rem',
+            padding: '1.5rem',
+            marginBottom: '1.5rem',
+          }}
+        >
+          <p style={{ color: '#a3a3a3', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.75rem' }}>
+            Practice Minutes — Last 14 Days
+          </p>
+          <PracticeChart sessions={recentSessions} />
+        </div>
+
+        {/* Activity + Estimate row */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }} className="lg:grid-cols-2 grid-cols-1">
+          <div
+            style={{
+              backgroundColor: '#111111',
+              border: '1px solid #262626',
+              borderRadius: '0.75rem',
+              padding: '1.5rem',
+            }}
+          >
+            <p style={{ color: '#a3a3a3', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.75rem' }}>
+              Activity
+            </p>
+            <StreakCalendar progress={progressForCalendar} />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <CompletionEstimate currentDay={profile.currentDay} avgPracticesPerWeek={avgPracticesPerWeek} />
+            <ReviewReminders nextReviews={nextReviews} />
+          </div>
+        </div>
+
         {/* Milestone Prompt */}
         <MilestonePrompt completedDays={completedDays.size} streak={profile.streak} />
 
@@ -321,6 +392,110 @@ export default async function DashboardPage() {
           ))}
         </div>
 
+        {/* Community section */}
+        <div
+          style={{
+            backgroundColor: '#111111',
+            border: '1px solid #262626',
+            borderRadius: '0.75rem',
+            padding: '1.5rem',
+            marginBottom: '1.5rem',
+          }}
+        >
+          <h2 style={{ color: '#f59e0b', fontWeight: 800, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1rem' }}>
+            Join the Community
+          </h2>
+          <div
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}
+            className="sm:grid-cols-3 grid-cols-1"
+          >
+            {/* Discord */}
+            <Link
+              href="/discord"
+              style={{
+                backgroundColor: '#0a0a0a',
+                border: '1px solid #262626',
+                borderRadius: '0.625rem',
+                padding: '1rem',
+                textDecoration: 'none',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.5rem',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                <div
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    backgroundColor: '#5865F2',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#fff',
+                    fontWeight: 900,
+                    fontSize: '0.875rem',
+                    flexShrink: 0,
+                  }}
+                >
+                  D
+                </div>
+                <p style={{ color: '#ffffff', fontWeight: 700, fontSize: '0.8rem', margin: 0 }}>
+                  Join our Discord server
+                </p>
+              </div>
+              <p style={{ color: '#525252', fontSize: '0.75rem', margin: 0 }}>Connect with 500+ students</p>
+            </Link>
+
+            {/* Leaderboard teaser */}
+            <Link
+              href="/leaderboard"
+              style={{
+                backgroundColor: '#0a0a0a',
+                border: '1px solid #262626',
+                borderRadius: '0.625rem',
+                padding: '1rem',
+                textDecoration: 'none',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.5rem',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                <span style={{ fontSize: '1.5rem', lineHeight: 1 }}>🏆</span>
+                <p style={{ color: '#ffffff', fontWeight: 700, fontSize: '0.8rem', margin: 0 }}>
+                  See how you rank →
+                </p>
+              </div>
+              <p style={{ color: '#525252', fontSize: '0.75rem', margin: 0 }}>Top students by XP &amp; streak</p>
+            </Link>
+
+            {/* Referral card */}
+            <Link
+              href="/referral"
+              style={{
+                backgroundColor: '#0a0a0a',
+                border: '1px solid #262626',
+                borderRadius: '0.625rem',
+                padding: '1rem',
+                textDecoration: 'none',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.5rem',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                <span style={{ fontSize: '1.5rem', lineHeight: 1 }}>🎁</span>
+                <p style={{ color: '#ffffff', fontWeight: 700, fontSize: '0.8rem', margin: 0 }}>
+                  Earn rewards by referring friends →
+                </p>
+              </div>
+              <p style={{ color: '#525252', fontSize: '0.75rem', margin: 0 }}>Share your unique referral link</p>
+            </Link>
+          </div>
+        </div>
+
         {/* Daily motivational quote */}
         <div
           style={{
@@ -351,6 +526,11 @@ export default async function DashboardPage() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }} className="lg:grid-cols-2 grid-cols-1">
           <AdaptivePath />
           <PartnerWidget />
+        </div>
+
+        {/* Footer area */}
+        <div style={{ textAlign: 'center', paddingTop: '0.5rem', paddingBottom: '1rem' }}>
+          <a href="/api/progress/export" download style={{ color: '#525252', fontSize: '0.75rem' }}>Export progress data →</a>
         </div>
 
       </main>

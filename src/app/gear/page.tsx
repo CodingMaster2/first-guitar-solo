@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
+import Breadcrumb from '@/components/Breadcrumb'
 
 export const metadata: Metadata = {
   title: 'Best Guitar Gear for Beginners — Everything You Actually Need',
@@ -151,6 +152,7 @@ export default function GearPage() {
         <Navbar />
 
         <main id="main-content" style={{ maxWidth: 860, margin: '0 auto', padding: '48px 16px 80px' }}>
+          <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Gear Guide' }]} />
           {/* Back link */}
           <Link
             href="/lessons"

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Navbar from '@/components/Navbar'
+import Breadcrumb from '@/components/Breadcrumb'
 
 export const metadata: Metadata = {
   title: 'Guitar Glossary — First Guitar Solo',
@@ -237,6 +238,7 @@ export default function GlossaryPage() {
         <Navbar />
 
         <main id="main-content" style={{ maxWidth: 800, margin: '0 auto', padding: '48px 16px 80px' }}>
+          <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Guitar Glossary' }]} />
           {/* Header */}
           <div style={{ marginBottom: 40 }}>
             <h1 style={{ fontSize: '2rem', fontWeight: 900, color: '#ffffff', marginBottom: 8 }}>

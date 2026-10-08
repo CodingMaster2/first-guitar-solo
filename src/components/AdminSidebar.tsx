@@ -105,6 +105,19 @@ const IconFunnel = () => (
     <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
   </svg>
 )
+const IconNps = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"/>
+    <path d="M8 13s1.5 2 4 2 4-2 4-2"/>
+    <line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
+  </svg>
+)
+const IconFlag = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+    <line x1="4" y1="22" x2="4" y2="15"/>
+  </svg>
+)
 const IconGear = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="3"/>
@@ -126,6 +139,7 @@ const navItems = [
   { href: '/admin', label: 'Overview', icon: IconGrid, exact: true },
   { href: '/admin/users', label: 'Users', icon: IconUsers },
   { href: '/admin/analytics', label: 'Analytics', icon: IconBarChart },
+  { href: '/admin/nps', label: 'NPS Surveys', icon: IconNps },
   { href: '/admin/coach', label: 'Coach Messages', icon: IconChat },
   { href: '/admin/feedback', label: 'Feedback', icon: IconStar },
   { href: '/admin/upload', label: 'Audio Assets', icon: IconPlay },
@@ -141,6 +155,7 @@ const navItems = [
   { href: '/admin/cohorts', label: 'Cohorts', icon: IconCohorts },
   { href: '/admin/funnel', label: 'Funnel', icon: IconFunnel },
   { href: '/admin/settings', label: 'Settings', icon: IconGear },
+  { href: '/admin/flags', label: 'Feature Flags', icon: IconFlag },
 ]
 
 export default function AdminSidebar() {

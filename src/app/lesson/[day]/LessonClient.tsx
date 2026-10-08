@@ -20,9 +20,13 @@ import LessonQuiz from '@/components/LessonQuiz'
 import SpeedTrainer from '@/components/SpeedTrainer'
 import FretboardDiagram from '@/components/FretboardDiagram'
 import LessonComments from '@/components/LessonComments'
+import NpsSurveyModal from '@/components/NpsSurveyModal'
 import CoachChat from '@/components/CoachChat'
 import MicrophoneMode from '@/components/MicrophoneMode'
 import PerformanceRecorder from '@/components/PerformanceRecorder'
+import LessonTip from '@/components/LessonTip'
+import { LESSON_TIPS } from '@/lib/lesson-tips'
+import ConfettiBurst from '@/components/ConfettiBurst'
 
 type ActiveTab = 'learn' | 'play' | 'review' | 'community'
 
@@ -88,6 +92,8 @@ export default function LessonClient({
   const [quizDone, setQuizDone] = useState(false)
   const [showSwipeHint, setShowSwipeHint] = useState(false)
   const [coachMessages, setCoachMessages] = useState<CoachMessageRecord[]>([])
+  const [showNps, setShowNps] = useState(false)
+  const [announcement, setAnnouncement] = useState<string>('')
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const notesDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -112,6 +118,8 @@ export default function LessonClient({
 
   // Save tab + update URL hash
   const switchTab = (tab: ActiveTab) => {
+    const currentLabel = TABS.find((t) => t.id === activeTab)?.label ?? activeTab
+    setAnnouncement(`Section ${currentLabel} completed!`)
     setActiveTab(tab)
     try {
       sessionStorage.setItem(`lesson-${lesson.day}-tab`, tab)
@@ -301,6 +309,7 @@ export default function LessonClient({
 
         const earned = data.xpEarned ?? lesson.xpReward
         setCompleted(true)
+        setAnnouncement(`Day ${lesson.day} complete! Great work!`)
         setXpEarned(earned)
         setNewAchievements(data.newAchievements ?? [])
         setShowToast(true)
@@ -327,6 +336,10 @@ export default function LessonClient({
           if (fromLevel !== toLevel) {
             setLevelUp({ from: fromLevel, to: toLevel })
           }
+        }
+
+        if (lesson.day === 15) {
+          setTimeout(() => setShowNps(true), 2000)
         }
       }
     } catch {
@@ -356,6 +369,17 @@ export default function LessonClient({
     return 'Beginner'
   }
 
+  function downloadTab() {
+    const content = `Day ${lesson.day} Guitar TAB\n\nFirst Guitar Solo — 30-Day Program\n\n[Professional TAB notation will be available here once audio assets are finalized]\n\nVisit firstguitarsolo.com for the full program`
+    const blob = new Blob([content], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `day-${lesson.day}-tab.txt`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   function getTechniqueColor(tech: string): { bg: string; border: string; text: string } {
     const t = tech.toLowerCase()
     if (t.includes('bend') || t.includes('vibrato')) return { bg: '#1a0f00', border: '#78350f', text: '#fb923c' }
@@ -383,6 +407,7 @@ export default function LessonClient({
 
   return (
     <>
+      <ConfettiBurst trigger={optimisticComplete} />
       <ReadingProgressBar />
 
       <main
@@ -510,6 +535,14 @@ export default function LessonClient({
                   ✓ Completed
                 </span>
               )}
+              <button
+                onClick={downloadTab}
+                style={{ color: '#737373', fontSize: '0.75rem', background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem 0', marginLeft: 4 }}
+                className="hover:text-white transition-colors"
+                aria-label={`Download Day ${lesson.day} TAB`}
+              >
+                ⬇ Download TAB
+              </button>
             </div>
           </div>
         </div>
@@ -621,6 +654,11 @@ export default function LessonClient({
               </span>
             )}
           </div>
+
+          {/* Pro Tip for milestone days */}
+          {LESSON_TIPS[lesson.day] && (
+            <LessonTip tip={LESSON_TIPS[lesson.day].tip} type={LESSON_TIPS[lesson.day].type} />
+          )}
 
           {/* Why This Matters */}
           <div style={{ borderLeft: '3px solid #f59e0b', paddingLeft: 12, marginBottom: 8 }}>
@@ -1381,6 +1419,10 @@ export default function LessonClient({
               </span>
             </div>
           )}
+
+          <div style={{ marginTop: 32 }}>
+            <LessonComments day={lesson.day} userId={userId ?? ''} />
+          </div>
         </div>
 
         {/* ─── TAB: COMMUNITY ─── */}
@@ -1390,7 +1432,7 @@ export default function LessonClient({
             animation: activeTab === 'community' ? 'tabFadeIn 0.15s ease' : 'none',
           }}
         >
-          <LessonComments day={lesson.day} userId={userId} />
+          <LessonComments day={lesson.day} userId={userId ?? ''} />
         </div>
 
         {/* ─── BOTTOM NAVIGATION ─── */}
@@ -1475,6 +1517,41 @@ export default function LessonClient({
         {/* Keyboard shortcut map */}
         <KeyboardShortcutMap />
       </main>
+
+      {/* NPS Survey Modal */}
+      {showNps && (
+        <NpsSurveyModal
+          isOpen={showNps}
+          onClose={() => setShowNps(false)}
+          onSubmit={async (score, comment) => {
+            await fetch('/api/nps', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ score, comment }),
+            }).catch(() => {})
+            setShowNps(false)
+          }}
+        />
+      )}
+
+      {/* Screen-reader live region for lesson progress announcements */}
+      <div
+        role="status"
+        aria-live="polite"
+        style={{
+          position: 'absolute',
+          width: 1,
+          height: 1,
+          padding: 0,
+          margin: -1,
+          overflow: 'hidden',
+          clip: 'rect(0,0,0,0)',
+          whiteSpace: 'nowrap',
+          border: 0,
+        }}
+      >
+        {announcement}
+      </div>
     </>
   )
 }

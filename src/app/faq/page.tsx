@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
+import Breadcrumb from '@/components/Breadcrumb'
 
 const faqs = [
   {
@@ -58,6 +59,38 @@ const faqs = [
     q: 'What makes this different from YouTube tutorials?',
     a: "YouTube guitar lessons are excellent but unstructured. You can watch hundreds of lessons and not make progress because there's no path, no progression, and no goal. This program has one goal (perform a complete solo on Day 30), a clear path to get there (30 structured days), and an AI Coach to help when you're stuck. Every lesson exists for a reason.",
   },
+  {
+    q: 'Do I need to read music to follow the course?',
+    a: 'No. The entire course uses guitar tablature (TAB), which is a simple visual system that shows exactly which string and fret to play. No music theory knowledge required — though we do teach the basics as you go.',
+  },
+  {
+    q: 'What guitar should I use for this course?',
+    a: "An electric guitar is strongly recommended. The lessons specifically teach the techniques used in rock and blues solos (bends, vibrato, pentatonic scales) which work best on electric. A budget electric like a Squier Stratocaster or Epiphone Les Paul is perfect.",
+  },
+  {
+    q: 'How long are the daily lessons?',
+    a: 'Each lesson is designed to take 20-45 minutes depending on your pace. The structured sections — warm-up, new technique, practice section, and review — guide you through each session.',
+  },
+  {
+    q: 'What happens after Day 30?',
+    a: "You'll have completed your first full guitar solo! At that point, you'll receive your graduation certificate, access to the Solo Forge to generate custom solos, and an invitation to join our graduates community. We also offer an advanced program.",
+  },
+  {
+    q: 'Can I skip ahead if I already know some techniques?',
+    a: "Yes, you can navigate to any day from the lessons page. That said, each day builds on the previous, so we recommend starting from Day 1 even if you have some experience — you may find things you've been doing wrong.",
+  },
+  {
+    q: 'Is there a mobile app?',
+    a: 'The web app is fully mobile-optimized and works great on any smartphone or tablet. We also support offline access through a progressive web app — just add it to your home screen from your browser.',
+  },
+  {
+    q: "What's the AI Coach?",
+    a: "The AI Coach is a built-in guitar tutor powered by AI. You can ask it anything — technique questions, theory explanations, practice advice — and it responds with guidance tailored to your current day in the program.",
+  },
+  {
+    q: 'Can I get a refund?',
+    a: "Yes, we offer a 30-day money-back guarantee. If you've completed at least 7 days of lessons and genuinely didn't find it valuable, contact us and we'll refund you in full. No questions asked.",
+  },
 ]
 
 export default function FAQPage() {
@@ -67,6 +100,7 @@ export default function FAQPage() {
     <div style={{ backgroundColor: '#0a0a0a', minHeight: '100vh' }}>
       <Navbar />
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'FAQ' }]} />
         <div className="mb-10">
           <Link href="/" style={{ color: '#a3a3a3' }} className="text-sm hover:text-white transition-colors">
             &#8592; Back

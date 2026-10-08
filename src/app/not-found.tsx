@@ -3,91 +3,32 @@ import Navbar from '@/components/Navbar'
 
 export default function NotFound() {
   return (
-    <div style={{ backgroundColor: '#0a0a0a', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ backgroundColor: '#0a0a0a', minHeight: '100vh' }}>
       <Navbar />
-      <main
-        style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '24px 16px',
-          textAlign: 'center',
-        }}
-      >
-        <p
-          style={{
-            fontSize: 'clamp(80px, 20vw, 128px)',
-            fontWeight: 900,
-            color: '#f59e0b',
-            lineHeight: 1,
-            margin: 0,
-          }}
-        >
+      <main style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)', padding: '0 16px', textAlign: 'center' }}>
+        {/* Giant amber 404 */}
+        <div style={{ fontSize: '8rem', fontWeight: 900, color: '#f59e0b', lineHeight: 1, marginBottom: 16, fontFamily: 'system-ui' }}>
           404
-        </p>
-        <h1
-          style={{
-            fontSize: 'clamp(24px, 5vw, 36px)',
-            fontWeight: 700,
-            color: '#ffffff',
-            marginTop: '16px',
-            marginBottom: '12px',
-          }}
-        >
+        </div>
+        <h1 style={{ color: '#ffffff', fontSize: '1.5rem', fontWeight: 700, marginBottom: 8 }}>
           Page not found
         </h1>
-        <p
-          style={{
-            fontSize: '16px',
-            color: '#737373',
-            marginBottom: '40px',
-            maxWidth: '400px',
-          }}
-        >
-          This page doesn&apos;t exist or has moved.
+        <p style={{ color: '#737373', fontSize: '1rem', marginBottom: 32, maxWidth: 400 }}>
+          Looks like you wandered off the fretboard. This page doesn&apos;t exist — but your first guitar solo does.
         </p>
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            gap: '16px',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-          }}
-        >
-          <Link
-            href="/"
-            style={{
-              display: 'inline-block',
-              padding: '12px 24px',
-              backgroundColor: '#f59e0b',
-              color: '#000000',
-              fontWeight: 700,
-              borderRadius: '8px',
-              textDecoration: 'none',
-              fontSize: '15px',
-            }}
-          >
-            ← Back to Home
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <Link href="/" style={{ backgroundColor: '#f59e0b', color: '#000', fontWeight: 700, padding: '10px 24px', borderRadius: 8, fontSize: '0.875rem', textDecoration: 'none', display: 'inline-block' }}>
+            Back to Home
           </Link>
-          <Link
-            href="/dashboard"
-            style={{
-              display: 'inline-block',
-              padding: '12px 24px',
-              backgroundColor: 'transparent',
-              color: '#ffffff',
-              fontWeight: 700,
-              borderRadius: '8px',
-              textDecoration: 'none',
-              fontSize: '15px',
-              border: '1px solid #262626',
-            }}
-          >
+          <Link href="/dashboard" style={{ backgroundColor: '#111111', color: '#d4d4d4', border: '1px solid #262626', padding: '10px 24px', borderRadius: 8, fontSize: '0.875rem', textDecoration: 'none', display: 'inline-block' }}>
             Go to Dashboard
           </Link>
+        </div>
+        {/* Guitar string decoration */}
+        <div style={{ marginTop: 64, opacity: 0.15 }}>
+          {[1, 2, 3, 4, 5, 6].map(i => (
+            <div key={i} style={{ height: i * 0.5, backgroundColor: '#f59e0b', width: 200, marginBottom: 8, borderRadius: 1, margin: '4px auto' }} />
+          ))}
         </div>
       </main>
     </div>

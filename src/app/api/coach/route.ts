@@ -5,6 +5,12 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { LESSONS } from '@/lib/lessons'
 import Groq from 'groq-sdk'
+import { z } from 'zod'
+
+const coachSchema = z.object({
+  message: z.string().min(1).max(2000),
+  day: z.number().int().min(1).max(30).optional(),
+})
 
 interface CoachRateLimitEntry {
   count: number
@@ -78,8 +84,21 @@ export async function POST(req: NextRequest) {
       difficulty?: string
       commonMistakes?: string[]
     }
-    const body = await req.json() as { message: string; lessonContext?: LessonContextPayload }
-    const { message, lessonContext } = body
+    let rawBody: unknown
+    try {
+      rawBody = await req.json()
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+    }
+    const coachParsed = coachSchema.safeParse(rawBody)
+    if (!coachParsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid input', details: z.flattenError(coachParsed.error) },
+        { status: 400 },
+      )
+    }
+    const { message } = coachParsed.data
+    const lessonContext = (rawBody as { lessonContext?: LessonContextPayload }).lessonContext
 
     const [profile, progress] = await Promise.all([
       prisma.profile.findUnique({ where: { userId: session.user.id } }),

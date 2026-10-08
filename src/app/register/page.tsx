@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -10,13 +10,21 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
+  const [promoCode, setPromoCode] = useState('')
+  const [promoMessage, setPromoMessage] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const honeypotRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+
+    // Honeypot check — bots fill this field, real users don't
+    if (honeypotRef.current?.value) {
+      return
+    }
 
     if (password !== confirm) {
       setError('Passwords do not match.')
@@ -34,14 +42,18 @@ export default function RegisterPage() {
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, website: honeypotRef.current?.value ?? '', promoCode: promoCode.trim() || undefined }),
       })
 
-      const data = (await res.json()) as { error?: string }
+      const data = (await res.json()) as { error?: string; promoValid?: boolean }
 
       if (!res.ok) {
         setError(data.error ?? 'Registration failed.')
         return
+      }
+
+      if (data.promoValid === true) {
+        setPromoMessage('Promo code applied! Your discount will be applied at checkout.')
       }
 
       // Auto sign in after registration
@@ -180,6 +192,53 @@ export default function RegisterPage() {
                   placeholder="Repeat your password"
                 />
               </div>
+
+              <div>
+                <label
+                  htmlFor="reg-promo"
+                  style={{ color: '#525252' }}
+                  className="block text-xs font-medium uppercase tracking-wider mb-2"
+                >
+                  Promo Code (optional)
+                </label>
+                <input
+                  id="reg-promo"
+                  name="promo-code"
+                  type="text"
+                  autoComplete="off"
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value)}
+                  style={{ backgroundColor: '#1a1a1a', border: '1px solid #262626', color: '#ffffff' }}
+                  className="w-full px-4 py-3 rounded-lg text-sm focus:outline-none focus:border-amber-500"
+                  placeholder="Enter promo code"
+                />
+              </div>
+
+              {promoMessage && (
+                <div
+                  style={{ backgroundColor: '#052e16', border: '1px solid #166534', color: '#86efac' }}
+                  className="rounded-lg px-4 py-3 text-sm"
+                >
+                  {promoMessage}
+                </div>
+              )}
+
+              {/* Honeypot — hidden from real users, traps bots */}
+              <input
+                ref={honeypotRef}
+                name="website"
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  left: -9999,
+                  width: 1,
+                  height: 1,
+                  opacity: 0,
+                }}
+              />
 
               {error && (
                 <div

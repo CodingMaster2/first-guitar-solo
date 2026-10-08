@@ -48,8 +48,30 @@ export default async function LessonsPage() {
   const circumference = 2 * Math.PI * 22
   const dashOffset = circumference * (1 - pct)
 
+  const courseSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Course',
+    name: 'First Guitar Solo — 30-Day Program',
+    description:
+      'Learn to play your first guitar solo in 30 days with structured daily lessons, AI coaching, and spaced repetition.',
+    provider: {
+      '@type': 'Organization',
+      name: 'Sixth String Labs',
+      url: 'https://firstguitarsolo.com',
+    },
+    numberOfLessons: 30,
+    timeRequired: 'PT30D',
+    educationalLevel: 'Beginner',
+    teaches:
+      'Electric guitar soloing techniques including bends, hammer-ons, pull-offs, vibrato, and pentatonic scales',
+  }
+
   return (
     <div style={{ backgroundColor: '#0a0a0a', minHeight: '100vh' }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(courseSchema) }}
+      />
       <Navbar />
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-6">

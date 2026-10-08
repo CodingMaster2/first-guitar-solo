@@ -1,14 +1,17 @@
 'use client'
 
+import { useEffect } from 'react'
 import Link from 'next/link'
 
-export default function GlobalError({
+export default function Error({
   error,
   reset,
 }: {
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  useEffect(() => { console.error(error) }, [error])
+
   return (
     <div
       style={{
@@ -22,6 +25,8 @@ export default function GlobalError({
         textAlign: 'center',
       }}
     >
+      {/* Warning icon */}
+      <div style={{ fontSize: '3rem', marginBottom: 16, lineHeight: 1 }}>⚠️</div>
       <h1
         style={{
           fontSize: 'clamp(24px, 5vw, 36px)',
@@ -36,18 +41,38 @@ export default function GlobalError({
         style={{
           fontSize: '16px',
           color: '#737373',
-          marginBottom: '40px',
+          marginBottom: process.env.NODE_ENV === 'development' ? '16px' : '40px',
           maxWidth: '420px',
         }}
       >
-        We&apos;re sorry — an unexpected error occurred. Please try again or
-        return home.
+        An unexpected error occurred. Please try again or go to your dashboard.
         {error.digest && (
           <span style={{ display: 'block', marginTop: '8px', fontSize: '12px', color: '#525252' }}>
             Error ID: {error.digest}
           </span>
         )}
       </p>
+      {process.env.NODE_ENV === 'development' && error.message && (
+        <pre
+          style={{
+            fontSize: '12px',
+            color: '#ef4444',
+            backgroundColor: 'rgba(239,68,68,0.05)',
+            border: '1px solid rgba(239,68,68,0.2)',
+            borderRadius: 8,
+            padding: '12px 16px',
+            maxWidth: '560px',
+            width: '100%',
+            textAlign: 'left',
+            overflowX: 'auto',
+            marginBottom: '40px',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+          }}
+        >
+          {error.message}
+        </pre>
+      )}
       <div
         style={{
           display: 'flex',
@@ -71,15 +96,15 @@ export default function GlobalError({
             fontSize: '15px',
           }}
         >
-          Try again
+          Try Again
         </button>
         <Link
-          href="/"
+          href="/dashboard"
           style={{
             display: 'inline-block',
             padding: '12px 24px',
-            backgroundColor: 'transparent',
-            color: '#ffffff',
+            backgroundColor: '#111111',
+            color: '#d4d4d4',
             fontWeight: 700,
             borderRadius: '8px',
             textDecoration: 'none',
@@ -87,7 +112,7 @@ export default function GlobalError({
             border: '1px solid #262626',
           }}
         >
-          Go home
+          Go to Dashboard
         </Link>
       </div>
     </div>

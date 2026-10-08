@@ -9,11 +9,18 @@ export async function POST(req: NextRequest) {
       email: string
       password: string
       name?: string
+      website?: string
+      promoCode?: string
       utmSource?: string
       utmMedium?: string
       utmCampaign?: string
     }
-    const { email, password, name, utmSource, utmMedium, utmCampaign } = body
+    const { email, password, name, website, promoCode, utmSource, utmMedium, utmCampaign } = body
+
+    // Honeypot — real users leave this empty; non-empty means bot
+    if (website) {
+      return NextResponse.json({ error: 'Invalid submission' }, { status: 400 })
+    }
 
     if (!email || !password) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
@@ -67,7 +74,27 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, userId: user.id })
+    // Promo code handling
+    let promoValid = false
+    if (promoCode) {
+      try {
+        const coupon = await prisma.couponCode.findFirst({
+          where: { code: promoCode.toUpperCase(), active: true },
+        })
+        if (coupon) {
+          const notExpired = !coupon.expiresAt || coupon.expiresAt > new Date()
+          const underLimit = !coupon.usageLimit || coupon.usedCount < coupon.usageLimit
+          if (notExpired && underLimit) {
+            console.log('[REGISTER] Promo code applied:', coupon.code, coupon.discountPct, '% off')
+            promoValid = true
+          }
+        }
+      } catch (promoErr) {
+        console.error('[register] promo code lookup failed:', promoErr)
+      }
+    }
+
+    return NextResponse.json({ success: true, userId: user.id, promoValid })
   } catch (error) {
     console.error('Registration error:', error)
     return NextResponse.json({ error: 'Failed to create account' }, { status: 500 })

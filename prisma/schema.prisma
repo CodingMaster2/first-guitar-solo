@@ -44,6 +44,8 @@ model User {
   cohort           Cohort?           @relation(fields: [cohortId], references: [id])
   funnelEvents     FunnelEvent[]
   giftCodesRedeemed GiftCode[]       @relation("giftRedeemer")
+  generatedSolos   GeneratedSolo[]
+  npsSurvey        NpsSurvey?
 }
 
 model PasswordResetToken {
@@ -200,8 +202,11 @@ model LessonComment {
   user      User     @relation(fields: [userId], references: [id])
   day       Int
   content   String
+  likes     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([day])
 }
 
 model Announcement {
@@ -305,4 +310,41 @@ model GiftCode {
   redeemedBy            User?     @relation("giftRedeemer", fields: [redeemedById], references: [id])
   stripePaymentIntentId String?
   createdAt             DateTime  @default(now())
+}
+
+model GeneratedSolo {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  title         String
+  style         String
+  key           String
+  mood          String
+  difficulty    String
+  bars          Int      @default(12)
+  bpm           Int      @default(75)
+  tabContent    String
+  sections      String
+  techniques    String
+  practiceGuide String
+  public        Boolean  @default(false)
+  createdAt     DateTime @default(now())
+}
+
+model NpsSurvey {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  score     Int
+  comment   String?
+  createdAt DateTime @default(now())
+}
+
+model FeatureFlag {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  enabled   Boolean  @default(false)
+  rollout   Int      @default(100)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

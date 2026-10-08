@@ -95,6 +95,11 @@ export default function SettingsPage() {
   const [deleteStatus, setDeleteStatus] = useState<'idle' | 'deleting' | 'done' | 'error'>('idle')
 
   // Solo data
+  // Subscription
+  const [hasStripeCustomer, setHasStripeCustomer] = useState(false)
+  const [portalLoading, setPortalLoading] = useState(false)
+
+  // Solo data
   const [soloData, setSoloData] = useState<{
     soloStyle: string | null
     guitarHero: string | null
@@ -119,6 +124,15 @@ export default function SettingsPage() {
   const [focusMode, setFocusMode] = useState(false)
   const [accessStatus, setAccessStatus] = useState<'idle' | 'saved'>('idle')
 
+  // Personalization — accent color
+  const [accentColor, setAccentColor] = useState('#f59e0b')
+
+  // Personalization — layout density
+  const [layoutDensity, setLayoutDensity] = useState<'comfortable' | 'compact'>('comfortable')
+
+  // Learning Preferences — auto-advance
+  const [autoAdvance, setAutoAdvance] = useState(false)
+
   // Privacy
   const [leaderboardOptIn, setLeaderboardOptIn] = useState(false)
   const [publicProfile, setPublicProfile] = useState(false)
@@ -131,9 +145,10 @@ export default function SettingsPage() {
   useEffect(() => {
     fetch('/api/settings')
       .then((r) => r.json())
-      .then((data: { avatarUrl?: string | null; leaderboardOptIn?: boolean }) => {
+      .then((data: { avatarUrl?: string | null; leaderboardOptIn?: boolean; hasStripeCustomer?: boolean }) => {
         if (typeof data.avatarUrl === 'string') setAvatarUrl(data.avatarUrl)
         if (typeof data.leaderboardOptIn === 'boolean') setLeaderboardOptIn(data.leaderboardOptIn)
+        if (typeof data.hasStripeCustomer === 'boolean') setHasStripeCustomer(data.hasStripeCustomer)
       })
       .catch(() => { /* ignore */ })
   }, [])
@@ -194,6 +209,12 @@ export default function SettingsPage() {
       if (fs) setFontSize(fs)
       const fm = localStorage.getItem('user-focus-mode')
       if (fm === 'true') setFocusMode(true)
+      const ac = localStorage.getItem('accent-color')
+      if (ac) setAccentColor(ac)
+      const ld = localStorage.getItem('layout-density')
+      if (ld === 'compact' || ld === 'comfortable') setLayoutDensity(ld)
+      const aa = localStorage.getItem('auto-advance')
+      if (aa === 'true') setAutoAdvance(true)
     } catch { /* ignore */ }
   }, [])
 
@@ -330,11 +351,30 @@ export default function SettingsPage() {
     }
   }
 
+  const openPortal = async () => {
+    setPortalLoading(true)
+    try {
+      const res = await fetch('/api/stripe/portal', { method: 'POST' })
+      const data = (await res.json()) as { url?: string; error?: string }
+      if (data.url) {
+        window.location.href = data.url
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      setPortalLoading(false)
+    }
+  }
+
   const deleteAccount = async () => {
     if (deleteConfirm !== 'DELETE') return
     setDeleteStatus('deleting')
     try {
-      const res = await fetch('/api/settings/delete-account', { method: 'POST' })
+      const res = await fetch('/api/account/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm: 'DELETE' }),
+      })
       if (!res.ok) throw new Error('Deletion failed')
       setDeleteStatus('done')
       await signOut({ callbackUrl: '/' })
@@ -683,6 +723,145 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* Personalization */}
+        <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6 mb-6">
+          <h2 className="text-white font-bold text-sm uppercase tracking-wider mb-5">Personalization</h2>
+          <div className="space-y-6">
+
+            {/* Accent Color */}
+            <div>
+              <label style={{ color: '#a3a3a3' }} className="text-xs uppercase tracking-wider block mb-3">
+                Accent Color
+              </label>
+              <div className="flex flex-wrap gap-3 mb-2">
+                {[
+                  { name: 'Amber',   hex: '#f59e0b' },
+                  { name: 'Emerald', hex: '#10b981' },
+                  { name: 'Sky',     hex: '#0ea5e9' },
+                  { name: 'Violet',  hex: '#8b5cf6' },
+                  { name: 'Rose',    hex: '#f43f5e' },
+                  { name: 'Slate',   hex: '#94a3b8' },
+                ].map(({ name, hex }) => (
+                  <button
+                    key={hex}
+                    type="button"
+                    title={name}
+                    onClick={() => {
+                      setAccentColor(hex)
+                      try { localStorage.setItem('accent-color', hex) } catch { /* ignore */ }
+                    }}
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: '50%',
+                      backgroundColor: hex,
+                      border: 'none',
+                      cursor: 'pointer',
+                      outline: accentColor === hex ? '2px solid #ffffff' : '2px solid transparent',
+                      outlineOffset: 2,
+                      transition: 'outline-color 0.15s',
+                    }}
+                  />
+                ))}
+              </div>
+              <p style={{ color: '#404040' }} className="text-xs">
+                Color accent applies to highlights and buttons — full theming coming soon
+              </p>
+            </div>
+
+            {/* Layout Density */}
+            <div>
+              <label style={{ color: '#a3a3a3' }} className="text-xs uppercase tracking-wider block mb-3">
+                Layout Density
+              </label>
+              <div className="flex gap-3">
+                {([
+                  { key: 'comfortable' as const, label: 'Comfortable', desc: 'More spacing, easier reading' },
+                  { key: 'compact' as const,     label: 'Compact',     desc: 'More content visible at once' },
+                ] as const).map(({ key, label, desc }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => {
+                      setLayoutDensity(key)
+                      try { localStorage.setItem('layout-density', key) } catch { /* ignore */ }
+                    }}
+                    style={{
+                      flex: 1,
+                      backgroundColor: layoutDensity === key ? '#1a0f00' : '#0a0a0a',
+                      border: `1px solid ${layoutDensity === key ? '#f59e0b' : '#262626'}`,
+                      borderRadius: '0.5rem',
+                      padding: '0.75rem 1rem',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <p style={{ color: layoutDensity === key ? '#f59e0b' : '#ffffff', fontWeight: 700, fontSize: '0.8rem', marginBottom: '0.25rem' }}>
+                      {label}
+                    </p>
+                    <p style={{ color: '#525252', fontSize: '0.7rem' }}>{desc}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Learning Preferences */}
+        <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6 mb-6">
+          <style>{`
+            .auto-advance-thumb {
+              transition: transform 0.2s ease;
+            }
+          `}</style>
+          <h2 className="text-white font-bold text-sm uppercase tracking-wider mb-5">Learning Preferences</h2>
+          <div>
+            <div className="flex items-start gap-4">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={autoAdvance}
+                onClick={() => {
+                  const next = !autoAdvance
+                  setAutoAdvance(next)
+                  try { localStorage.setItem('auto-advance', String(next)) } catch { /* ignore */ }
+                }}
+                style={{
+                  backgroundColor: autoAdvance ? '#f59e0b' : '#1a1a1a',
+                  border: `1px solid ${autoAdvance ? '#d97706' : '#262626'}`,
+                  borderRadius: 20,
+                  width: 44,
+                  height: 24,
+                  padding: 2,
+                  transition: 'background-color 0.2s',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  marginTop: 2,
+                }}
+              >
+                <div
+                  className="auto-advance-thumb"
+                  style={{
+                    backgroundColor: autoAdvance ? '#000' : '#525252',
+                    borderRadius: '50%',
+                    width: 18,
+                    height: 18,
+                    transform: autoAdvance ? 'translateX(20px)' : 'translateX(0)',
+                  }}
+                />
+              </button>
+              <div>
+                <p style={{ color: autoAdvance ? '#f59e0b' : '#ffffff', fontWeight: 700, fontSize: '0.875rem', marginBottom: '0.25rem' }}>
+                  Auto-advance to next lesson after completing
+                </p>
+                <p style={{ color: '#404040', fontSize: '0.75rem' }}>
+                  Automatically opens the next day&apos;s lesson when you mark one complete
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Privacy */}
         <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6 mb-6">
           <h2 className="text-white font-bold text-sm uppercase tracking-wider mb-5">Privacy</h2>
@@ -744,6 +923,27 @@ export default function SettingsPage() {
             Manage Partner
           </a>
         </div>
+
+        {/* Subscription */}
+        {hasStripeCustomer && (
+          <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6 mb-6">
+            <h2 className="text-white font-bold text-sm uppercase tracking-wider mb-2">Subscription</h2>
+            <p style={{ color: '#a3a3a3' }} className="text-sm mb-4 leading-relaxed">
+              Update your billing details, download invoices, or cancel your subscription.
+            </p>
+            <button
+              onClick={openPortal}
+              disabled={portalLoading}
+              style={{
+                backgroundColor: portalLoading ? '#262626' : '#f59e0b',
+                color: portalLoading ? '#a3a3a3' : '#000000',
+              }}
+              className="inline-block px-5 py-2 rounded-lg text-sm font-bold uppercase tracking-wider hover:opacity-90 transition-all disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {portalLoading ? 'Loading...' : 'Manage Subscription'}
+            </button>
+          </div>
+        )}
 
         {/* Your Solo */}
         <div style={{ backgroundColor: '#111111', border: '1px solid #262626' }} className="rounded-xl p-6 mb-6">

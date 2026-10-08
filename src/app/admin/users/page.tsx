@@ -7,6 +7,7 @@ import AdminSidebar from '@/components/AdminSidebar'
 import Navbar from '@/components/Navbar'
 import Link from 'next/link'
 import BatchUsersTable from './BatchUsersTable'
+import UserFilters from './UserFilters'
 
 interface PageProps {
   searchParams: Promise<{ page?: string; q?: string; status?: string; sort?: string; activity?: string }>
@@ -141,8 +142,6 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     return `/admin/users?${params.toString()}`
   }
 
-  const hasActiveFilters = q || status || sort || activity
-
   return (
     <div style={{ backgroundColor: '#0a0a0a', minHeight: '100vh' }}>
       <Navbar />
@@ -155,91 +154,24 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
               <p style={{ color: '#525252' }} className="text-xs mt-1">{total} matching</p>
             </div>
             <a
-              href="/api/admin/export-users"
+              href="/api/admin/users/export"
+              download
               style={{
-                border: '1px solid #1f1f1f',
-                color: '#ffffff',
                 backgroundColor: '#111111',
+                border: '1px solid #262626',
+                color: '#a3a3a3',
+                padding: '6px 12px',
                 borderRadius: 6,
-                padding: '7px 14px',
                 fontSize: '0.75rem',
-                fontWeight: 600,
                 textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
               }}
-              className="hover:border-neutral-500 transition-colors"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-              Export CSV
+              ⬇ Export CSV
             </a>
           </div>
 
           {/* Filters */}
-          <form method="get" className="flex flex-wrap gap-2 mb-4">
-            <input
-              name="q"
-              defaultValue={q}
-              placeholder="Search email or name..."
-              style={{ backgroundColor: '#111111', border: '1px solid #262626', color: '#fff' }}
-              className="px-3 py-2 rounded-lg text-sm flex-1 min-w-48 focus:outline-none focus:border-amber-700 placeholder-neutral-600"
-            />
-            <select
-              name="status"
-              defaultValue={status ?? ''}
-              style={{ backgroundColor: '#111111', border: '1px solid #262626', color: '#fff' }}
-              className="px-3 py-2 rounded-lg text-sm focus:outline-none"
-            >
-              <option value="">All statuses</option>
-              <option value="PAID">Paid</option>
-              <option value="FREE">Free</option>
-            </select>
-            <select
-              name="activity"
-              defaultValue={activity ?? ''}
-              style={{ backgroundColor: '#111111', border: '1px solid #262626', color: '#fff' }}
-              className="px-3 py-2 rounded-lg text-sm focus:outline-none"
-            >
-              <option value="">All activity</option>
-              <option value="active">Active (7d)</option>
-              <option value="at-risk">At risk (2–4d)</option>
-              <option value="churned">Churned (5d+)</option>
-              <option value="inactive">Inactive (7d+)</option>
-              <option value="never">Never practiced</option>
-            </select>
-            <select
-              name="sort"
-              defaultValue={sort ?? ''}
-              style={{ backgroundColor: '#111111', border: '1px solid #262626', color: '#fff' }}
-              className="px-3 py-2 rounded-lg text-sm focus:outline-none"
-            >
-              <option value="">Newest first</option>
-              <option value="oldest">Oldest first</option>
-              <option value="xp">Most XP</option>
-              <option value="streak">Longest streak</option>
-            </select>
-            <button
-              type="submit"
-              style={{ backgroundColor: '#f59e0b', color: '#000' }}
-              className="px-4 py-2 rounded-lg text-sm font-bold"
-            >
-              Search
-            </button>
-            {hasActiveFilters && (
-              <Link
-                href="/admin/users"
-                style={{ border: '1px solid #262626', color: '#737373' }}
-                className="px-4 py-2 rounded-lg text-sm hover:text-white transition-colors"
-              >
-                Clear
-              </Link>
-            )}
-          </form>
+          <UserFilters />
 
           {/* Summary stats bar */}
           <div

@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
+import { z } from 'zod'
+
+const contactSchema = z.object({
+  name: z.string().min(1).max(100),
+  email: z.string().email(),
+  message: z.string().min(10).max(2000),
+})
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -31,31 +38,26 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const body = await request.json() as {
-      name?: string
-      email?: string
-      subject?: string
-      message?: string
+    let rawBody: unknown
+    try {
+      rawBody = await request.json()
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
     }
-
-    const { name, email, subject, message } = body
-
-    if (!name || typeof name !== 'string' || name.trim().length === 0) {
-      return NextResponse.json({ error: 'Name is required' }, { status: 400 })
-    }
-    if (!email || typeof email !== 'string' || !email.includes('@')) {
-      return NextResponse.json({ error: 'Valid email is required' }, { status: 400 })
-    }
-    if (!message || typeof message !== 'string' || message.trim().length < 20) {
+    const contactParsed = contactSchema.safeParse(rawBody)
+    if (!contactParsed.success) {
       return NextResponse.json(
-        { error: 'Message must be at least 20 characters' },
+        { error: 'Invalid input', details: z.flattenError(contactParsed.error) },
         { status: 400 },
       )
     }
+    const { name, email, message } = contactParsed.data
+    const rawSubject = (rawBody as { subject?: string }).subject
 
     const safeName = name.trim()
     const safeEmail = email.trim()
-    const safeSubject = subject && typeof subject === 'string' ? subject.trim() : 'Other'
+    const safeSubject =
+      rawSubject && typeof rawSubject === 'string' ? rawSubject.trim() : 'Other'
     const safeMessage = message.trim()
 
     await resend.emails.send({

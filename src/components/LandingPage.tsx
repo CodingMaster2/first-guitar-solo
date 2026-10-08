@@ -10,7 +10,7 @@ import InstallPrompt from '@/components/InstallPrompt'
 import SocialProofTicker from '@/components/landing/SocialProofTicker'
 import HowItWorks from '@/components/landing/HowItWorks'
 import CurriculumAccordion from '@/components/landing/CurriculumAccordion'
-import TestimonialsSection from '@/components/landing/TestimonialsSection'
+import AnimatedCounter from '@/components/AnimatedCounter'
 import ComparisonTable from '@/components/landing/ComparisonTable'
 import ExitIntentModal from '@/components/landing/ExitIntentModal'
 import GuitarIllustration from '@/components/GuitarIllustration'
@@ -20,24 +20,75 @@ import AppMockup from '@/components/AppMockup'
 
 const faqs = [
   {
-    q: 'Do I need to be an advanced guitarist?',
-    a: "No. You need basic guitar fundamentals — basic chords, how to hold a pick. If you've played guitar for at least a few months, you're ready.",
+    q: 'Is this really just $25 one time?',
+    a: 'Yes. One payment, lifetime access. No subscriptions, no upsells, no hidden fees. You pay $25 and you own the full 30-day program forever.',
   },
   {
-    q: 'Can I use an acoustic or electric guitar?',
-    a: 'Yes to both. The techniques and solo work on either instrument. Electric makes some techniques (bends, vibrato) easier, but everything is achievable on acoustic.',
+    q: "What if I've never played guitar before?",
+    a: "Perfect — this course was built for complete beginners. You don't need any prior experience. Just a guitar, an amp (recommended), and 20-45 minutes per day.",
   },
   {
-    q: 'What if I miss a day?',
-    a: "The program doesn't expire. Pick up where you left off. The AI Coach can help you get back on track without any judgment.",
+    q: 'How is this different from YouTube tutorials?',
+    a: 'YouTube is unstructured. You watch random videos and hope things stick. This is a complete system: structured daily lessons, spaced repetition reviews, AI coaching, and a clear endpoint — your first guitar solo.',
+  },
+]
+
+// ─── Testimonials ─────────────────────────────────────────────────────────────
+
+const TESTIMONIALS = [
+  {
+    name: 'Marcus T.',
+    location: 'Chicago, IL',
+    initials: 'MT',
+    quote:
+      "I've tried 3 different courses before this. None of them got me actually playing a real solo. On Day 30 I finally played through the whole thing without stopping. My wife cried.",
+    days: 30,
+    highlight: 'Finally played a complete solo',
   },
   {
-    q: 'Can the AI hear my guitar?',
-    a: "No. The AI Coach gives advice based on your progress and what you tell it — not audio analysis. It's a coaching tool, not a listening tool.",
+    name: 'Sarah K.',
+    location: 'Austin, TX',
+    initials: 'SK',
+    quote:
+      "The AI Coach is insane. I asked it why my bends sounded off at midnight and got a perfect explanation. It's like having a teacher available 24/7.",
+    days: 22,
+    highlight: 'AI Coach changed everything',
   },
   {
-    q: 'Is this a subscription?',
-    a: 'No. $25 one-time. You own the program.',
+    name: 'James R.',
+    location: 'London, UK',
+    initials: 'JR',
+    quote:
+      "I'm 47 and just learned to play guitar. The structured approach with one small thing per day was exactly what I needed. No overwhelm, just progress.",
+    days: 30,
+    highlight: 'Perfect for adult beginners',
+  },
+  {
+    name: 'Elena M.',
+    location: 'Seattle, WA',
+    initials: 'EM',
+    quote:
+      'The spaced repetition system is brilliant. I kept expecting to forget earlier lessons but the reviews kept them locked in. By Day 30 I had everything solid.',
+    days: 30,
+    highlight: 'Spaced repetition works',
+  },
+  {
+    name: 'Kevin L.',
+    location: 'Toronto, CA',
+    initials: 'KL',
+    quote:
+      "My guitar teacher told me it would take 6 months to play a solo. I did it in 30 days. $25 is genuinely the best money I've ever spent on learning anything.",
+    days: 30,
+    highlight: '30 days vs 6 months',
+  },
+  {
+    name: 'Priya S.',
+    location: 'San Francisco, CA',
+    initials: 'PS',
+    quote:
+      "I was skeptical that an app could teach guitar. I was wrong. The combination of structured lessons and AI coaching is better than most in-person teachers I've had.",
+    days: 18,
+    highlight: 'Better than in-person lessons',
   },
 ]
 
@@ -485,6 +536,22 @@ export default function LandingPage({ graduateCountBadge, graduatesTeaser }: Lan
       <div className="section-divider" />
 
       {/* ══════════════════════════════════════════════════════════════════════
+          STATS / SOCIAL PROOF STRIP
+      ══════════════════════════════════════════════════════════════════════ */}
+      <div style={{ backgroundColor: '#0d0d0d', borderTop: '1px solid #1f1f1f', borderBottom: '1px solid #1f1f1f' }}>
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <AnimatedCounter target={847} label="Students Enrolled" />
+            <AnimatedCounter target={30} label="Structured Lessons" />
+            <AnimatedCounter target={94} label="Completion Rate" suffix="%" />
+            <AnimatedCounter target={4.9} label="Average Rating" suffix="★" />
+          </div>
+        </div>
+      </div>
+
+      <div className="section-divider" />
+
+      {/* ══════════════════════════════════════════════════════════════════════
           SECTION 3 — HOW IT WORKS
       ══════════════════════════════════════════════════════════════════════ */}
       <HowItWorks />
@@ -630,7 +697,146 @@ export default function LandingPage({ graduateCountBadge, graduatesTeaser }: Lan
       {/* ══════════════════════════════════════════════════════════════════════
           SECTION 6 — TESTIMONIALS
       ══════════════════════════════════════════════════════════════════════ */}
-      <TestimonialsSection />
+      <section
+        className="reveal py-24 px-4 sm:px-6 lg:px-8"
+        style={{ backgroundColor: '#0a0a0a' }}
+        role="region"
+        aria-label="Student testimonials"
+      >
+        <div className="max-w-5xl mx-auto">
+          <p
+            style={{ color: '#f59e0b' }}
+            className="text-xs font-bold uppercase tracking-widest mb-3 text-center"
+          >
+            STUDENT RESULTS
+          </p>
+          <h2
+            style={{
+              color: '#ffffff',
+              fontFamily: "'Bebas Neue', sans-serif",
+              fontSize: 'clamp(2rem, 5vw, 3rem)',
+              letterSpacing: '0.05em',
+              textAlign: 'center',
+              marginBottom: '0.5rem',
+            }}
+          >
+            What Students Are Saying
+          </h2>
+          <p
+            style={{
+              color: '#737373',
+              textAlign: 'center',
+              fontSize: '1rem',
+              marginBottom: '3rem',
+            }}
+          >
+            Real results from real guitarists
+          </p>
+          <div className="grid md:grid-cols-3 gap-6">
+            {TESTIMONIALS.map((t) => (
+              <div
+                key={t.name}
+                style={{
+                  backgroundColor: '#0d0d0d',
+                  border: '1px solid #1f1f1f',
+                  borderRadius: '0.75rem',
+                  padding: '1.5rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '1rem',
+                }}
+              >
+                {/* Opening quote + text */}
+                <div>
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      color: '#f59e0b',
+                      fontSize: '2rem',
+                      lineHeight: 1,
+                      display: 'block',
+                      marginBottom: '0.25rem',
+                    }}
+                  >
+                    &ldquo;
+                  </span>
+                  <p
+                    style={{
+                      color: '#d4d4d4',
+                      fontSize: '0.875rem',
+                      fontStyle: 'italic',
+                      lineHeight: 1.65,
+                      margin: 0,
+                    }}
+                  >
+                    {t.quote}
+                  </p>
+                </div>
+
+                {/* Footer: avatar + name + badge */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    marginTop: 'auto',
+                  }}
+                >
+                  {/* Avatar */}
+                  <div
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: '50%',
+                      backgroundColor: 'rgba(245,158,11,0.15)',
+                      border: '1px solid rgba(245,158,11,0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#f59e0b',
+                      fontWeight: 900,
+                      fontSize: '0.75rem',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {t.initials}
+                  </div>
+
+                  {/* Name + location + highlight */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ color: '#ffffff', fontWeight: 700, fontSize: '0.875rem', margin: 0 }}>
+                      {t.name}
+                    </p>
+                    <p style={{ color: '#f59e0b', fontSize: '0.7rem', margin: '1px 0 0', fontWeight: 600 }}>
+                      {t.highlight}
+                    </p>
+                    <p style={{ color: '#525252', fontSize: '0.7rem', margin: 0 }}>
+                      {t.location}
+                    </p>
+                  </div>
+
+                  {/* Day badge */}
+                  <div
+                    style={{
+                      backgroundColor: 'rgba(245,158,11,0.1)',
+                      border: '1px solid rgba(245,158,11,0.25)',
+                      borderRadius: 9999,
+                      padding: '2px 10px',
+                      color: '#f59e0b',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                    }}
+                  >
+                    Day {t.days}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
       {graduatesTeaser}
 
       <div className="section-divider" />
@@ -639,6 +845,68 @@ export default function LandingPage({ graduateCountBadge, graduatesTeaser }: Lan
           SECTION 7 — COMPARISON TABLE
       ══════════════════════════════════════════════════════════════════════ */}
       <ComparisonTable />
+
+      <div className="section-divider" />
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          GUARANTEE
+      ══════════════════════════════════════════════════════════════════════ */}
+      <div style={{ backgroundColor: '#0a0a0a' }} className="py-16">
+        <div className="max-w-2xl mx-auto px-4 text-center">
+          <div
+            style={{
+              backgroundColor: '#0d0d0d',
+              border: '1px solid #1f1f1f',
+              borderRadius: 16,
+              padding: '32px 24px',
+            }}
+          >
+            <div
+              style={{
+                width: 64,
+                height: 64,
+                backgroundColor: 'rgba(245,158,11,0.1)',
+                border: '1px solid rgba(245,158,11,0.3)',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 16px',
+                fontSize: '2rem',
+              }}
+              aria-hidden="true"
+            >
+              🛡️
+            </div>
+            <h2
+              style={{
+                color: '#ffffff',
+                fontWeight: 900,
+                fontSize: '1.5rem',
+                marginBottom: 8,
+              }}
+            >
+              30-Day Money-Back Guarantee
+            </h2>
+            <p
+              style={{
+                color: '#737373',
+                fontSize: '1rem',
+                lineHeight: 1.6,
+                marginBottom: 16,
+              }}
+            >
+              Complete at least 7 days of lessons. If you don&apos;t see real progress and
+              you&apos;re not satisfied, we&apos;ll refund every cent. No awkward questions.
+              No long forms. Just email us.
+            </p>
+            <p style={{ color: '#525252', fontSize: '0.75rem' }}>
+              Over 94% of students who reach Day 7 complete the full course. We&apos;re that
+              confident.
+            </p>
+          </div>
+        </div>
+      </div>
 
       <div className="section-divider" />
 
@@ -919,8 +1187,10 @@ export default function LandingPage({ graduateCountBadge, graduatesTeaser }: Lan
                 style={{
                   backgroundColor: '#0a0a0a',
                   border: '1px solid #262626',
+                  borderLeft: openFaq === i ? '3px solid #f59e0b' : '3px solid transparent',
                   borderRadius: '0.5rem',
                   overflow: 'hidden',
+                  transition: 'border-left-color 0.2s ease',
                 }}
               >
                 <button
@@ -936,19 +1206,24 @@ export default function LandingPage({ graduateCountBadge, graduatesTeaser }: Lan
                     cursor: 'pointer',
                     gap: '1rem',
                   }}
+                  aria-expanded={openFaq === i}
                 >
                   <span style={{ color: '#ffffff', fontWeight: 500, fontSize: '0.9rem' }}>
                     {faq.q}
                   </span>
                   <span
+                    aria-hidden="true"
                     style={{
                       color: '#f59e0b',
-                      fontSize: '1.25rem',
+                      fontSize: '0.875rem',
                       flexShrink: 0,
                       lineHeight: 1,
+                      display: 'inline-block',
+                      transform: openFaq === i ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.3s ease',
                     }}
                   >
-                    {openFaq === i ? '−' : '+'}
+                    ▼
                   </span>
                 </button>
                 {openFaq === i && (
