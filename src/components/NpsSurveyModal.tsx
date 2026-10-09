@@ -18,8 +18,11 @@ export default function NpsSurveyModal({ isOpen, onClose, onSubmit }: NpsSurveyM
   const handleSubmit = async () => {
     if (score === null || submitting) return
     setSubmitting(true)
-    await onSubmit(score, comment)
-    setSubmitting(false)
+    try {
+      await onSubmit(score, comment)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const getScoreColor = (n: number) => {

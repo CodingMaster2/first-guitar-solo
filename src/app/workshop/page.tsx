@@ -51,17 +51,29 @@ interface StoredSolo {
 }
 
 function parseSolo(raw: StoredSolo): GeneratedSolo {
-  return {
-    ...raw,
-    sections:
-      typeof raw.sections === 'string'
-        ? (JSON.parse(raw.sections) as SoloSection[])
-        : (raw.sections as unknown as SoloSection[]),
-    techniques:
-      typeof raw.techniques === 'string'
-        ? (JSON.parse(raw.techniques) as string[])
-        : (raw.techniques as unknown as string[]),
+  let sections: SoloSection[]
+  if (typeof raw.sections === 'string') {
+    try {
+      sections = JSON.parse(raw.sections) as SoloSection[]
+    } catch {
+      sections = []
+    }
+  } else {
+    sections = raw.sections as unknown as SoloSection[]
   }
+
+  let techniques: string[]
+  if (typeof raw.techniques === 'string') {
+    try {
+      techniques = JSON.parse(raw.techniques) as string[]
+    } catch {
+      techniques = []
+    }
+  } else {
+    techniques = raw.techniques as unknown as string[]
+  }
+
+  return { ...raw, sections, techniques }
 }
 
 type TabView = 'forge' | 'history' | 'community'

@@ -110,7 +110,7 @@ export default async function DashboardPage() {
   }))
 
   const nextReviews = progress
-    .filter((p) => p.nextReviewAt && !p.completed)
+    .filter((p) => p.nextReviewAt && p.completed)
     .map((p) => ({ day: p.day, nextReviewAt: new Date(p.nextReviewAt!).toISOString() }))
     .sort((a, b) => new Date(a.nextReviewAt).getTime() - new Date(b.nextReviewAt).getTime())
     .slice(0, 3)

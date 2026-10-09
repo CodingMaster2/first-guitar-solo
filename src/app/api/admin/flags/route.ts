@@ -46,7 +46,12 @@ export async function PATCH(req: NextRequest) {
   const session = await requireAdmin()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await req.json()
+  let body: { id?: string; enabled?: boolean; rollout?: number }
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+  }
   const { id, enabled, rollout } = body
 
   if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 })
@@ -55,6 +60,10 @@ export async function PATCH(req: NextRequest) {
   if (typeof enabled === 'boolean') data.enabled = enabled
   if (typeof rollout === 'number') data.rollout = rollout
 
-  const flag = await prisma.featureFlag.update({ where: { id }, data })
-  return NextResponse.json(flag)
+  try {
+    const flag = await prisma.featureFlag.update({ where: { id }, data })
+    return NextResponse.json(flag)
+  } catch {
+    return NextResponse.json({ error: 'Flag not found or update failed' }, { status: 404 })
+  }
 }

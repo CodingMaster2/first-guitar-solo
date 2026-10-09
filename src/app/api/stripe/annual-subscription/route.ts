@@ -9,6 +9,10 @@ export async function POST() {
   }
 
   const session = await getServerSession(authOptions)
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const baseUrl =
     process.env.NEXTAUTH_URL ??
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')

@@ -33,6 +33,7 @@ export default function ConfettiBurst({ trigger }: { trigger: boolean }) {
     return () => {
       clearTimeout(cleanup)
       if (document.body.contains(container)) document.body.removeChild(container)
+      if (document.head.contains(style)) document.head.removeChild(style)
     }
   }, [trigger])
   return null

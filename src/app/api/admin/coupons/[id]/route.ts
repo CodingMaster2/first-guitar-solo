@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-interface Params { params: Promise<{ id: string }> }
+type Params = { params: Promise<unknown> }
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions)
@@ -15,7 +15,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const session = await requireAdmin()
   if (!session) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const { id } = await params
+  const { id } = await params as { id: string }
   const body = await req.json() as { active?: boolean }
 
   const coupon = await prisma.couponCode.findUnique({ where: { id } })
@@ -33,7 +33,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   const session = await requireAdmin()
   if (!session) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const { id } = await params
+  const { id } = await params as { id: string }
   const coupon = await prisma.couponCode.findUnique({ where: { id } })
   if (!coupon) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 

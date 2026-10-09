@@ -3,13 +3,13 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 
-interface RouteContext { params: Promise<{ id: string }> }
+type RouteContext = { params: Promise<unknown> }
 
 export async function DELETE(_req: Request, { params }: RouteContext) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { id } = await params
+  const { id } = await params as { id: string }
   const userId = session.user.id
 
   // Find the partnership record
