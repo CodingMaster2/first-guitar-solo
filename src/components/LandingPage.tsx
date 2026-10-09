@@ -218,17 +218,6 @@ export default function LandingPage({ graduateCountBadge, graduatesTeaser }: Lan
     return () => obs.disconnect()
   }, [])
 
-  // Crisp chat — replace CRISP_WEBSITE_ID with your ID from crisp.chat
-  useEffect(() => {
-    const w = window as typeof window & { $crisp: unknown[]; CRISP_WEBSITE_ID: string }
-    w.$crisp = []
-    w.CRISP_WEBSITE_ID = 'YOUR_CRISP_ID'
-    const d = document
-    const s = d.createElement('script')
-    s.src = 'https://client.crisp.chat/l.js'
-    s.async = true
-    d.getElementsByTagName('head')[0].appendChild(s)
-  }, [])
 
   return (
     <div style={{ backgroundColor: '#0a0a0a', color: '#ffffff' }} className="min-h-screen">
