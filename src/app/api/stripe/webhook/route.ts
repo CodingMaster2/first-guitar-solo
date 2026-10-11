@@ -3,6 +3,8 @@ import { stripe } from '@/lib/stripe'
 import { prisma } from '@/lib/prisma'
 import { ACHIEVEMENTS } from '@/lib/achievements'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(req: NextRequest) {
   const body = await req.text()
   const sig = req.headers.get('stripe-signature')
@@ -92,7 +94,7 @@ export async function POST(req: NextRequest) {
     if (userId) {
       await prisma.user.update({
         where: { id: userId },
-        data: { subscriptionStatus: 'canceled' },
+        data: { subscriptionStatus: 'canceled', purchaseStatus: 'UNPAID' },
       })
     }
   }

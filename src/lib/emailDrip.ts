@@ -14,6 +14,9 @@ export async function processDailyEmails(): Promise<{ processed: number }> {
     include: { profile: true },
   })
 
+  const todayStart = new Date(now)
+  todayStart.setHours(0, 0, 0, 0)
+
   for (const user of users) {
     if (!user.profile) continue
     const profile = user.profile
@@ -42,15 +45,22 @@ export async function processDailyEmails(): Promise<{ processed: number }> {
       await sendStreakMilestoneEmail({ email: user.email, name: user.name }, streak)
     }
 
-    // Halfway email: currentDay just hit 15
+    // Halfway email: fires only on the day day 14 is completed (transitioning to currentDay 15)
+    // Guard prevents re-sending on subsequent days when currentDay is still 15
     if (currentDay === 15 && daysSinceLastPractice === 0) {
-      await sendHalfwayEmail({ email: user.email, name: user.name })
+      const day14Done = await prisma.progress.findFirst({
+        where: { userId: user.id, day: 14, completed: true, completedAt: { gte: todayStart } },
+      })
+      if (day14Done) {
+        await sendHalfwayEmail({ email: user.email, name: user.name })
+      }
     }
 
-    // Graduation: currentDay === 30 and completed today
+    // Graduation: only send on the day day 30 is first completed
+    // currentDay stays 30 after graduation, so we must guard against re-sends on subsequent days
     if (currentDay === 30 && daysSinceLastPractice === 0) {
       const day30Done = await prisma.progress.findFirst({
-        where: { userId: user.id, day: 30, completed: true },
+        where: { userId: user.id, day: 30, completed: true, completedAt: { gte: todayStart } },
       })
       if (day30Done) {
         await sendGraduationEmail({ email: user.email, name: user.name })

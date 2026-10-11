@@ -15,10 +15,11 @@ export default async function CoachPage() {
     prisma.profile.findUnique({ where: { userId: session.user.id } }),
     prisma.coachMessage.findMany({
       where: { userId: session.user.id },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { createdAt: 'desc' },
       take: 20,
     }),
   ])
+  messages.reverse()
 
   if (!profile) redirect('/onboarding')
 

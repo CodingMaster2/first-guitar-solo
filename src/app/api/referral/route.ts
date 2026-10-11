@@ -48,6 +48,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'referralCode is required' }, { status: 400 })
     }
 
+    // Prevent self-referral: if the caller is already authenticated, make sure
+    // they are not submitting their own referral code.
+    const session = await getServerSession(authOptions)
+    if (session?.user) {
+      const currentUser = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { referralCode: true },
+      })
+      if (currentUser?.referralCode && currentUser.referralCode === referralCode) {
+        return NextResponse.json({ error: 'Cannot refer yourself' }, { status: 400 })
+      }
+    }
+
     await prisma.user.update({
       where: { referralCode },
       data: { referralCount: { increment: 1 } },

@@ -96,46 +96,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Already completed', alreadyCompleted: true })
     }
 
-    // Compute tomorrow for spaced repetition initialization
-    const tomorrow = new Date()
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    tomorrow.setHours(0, 0, 0, 0)
-
-    // Mark day complete and initialize SM-2 schedule
-    await prisma.progress.upsert({
-      where: { userId_day: { userId: session.user.id, day } },
-      update: {
-        completed: true,
-        completedAt: new Date(),
-        difficulty,
-        difficultAreas,
-        rating,
-        notes,
-        nextReviewAt: tomorrow,
-        reviewCount: 0,
-        easeFactor: 2.5,
-      },
-      create: {
-        userId: session.user.id,
-        day,
-        completed: true,
-        completedAt: new Date(),
-        difficulty,
-        difficultAreas,
-        rating,
-        notes,
-        nextReviewAt: tomorrow,
-        reviewCount: 0,
-        easeFactor: 2.5,
-      },
-    })
-
-    // Update profile XP, streak, currentDay
+    // Fetch profile before mutating anything — fail fast before touching progress
     const profile = await prisma.profile.findUnique({ where: { userId: session.user.id } })
     if (!profile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
 
+    // Compute tomorrow for spaced repetition initialization
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    tomorrow.setHours(0, 0, 0, 0)
+
+    // Calculate new profile values before the transaction
     const now = new Date()
     const lastPractice = profile.lastPracticeDate
     let newStreak = profile.streak
@@ -156,16 +128,46 @@ export async function POST(req: NextRequest) {
     const newTotalXP = profile.totalXP + xpReward
     const newBestStreak = Math.max(profile.bestStreak, newStreak)
 
-    await prisma.profile.update({
-      where: { userId: session.user.id },
-      data: {
-        totalXP: newTotalXP,
-        streak: newStreak,
-        bestStreak: newBestStreak,
-        lastPracticeDate: now,
-        currentDay: newCurrentDay > 30 ? 30 : newCurrentDay,
-      },
-    })
+    // Atomically mark progress complete and award XP in a single transaction
+    await prisma.$transaction([
+      prisma.progress.upsert({
+        where: { userId_day: { userId: session.user.id, day } },
+        update: {
+          completed: true,
+          completedAt: now,
+          difficulty,
+          difficultAreas,
+          rating,
+          notes,
+          nextReviewAt: tomorrow,
+          reviewCount: 0,
+          easeFactor: 2.5,
+        },
+        create: {
+          userId: session.user.id,
+          day,
+          completed: true,
+          completedAt: now,
+          difficulty,
+          difficultAreas,
+          rating,
+          notes,
+          nextReviewAt: tomorrow,
+          reviewCount: 0,
+          easeFactor: 2.5,
+        },
+      }),
+      prisma.profile.update({
+        where: { userId: session.user.id },
+        data: {
+          totalXP: newTotalXP,
+          streak: newStreak,
+          bestStreak: newBestStreak,
+          lastPracticeDate: now,
+          currentDay: newCurrentDay > 30 ? 30 : newCurrentDay,
+        },
+      }),
+    ])
 
     // Seed achievements if they haven't been created yet
     const achievementCount = await prisma.achievement.count()

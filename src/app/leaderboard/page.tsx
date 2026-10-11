@@ -41,7 +41,7 @@ export default async function LeaderboardPage() {
       include: { user: { select: { name: true, id: true } } },
     }),
     prisma.profile.findMany({
-      where: { soloCompleted: true },
+      where: { soloCompleted: true, leaderboardOptIn: true },
       orderBy: { soloCompletedAt: 'desc' },
       take: 10,
       include: { user: { select: { name: true, id: true } } },

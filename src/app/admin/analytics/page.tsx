@@ -220,7 +220,19 @@ export default async function AdminAnalyticsPage() {
     GROUP BY DATE("createdAt")
     ORDER BY date ASC
   `
-  const dauMap = new Map(rawDau.map((r) => [r.date, Number(r.count)]))
+  // PostgreSQL DATE() returns a JS Date object via the pg driver, not a string,
+  // despite the TypeScript annotation. Normalise every key to YYYY-MM-DD so that
+  // the string lookup below (`dauMap.get(dateStr)`) always matches.
+  const dauMap = new Map(
+    rawDau.map((r) => {
+      const raw = r.date as unknown
+      const dateKey =
+        typeof raw === 'string'
+          ? raw.slice(0, 10)
+          : (raw as Date).toISOString().slice(0, 10)
+      return [dateKey, Number(r.count)]
+    }),
+  )
   const dauData = Array.from({ length: 30 }, (_, i) => {
     const d = new Date(Date.now() - (29 - i) * 86400000)
     const dateStr = d.toISOString().split('T')[0]

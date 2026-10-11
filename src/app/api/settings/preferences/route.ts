@@ -10,7 +10,7 @@ export async function GET() {
 
     const profile = await prisma.profile.findUnique({
       where: { userId: session.user.id },
-      select: { weeklyGoalDays: true, soloStyle: true, soloVibe: true, adaptivePath: true, leaderboardOptIn: true },
+      select: { weeklyGoalDays: true, adaptivePath: true, leaderboardOptIn: true },
     })
 
     let prefs: Record<string, unknown> = {}
@@ -18,8 +18,8 @@ export async function GET() {
 
     return NextResponse.json({
       weeklyGoalDays: profile?.weeklyGoalDays ?? 5,
-      guitarType: profile?.soloStyle ?? '',
-      preferredGenre: profile?.soloVibe ?? '',
+      guitarType: typeof prefs.guitarType === 'string' ? prefs.guitarType : '',
+      preferredGenre: typeof prefs.preferredGenre === 'string' ? prefs.preferredGenre : '',
       reminderTime: typeof prefs.reminderTime === 'string' ? prefs.reminderTime : '',
       publicProfile: typeof prefs.publicProfile === 'boolean' ? prefs.publicProfile : false,
       leaderboardOptIn: profile?.leaderboardOptIn ?? false,
@@ -44,14 +44,12 @@ export async function PATCH(req: NextRequest) {
     if (typeof body.leaderboardOptIn === 'boolean') {
       updateData.leaderboardOptIn = body.leaderboardOptIn
     }
-    if (typeof body.guitarType === 'string') {
-      updateData.soloStyle = body.guitarType
-    }
-    if (typeof body.preferredGenre === 'string') {
-      updateData.soloVibe = body.preferredGenre
-    }
-
-    if (body.reminderTime !== undefined || typeof body.publicProfile === 'boolean') {
+    if (
+      body.reminderTime !== undefined ||
+      typeof body.publicProfile === 'boolean' ||
+      typeof body.guitarType === 'string' ||
+      typeof body.preferredGenre === 'string'
+    ) {
       const existing = await prisma.profile.findUnique({
         where: { userId: session.user.id },
         select: { adaptivePath: true },
@@ -60,6 +58,8 @@ export async function PATCH(req: NextRequest) {
       try { prefs = existing?.adaptivePath ? JSON.parse(existing.adaptivePath) : {} } catch { prefs = {} }
       if (typeof body.reminderTime === 'string') prefs.reminderTime = body.reminderTime
       if (typeof body.publicProfile === 'boolean') prefs.publicProfile = body.publicProfile
+      if (typeof body.guitarType === 'string') prefs.guitarType = body.guitarType
+      if (typeof body.preferredGenre === 'string') prefs.preferredGenre = body.preferredGenre
       updateData.adaptivePath = JSON.stringify(prefs)
     }
 

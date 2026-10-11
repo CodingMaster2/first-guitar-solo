@@ -252,7 +252,7 @@ export default async function ProgressPage() {
           <h2 className="text-white font-bold text-sm uppercase tracking-wider mb-5">Personal Records</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
-              { label: 'Best Streak', value: `${profile.streak}d`, sub: 'days in a row', color: '#f59e0b' },
+              { label: 'Best Streak', value: `${profile.bestStreak}d`, sub: 'days in a row', color: '#f59e0b' },
               { label: 'This Week', value: `${weeklyPractice}`, sub: 'sessions', color: '#ffffff' },
               { label: 'Longest Session', value: longestSession > 0 ? `${longestSession} min` : '—', sub: 'single session', color: '#ffffff' },
               { label: 'Achievement XP', value: `+${earnedAchievementXP}`, sub: 'from achievements', color: '#f59e0b' },

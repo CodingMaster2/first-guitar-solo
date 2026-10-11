@@ -23,6 +23,7 @@ export default function AnimatedCounter({
   useEffect(() => {
     const el = ref.current
     if (!el) return
+    if (typeof IntersectionObserver === 'undefined') return
 
     const observer = new IntersectionObserver(
       (entries) => {

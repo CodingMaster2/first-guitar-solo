@@ -88,7 +88,7 @@ export default function OnboardingPage() {
         return
       }
 
-      router.push('/dashboard')
+      router.push('/lesson/1')
     } catch {
       setError('Something went wrong. Please try again.')
     } finally {

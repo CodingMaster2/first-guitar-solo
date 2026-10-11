@@ -38,6 +38,10 @@ export async function DELETE(req: NextRequest) {
     await prisma.adminLog.deleteMany({ where: { adminId: userId } })
     await prisma.passwordResetToken.deleteMany({ where: { userId } })
     await prisma.profile.deleteMany({ where: { userId } })
+    // FunnelEvent has an optional FK to user — delete rows for this user
+    await prisma.funnelEvent.deleteMany({ where: { userId } })
+    // GiftCode.redeemedById is an optional FK — nullify it rather than deleting the gift code
+    await prisma.giftCode.updateMany({ where: { redeemedById: userId }, data: { redeemedById: null } })
     await prisma.user.delete({ where: { id: userId } })
 
     return NextResponse.json({ success: true })

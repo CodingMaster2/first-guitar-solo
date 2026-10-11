@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 interface FeatureFlag {
   id: string
@@ -26,6 +26,9 @@ export default function FlagsList({ initialFlags }: { initialFlags: FeatureFlag[
   const [newKey, setNewKey] = useState('')
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState('')
+  // Tracks the rollout value that was committed before the user started editing,
+  // so we can revert to it when a PATCH request fails.
+  const savedRollout = useRef<Record<string, number>>({})
 
   const toggle = async (flag: FeatureFlag) => {
     const prev = flags
@@ -38,11 +41,14 @@ export default function FlagsList({ initialFlags }: { initialFlags: FeatureFlag[
   }
 
   const updateRollout = async (flag: FeatureFlag, value: number) => {
+    // Use the value captured at focus-time (before any onChange edits).
+    // By the time onBlur fires, flag.rollout has already been updated
+    // optimistically via onChange, so it cannot be used as the revert target.
+    const revertValue = savedRollout.current[flag.id] ?? flag.rollout
     try {
       await patchFlag(flag.id, { rollout: value })
     } catch {
-      // silently revert
-      setFlags((prev) => prev.map((f) => (f.id === flag.id ? { ...f, rollout: flag.rollout } : f)))
+      setFlags((prev) => prev.map((f) => (f.id === flag.id ? { ...f, rollout: revertValue } : f)))
     }
   }
 
@@ -241,6 +247,10 @@ export default function FlagsList({ initialFlags }: { initialFlags: FeatureFlag[
                         min={0}
                         max={100}
                         value={flag.rollout}
+                        onFocus={() => {
+                          // Snapshot the committed value before the user edits it.
+                          savedRollout.current[flag.id] = flag.rollout
+                        }}
                         onChange={(e) => {
                           const v = Math.min(100, Math.max(0, parseInt(e.target.value) || 0))
                           setFlags((prev) =>

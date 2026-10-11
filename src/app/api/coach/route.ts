@@ -48,9 +48,10 @@ export async function GET() {
 
     const messages = await prisma.coachMessage.findMany({
       where: { userId: session.user.id },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { createdAt: 'desc' },
       take: 20,
     })
+    messages.reverse()
 
     return NextResponse.json({ messages })
   } catch (error) {
@@ -157,9 +158,10 @@ Rules:
     // Get conversation history for context
     const recentMessages = await prisma.coachMessage.findMany({
       where: { userId: session.user.id },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { createdAt: 'desc' },
       take: 18,
     })
+    recentMessages.reverse()
 
     const groqMessages: { role: 'user' | 'assistant'; content: string }[] = recentMessages.map((m) => ({
       role: m.role as 'user' | 'assistant',
@@ -191,9 +193,10 @@ Rules:
     // Return last 20 messages
     const allMessages = await prisma.coachMessage.findMany({
       where: { userId: session.user.id },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { createdAt: 'desc' },
       take: 20,
     })
+    allMessages.reverse()
 
     return NextResponse.json({ messages: allMessages, reply: assistantMessage })
   } catch (error) {

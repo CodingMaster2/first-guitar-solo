@@ -12,12 +12,12 @@ export function calculateNextReview(card: SM2Card, quality: number): SM2Card {
   const now = new Date()
 
   if (quality < 3) {
-    // Failed — review again in 1 day, keep existing ease factor
+    // Failed — review again in 1 day, reset count to 0 per SM-2 spec
     const nextReviewAt = new Date(now)
     nextReviewAt.setDate(nextReviewAt.getDate() + 1)
     return {
       easeFactor: card.easeFactor,
-      reviewCount: card.reviewCount, // don't advance count on failure
+      reviewCount: 0, // SM-2: reset repetitions to start on failure
       nextReviewAt,
     }
   }

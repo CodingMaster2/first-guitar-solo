@@ -205,6 +205,7 @@ export default function LandingPage({ graduateCountBadge, graduatesTeaser }: Lan
 
   // Scroll-triggered reveal
   useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') return
     const els = document.querySelectorAll('.reveal')
     const obs = new IntersectionObserver(
       (entries) => {
